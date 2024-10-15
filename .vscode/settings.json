@@ -1,7 +1,7 @@
 {
     // ESLint
     "editor.codeActionsOnSave": {
-      "source.fixAll": true
+      "source.fixAll": "explicit"
     },
     // Prettier
     "editor.defaultFormatter": "esbenp.prettier-vscode",
