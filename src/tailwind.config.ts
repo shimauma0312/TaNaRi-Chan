@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss";
+import type { Config } from "tailwindcss"
 
 const config: Config = {
   content: [
@@ -11,9 +11,14 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "custom-bg": "#171A0F",
+      },
+      backgroundImage: {
+        tile: "url('/images/tile.png')",
       },
     },
   },
   plugins: [],
-};
-export default config;
+}
+
+export default config
