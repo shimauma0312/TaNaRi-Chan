@@ -11,8 +11,8 @@ COPY src/package.json src/package-lock.json ./
 # 依存関係をインストール
 RUN npm install
 
-# Prisma CLIと@prisma/clientをインストール
-RUN npm install prisma @prisma/client
+# Prisma CLIと@prisma/client、firebaseをインストール
+RUN npm install prisma @prisma/client firebase --save-dev @types/firebase
 
 # Prismaのスキーマファイルをコピー
 COPY prisma ./prisma
@@ -20,7 +20,7 @@ COPY prisma ./prisma
 # アプリケーションのソースコードをコピー
 COPY src .
 
-# Prismaのマイグレーションを実行
+# Prismaのクライアントを生成
 RUN npx prisma generate
 
 CMD ["npm", "run", "dev"]
