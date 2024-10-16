@@ -7,8 +7,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  name  String
-  email String  @unique
+model Users {
+  user_id      Int     @id @default(autoincrement())
+  user_name    String
+  user_email   String  @unique
+  icon_number  int
+  todos        Todos[] 
+  posts        Posts[]
+  postComments PostComments[]
+  todoComments TodoComments[]
+}
+
+model Todos {
+  todo_id      Int      @id @default(autoincrement())
+  description  String
+  todo_deadline DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user_id      Int
+  user         Users    @relation(fields: [user_id], references: [user_id])
+  is_completed Boolean  @default(false)
+  is_public    Boolean  @default(false)
+  comments     TodoComments[]
+}
+
+model Posts {
+  post_id      Int       @id @default(autoincrement())
+  title        String
+  content      String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  author_id    Int
+  author       Users     @relation(fields: [author_id], references: [user_id])
+  tags         Tags[]    @relation(references: [tag_id])
+  comments     PostComments[]
+}
+
+model Post_Tags {
+  tag_id   Int     @id @default(autoincrement())
+  tag_name String  @unique
+  posts    Posts[] @relation(references: [post_id])
+}
+
+model PostComments {
+  comment_id Int      @id @default(autoincrement())
+  content    String
+  createdAt  DateTime @default(now())
+  author_id  Int
+  post_id    Int
+  author     Users    @relation(fields: [author_id], references: [user_id])
+  post       Posts    @relation(fields: [post_id], references: [post_id])
+}
+
+model TodoComments {
+  comment_id Int      @id @default(autoincrement())
+  content    String
+  createdAt  DateTime @default(now())
+  author_id  Int
+  todo_id    Int
+  author     Users    @relation(fields: [author_id], references: [user_id])
+  todo       Todos    @relation(fields: [todo_id], references: [todo_id])
 }
