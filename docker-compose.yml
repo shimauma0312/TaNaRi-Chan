@@ -8,6 +8,7 @@ services:
       - ./src:/app
     ports:
       - "3000:3000"
+      - "5555:5555" # Prisma Studioのポートをホストに公開
     environment:
       - WATCHPACK_POLLING=true
       - DATABASE_URL=postgresql://postgres:example_password@db:5432/app_db
