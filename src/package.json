@@ -7,26 +7,28 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup": "npm install && npx prisma generate"
+    "setup": "npm install --legacy-peer-deps && npx prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "^5.21.0",
+    "firebase": "*",
     "next": "14.2.15",
     "prisma": "^5.21.0",
     "react": "^18",
-    "react-dom": "^18",
-    "firebase": "*"
+    "react-dom": "^18"
   },
   "devDependencies": {
+    "@eslint/config-array": "^0.18.0",
     "@eslint/js": "^9.12.0",
+    "@eslint/object-schema": "^2.1.4",
+    "@prisma/client": "^5.21.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@types/firebase": "*",
-    "eslint": "^8.57.1",
+    "eslint": "^9.12.0",
     "eslint-config-next": "^14.2.15",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.37.1",
+    "glob": "^9.3.5",
     "globals": "^15.11.0",
     "postcss": "^8",
     "prettier": "^3.3.3",

@@ -6,13 +6,12 @@ services:
     tty: true
     volumes:
       - ./src:/app
-      - ./prisma:/app/prisma
     ports:
       - "3000:3000"
     environment:
       - WATCHPACK_POLLING=true
       - DATABASE_URL=postgresql://postgres:example_password@db:5432/app_db
-    command: sh -c "npx prisma migrate deploy && npm run start"
+    command: sh -c "npx prisma migrate deploy && npm run dev"
     depends_on:
       - db
 
