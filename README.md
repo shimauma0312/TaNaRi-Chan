@@ -38,11 +38,7 @@
 
 This project requires environment variables to be set up. Follow these steps to create and configure the `.env` file:
 
-1. Copy the `.default.env` file to create a new `.env` file:
-
-   ```bash
-   cp src/.default.env .env
-   ```
+1. Copy the `.default.env` file in the `src` directory to create a new `.env` file in the same directory:
 
 2. Open the .env file and set the Firebase authentication information and other necessary environment variables. For example:
 
