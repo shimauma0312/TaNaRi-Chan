@@ -38,10 +38,11 @@
 
 This project requires environment variables to be set up. Follow these steps to create and configure the `.env` file:
 
-1. Copy the `.default.env` file to create a new `.env` file:
+1. Copy the `.default.env` file in the `src` directory to create a new `.env` file in the same directory:
 
    ```bash
-   cp src/.default.env .env
+   cp src/.default.env src/.env
+
    ```
 
 2. Open the .env file and set the Firebase authentication information and other necessary environment variables. For example:
@@ -55,5 +56,8 @@ This project requires environment variables to be set up. Follow these steps to 
    NEXT_PUBLIC_FIREBASE_APP_ID="your_firebase_app_id"
    ```
 
-   Replace the placeholder values with your actual Firebase project credentials.  
-   Note: You do not need to modify the DATABASE_URL value.
+```
+
+Replace the placeholder values with your actual Firebase project credentials.
+ Note: You do not need to modify the DATABASE_URL value.
+```
