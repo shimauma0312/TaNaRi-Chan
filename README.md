@@ -22,8 +22,15 @@
    ```
 
 3. Start the application:
+
    ```bash
    docker-compose up
+   ```
+
+4. Access
+
+   ```bash
+   http://localhost:3000
    ```
 
 # Notes
