@@ -7,6 +7,9 @@ yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
 
+# Prisma migrations
+src/prisma/migrations/
+
 # Firebase cache
 .firebase/
 
