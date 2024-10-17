@@ -7,64 +7,65 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users {
+model User {
   user_id      Int     @id @default(autoincrement())
+  firebase_uid String  @unique
   user_name    String
   user_email   String  @unique
-  icon_number  int
-  todos        Todos[] 
-  posts        Posts[]
-  postComments PostComments[]
-  todoComments TodoComments[]
+  icon_number  Int
+  todos        Todo[] 
+  posts        Post[]
+  postComments PostComment[]
+  todoComments TodoComment[]
 }
 
-model Todos {
+model Todo {
   todo_id      Int      @id @default(autoincrement())
   description  String
   todo_deadline DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   user_id      Int
-  user         Users    @relation(fields: [user_id], references: [user_id])
+  user         User    @relation(fields: [user_id], references: [user_id])
   is_completed Boolean  @default(false)
   is_public    Boolean  @default(false)
-  comments     TodoComments[]
+  comments     TodoComment[]
 }
 
-model Posts {
+model Post {
   post_id      Int       @id @default(autoincrement())
   title        String
   content      String
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   author_id    Int
-  author       Users     @relation(fields: [author_id], references: [user_id])
-  tags         Tags[]    @relation(references: [tag_id])
-  comments     PostComments[]
+  author       User     @relation(fields: [author_id], references: [user_id])
+  tags         PostTag[]    @relation()
+  comments     PostComment[]
 }
 
-model Post_Tags {
+model PostTag {
   tag_id   Int     @id @default(autoincrement())
   tag_name String  @unique
-  posts    Posts[] @relation(references: [post_id])
+  posts    Post[] @relation()
 }
 
-model PostComments {
+model PostComment {
   comment_id Int      @id @default(autoincrement())
   content    String
   createdAt  DateTime @default(now())
   author_id  Int
   post_id    Int
-  author     Users    @relation(fields: [author_id], references: [user_id])
-  post       Posts    @relation(fields: [post_id], references: [post_id])
+  author     User    @relation(fields: [author_id], references: [user_id])
+  post       Post    @relation(fields: [post_id], references: [post_id])
 }
 
-model TodoComments {
+model TodoComment {
   comment_id Int      @id @default(autoincrement())
   content    String
   createdAt  DateTime @default(now())
   author_id  Int
   todo_id    Int
-  author     Users    @relation(fields: [author_id], references: [user_id])
-  todo       Todos    @relation(fields: [todo_id], references: [todo_id])
+  author     User    @relation(fields: [author_id], references: [user_id])
+  todo       Todo   @relation(fields: [todo_id], references: [todo_id])
 }
