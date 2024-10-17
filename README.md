@@ -56,8 +56,5 @@ This project requires environment variables to be set up. Follow these steps to 
    NEXT_PUBLIC_FIREBASE_APP_ID="your_firebase_app_id"
    ```
 
-```
-
-Replace the placeholder values with your actual Firebase project credentials.
- Note: You do not need to modify the DATABASE_URL value.
-```
+   Replace the placeholder values with your actual Firebase project credentials.  
+   Note: You do not need to modify the DATABASE_URL value.
