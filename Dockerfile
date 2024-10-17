@@ -11,8 +11,10 @@ COPY src/package.json src/package-lock.json ./
 # Prismaのスキーマファイルをコピー
 COPY src/prisma ./prisma
 
-# 依存関係をインストール（package.jsonのsetup：）
-RUN npm run setup
+# 依存関係をインストール --legacy-peer-deps
+RUN npm install
+
+RUN npx prisma generate
 
 # アプリケーションのソースコードをコピー
 COPY src .
