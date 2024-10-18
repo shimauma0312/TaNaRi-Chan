@@ -3,25 +3,11 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation" // next/routerではなくnext/navigationを使用
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/app/firebaseConfig"
+import { useLogin } from "@/hooks/useLogin"
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      await signInWithEmailAndPassword(auth, email, password)
-      router.push("/dashboard") // ログイン成功後の遷移先
-    } catch (error) {
-      setError("Failed to log in. Please check your credentials.")
-    }
-  }
+  const { email, setEmail, password, setPassword, error, handleSubmit } =
+    useLogin()
 
   return (
     <div>
