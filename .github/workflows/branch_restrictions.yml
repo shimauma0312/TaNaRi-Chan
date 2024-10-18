@@ -1,4 +1,4 @@
-name: Branch Restrictions
+name: ブランチ制限
 
 on:
   pull_request:
@@ -9,9 +9,10 @@ jobs:
   check_base_branch:
     runs-on: ubuntu-latest
     steps:
-      - name: Fail if not from develop branch
+      - name: developブランチ以外からのPRを拒否
         run: |
           if [[ "${{ github.event.pull_request.head.ref }}" != "develop" ]]; then
-            echo "Error: PRs to main must come from the develop branch."
+            echo "エラー: mainブランチへのPRはdevelopブランチからのみ許可されています。"
+            echo "まずdevelopブランチにPR出してね。"
             exit 1
           fi
