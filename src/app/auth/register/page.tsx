@@ -1,41 +1,19 @@
 "use client"
 
-import React, { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation" // next/routerではなくnext/navigationを使用
-import { createUserWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/app/firebaseConfig"
+import { useUserRegister } from "@/hooks/useUserRegister"
 
 const RegisterPage = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [userName, setUserName] = useState("")
-  const [error, setError] = useState("")
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const response = await fetch("/api/createUser", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password, userName }),
-      })
-
-      if (response.ok) {
-        console.log("User registered successfully")
-        router.push("/auth/login") // 成功後の遷移先
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || "ユーザー登録中にエラーが発生しました。")
-      }
-    } catch (error) {
-      console.error("Error registering user:", error)
-      setError("ユーザー登録中にエラーが発生しました。")
-    }
-  }
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    userName,
+    setUserName,
+    error,
+    handleSubmit,
+  } = useUserRegister()
 
   return (
     <div>
