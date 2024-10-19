@@ -3,13 +3,13 @@ FROM node:lts-buster-slim
 WORKDIR /app
 
 # OpenSSLをインストール
-RUN apt-get update -y && apt-get install -y openssl
+RUN apt update -y && apt install -y openssl
 
 # アプリケーションのソースコードをコピー
 COPY ./src ./
 
 # 依存関係をインストール --legacy-peer-deps
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 RUN npx prisma generate
 
