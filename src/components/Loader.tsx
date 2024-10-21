@@ -2,6 +2,7 @@
 import React, { useEffect } from "react"
 import loader from "../styles/loader.module.css"
 import fede from "../styles/fede.module.css"
+import noise from "../styles/noise.module.css"
 
 interface LoaderProps {
   onTimeout: () => void
@@ -20,8 +21,8 @@ const Loader: React.FC<LoaderProps> = ({ onTimeout, timeout }) => {
   return (
     <section className={(loader.container, fede.fadeinout)}>
       <div className={loader.loader}> </div>
-      <div className={loader.glitch} data-text="Loading...">
-        Loading...
+      <div className={noise.glitch} data-text="Loading...">
+        Loading
       </div>
     </section>
   )
