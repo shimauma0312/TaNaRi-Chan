@@ -21,7 +21,7 @@ export const useUserRegister = () => {
 
       if (response.ok) {
         console.log("User registered successfully")
-        router.push("/auth/login") // 成功後の遷移先
+        router.push("login") // 成功後の遷移先
       } else {
         const errorData = await response.json()
         setError(errorData.error || "ユーザー登録中にエラーが発生しました。")

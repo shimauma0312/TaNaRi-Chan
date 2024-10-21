@@ -1,0 +1,50 @@
+/*フェードイン*/
+.fadein {
+  animation: fadeIn 0.5s;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1; /*透明度0%*/
+  }
+}
+
+/*フェードアウト*/
+.fadeout {
+  animation: fadeOut 1s;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/*フェードインアウト*/
+.fadeinout {
+  animation: fadeInOut 2s;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
