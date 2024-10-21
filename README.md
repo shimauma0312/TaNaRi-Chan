@@ -19,13 +19,13 @@
 2. Build the Docker containers:
 
    ```bash
-   docker-compose build
+   docker compose build
    ```
 
 3. Start the application:
 
    ```bash
-   docker-compose up
+   docker compose up
    ```
 
 4. Access
