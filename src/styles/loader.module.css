@@ -113,9 +113,9 @@
   content: attr(data-text);
   position: absolute;
   left: 4px;
-  text-shadow: -1px 0 rgb(14, 203, 255);
+  text-shadow: -1px 0 rgb(255, 0, 0);
   top: 0;
-  color: white;
+  color: rgb(0, 68, 255);
   overflow: hidden;
   clip: rect(0, 900px, 0, 0);
   animation: noise-anim 2s infinite linear alternate-reverse;
