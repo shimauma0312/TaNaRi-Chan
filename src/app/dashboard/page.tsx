@@ -35,7 +35,9 @@ const DashboardPage = () => {
     <div>
       <h1>Dashboard</h1>
       <p>Welcome, {user.email}</p>
-      <button onClick={handleLogout}>Logout</button>
+      <button className="font-bold" onClick={handleLogout}>
+        Logout
+      </button>
     </div>
   )
 }
