@@ -15,7 +15,7 @@ const DashboardPage = () => {
       if (user) {
         setUser(user)
       } else {
-        router.push("/auth/login")
+        router.push("login")
       }
     })
 
@@ -24,7 +24,7 @@ const DashboardPage = () => {
 
   const handleLogout = async () => {
     await signOut(auth)
-    router.push("/auth/login")
+    router.push("login")
   }
 
   if (!user) {
