@@ -53,10 +53,15 @@ const RegisterPage = () => {
           />
         </div>
         {error && <p>{error}</p>}
-        <button type="submit">Register</button>
+        <button className="font-bold" type="submit">
+          Register
+        </button>
       </form>
       <p>
-        Already have an account? <Link href="login">Login here</Link>
+        Already have an account?{" "}
+        <Link className="font-bold" href="login">
+          Login here
+        </Link>
       </p>
     </div>
   )

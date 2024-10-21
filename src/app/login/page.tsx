@@ -35,10 +35,15 @@ const LoginPage = () => {
           />
         </div>
         {error && <p>{error}</p>}
-        <button type="submit">Login</button>
+        <button className="font-bold" type="submit">
+          Login
+        </button>
       </form>
       <p>
-        Don't have an account? <Link href="register">Register here</Link>
+        Don't have an account?{" "}
+        <Link className="font-bold" href="register">
+          Register here
+        </Link>
       </p>
     </div>
   )
