@@ -5,10 +5,12 @@ import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation" // next/routerではなくnext/navigationを使用
 import { onAuthStateChanged, signOut, User } from "firebase/auth"
 import { auth } from "@/app/firebaseConfig"
+import { useDashboardAccess } from "@/hooks/useDashboardAccess"
 
 const DashboardPage = () => {
   const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
+  const accessCount = useDashboardAccess()
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -33,7 +35,7 @@ const DashboardPage = () => {
 
   return (
     <div>
-      <h1>Dashboard</h1>
+      <h1>Dashboard (acscnt: {accessCount})</h1>
       <p>Welcome, {user.email}</p>
       <button onClick={handleLogout}>Logout</button>
     </div>
