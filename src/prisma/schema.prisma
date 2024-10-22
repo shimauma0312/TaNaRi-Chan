@@ -8,8 +8,7 @@ datasource db {
 }
 
 model User {
-  user_id      Int     @id @default(autoincrement())
-  firebase_uid String  @unique
+  user_id      String  @id @unique
   user_name    String
   user_email   String  @unique
   icon_number  Int
@@ -21,11 +20,12 @@ model User {
 
 model Todo {
   todo_id      Int      @id @default(autoincrement())
+  title        String
   description  String
   todo_deadline DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  user_id      Int
+  user_id      String
   user         User    @relation(fields: [user_id], references: [user_id])
   is_completed Boolean  @default(false)
   is_public    Boolean  @default(false)
@@ -38,7 +38,7 @@ model Post {
   content      String
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  author_id    Int
+  author_id    String
   author       User     @relation(fields: [author_id], references: [user_id])
   tags         PostTag[]    @relation()
   comments     PostComment[]
@@ -54,7 +54,7 @@ model PostComment {
   comment_id Int      @id @default(autoincrement())
   content    String
   createdAt  DateTime @default(now())
-  author_id  Int
+  author_id  String
   post_id    Int
   author     User    @relation(fields: [author_id], references: [user_id])
   post       Post    @relation(fields: [post_id], references: [post_id])
@@ -64,7 +64,7 @@ model TodoComment {
   comment_id Int      @id @default(autoincrement())
   content    String
   createdAt  DateTime @default(now())
-  author_id  Int
+  author_id  String
   todo_id    Int
   author     User    @relation(fields: [author_id], references: [user_id])
   todo       Todo   @relation(fields: [todo_id], references: [todo_id])
