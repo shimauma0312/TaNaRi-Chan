@@ -57,7 +57,7 @@ async function firebaseCreateUser(body: UserRequestBody) {
 async function saveUserToDatabase(body: UserRequestBody, userId: string) {
   await prisma.user.create({
     data: {
-      firebase_uid: userId,
+      user_id: userId,
       user_name: body.userName,
       user_email: body.email,
       icon_number: 1, // デフォルトのアイコン番号

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation" // next/routerではなくnext/navig
 import { onAuthStateChanged, signOut, User } from "firebase/auth"
 import { auth } from "@/app/firebaseConfig"
 import { useDashboardAccess } from "@/hooks/useDashboardAccess"
+import Link from "next/link"
 
 const DashboardPage = () => {
   const [user, setUser] = useState<User | null>(null)
@@ -40,6 +41,9 @@ const DashboardPage = () => {
       <button className="font-bold" onClick={handleLogout}>
         Logout
       </button>
+      <div>
+        <Link href="dashboard/todoList">To Do List</Link>
+      </div>
     </div>
   )
 }
