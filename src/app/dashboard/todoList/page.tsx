@@ -17,8 +17,7 @@ const ToDoListPage = () => {
   const router = useRouter()
 
   useEffect(() => {
-    const fetchData = async () => {
-      const user = auth.currentUser
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user)
         const todos = await getTodoList(user.uid) // ToDoリストデータを取得
@@ -26,9 +25,9 @@ const ToDoListPage = () => {
       } else {
         router.push("login")
       }
-    }
+    })
 
-    fetchData()
+    return () => unsubscribe()
   }, [router])
 
   if (!user) {
