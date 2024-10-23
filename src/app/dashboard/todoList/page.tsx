@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation" // next/routerではなくnext/navigationを使用
-import { auth } from "@/app/firebaseConfig"
-import { onAuthStateChanged, User } from "firebase/auth"
+import useAuth from "@/hooks/useAuth"
 
 const getTodoList = async (id: string) => {
   const response = await fetch("/api/todoList/" + id)
@@ -12,23 +11,19 @@ const getTodoList = async (id: string) => {
 }
 
 const ToDoListPage = () => {
-  const [user, setUser] = useState<User | null>(null)
+  const user = useAuth()
   const [todoList, setTodoList] = useState<any[]>([]) // ToDoリストデータの状態を追加
-  const router = useRouter()
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user)
+    if (user) {
+      const fetchData = async () => {
         const todos = await getTodoList(user.uid) // ToDoリストデータを取得
         setTodoList(todos) // ToDoリストデータを状態に設定
-      } else {
-        router.push("login")
       }
-    })
 
-    return () => unsubscribe()
-  }, [router])
+      fetchData()
+    }
+  }, [user])
 
   if (!user) {
     return <div>Loading...</div>
