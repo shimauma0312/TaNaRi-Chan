@@ -32,3 +32,26 @@ async function getTodo(userId: string) {
   })
   return todos
 }
+
+/**
+ * ユーザーのToDoを作成する
+ * */
+async function insertTodo(
+  userId: string,
+  todoData: {
+    title: string
+    description: string
+    deadline: Date
+    is_public: boolean
+  },
+) {
+  const todo = await prisma.todo.create({
+    data: {
+      title: todoData.title,
+      description: todoData.description,
+      todo_deadline: todoData.deadline,
+      is_public: todoData.is_public,
+      user_id: userId,
+    },
+  })
+}
