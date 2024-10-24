@@ -5,13 +5,13 @@ import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation" // next/routerではなくnext/navigationを使用
 import { onAuthStateChanged, signOut, User } from "firebase/auth"
 import { auth } from "@/app/firebaseConfig"
-import { useDashboardAccess } from "@/hooks/useDashboardAccess"
+import { useAccess } from "@/hooks/useDashboardAccess"
 import Link from "next/link"
 
 const DashboardPage = () => {
   const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
-  const accessCount = useDashboardAccess()
+  const accessCount = useAccess()
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
