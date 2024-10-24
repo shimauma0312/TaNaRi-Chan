@@ -14,7 +14,7 @@ import {
 // Realtime Database を取得
 const db = getDatabase(app)
 
-export const useDashboardAccess = () => {
+export const useAccess = () => {
   const [accessCount, setAccessCount] = useState<number>(0)
   const eventFiredRef = useRef(false)
 
@@ -38,4 +38,4 @@ export const useDashboardAccess = () => {
   return accessCount
 }
 
-export default useDashboardAccess
+export default useAccess
