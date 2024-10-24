@@ -48,7 +48,7 @@ This project requires environment variables to be set up. Follow these steps to 
 2. Open the .env file and set the Firebase authentication information and other necessary environment variables. For example:
 
    ```bash
-   DATABASE_URL="postgresql://postgres:example_password@db:/app_db" 👈これは固定！
+   DATABASE_URL="postgresql://postgres:example_password@db:/app_db" 👈 no touch
    NEXT_PUBLIC_FIREBASE_API_KEY=""
    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=""
    NEXT_PUBLIC_FIREBASE_DATABASE_URL=""
