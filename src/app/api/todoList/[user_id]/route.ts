@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import { NextRequest, NextResponse } from "next/server"
-
+import { getTodo } from "@/service/todoService"
 import { PrismaClient } from "@prisma/client"
 import { createUserWithEmailAndPassword } from "firebase/auth"
 import { auth } from "@/app/firebaseConfig"
@@ -19,16 +19,3 @@ export async function GET(
 // export function POST(request: NextRequest): NextResponse {
 //   // POST /api/users リクエストの処理
 // }
-
-/**
- * ユーザーのToDoリストを取得する
- * @param userId : number
- */
-async function getTodo(userId: string) {
-  const todos = await prisma.todo.findMany({
-    where: {
-      user_id: userId,
-    },
-  })
-  return todos
-}
