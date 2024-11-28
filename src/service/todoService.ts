@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
  * ユーザーのToDoリストを取得する
  * @param userId : number
  */
-async function getTodo(userId: string) {
+export async function getTodo(userId: string) {
   const todos = await prisma.todo.findMany({
     where: {
       user_id: userId,
