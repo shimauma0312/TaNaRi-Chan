@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { onAuthStateChanged, signOut, User } from "firebase/auth"
 import { auth } from "@/app/firebaseConfig"
 import { useAccess } from "@/hooks/useDashboardAccess"
+import { onAuthStateChanged, signOut, User } from "firebase/auth"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 const mockData = {
   timelineArticles: [
@@ -116,10 +116,10 @@ const DashboardPage = () => {
             Other's Todo List
           </Link>
           <Link
-            href="/dashboard/timeline"
+            href="/dashboard/articles"
             className="block text-lg text-indigo-400 hover:text-indigo-300"
           >
-            Timeline Articles
+            Other's Articles
           </Link>
           <Link
             href="/dashboard/myPage"
