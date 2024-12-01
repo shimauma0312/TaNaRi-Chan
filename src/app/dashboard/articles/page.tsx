@@ -30,7 +30,15 @@ const ArticlesPage = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Articles</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Articles</h1>
+        <a
+          href="/dashboard/articles/register"
+          className="inline-block px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700"
+        >
+          New Article
+        </a>
+      </div>
       {articles.length === 0 ? (
         <p>記事が見つかりません</p>
       ) : (
