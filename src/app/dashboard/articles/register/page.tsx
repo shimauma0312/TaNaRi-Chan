@@ -17,7 +17,7 @@ const RegisterArticlePage: React.FC = () => {
     }
 
     try {
-      const response = await fetch("/api/posts", {
+      const response = await fetch("/api/articles", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
