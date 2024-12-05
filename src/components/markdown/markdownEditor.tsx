@@ -2,7 +2,6 @@ import "easymde/dist/easymde.min.css"
 import "github-markdown-css/github-markdown.css"
 import React, { useState } from "react"
 import ReactMarkdown from "react-markdown"
-import SimpleMDE from "react-simplemde-editor"
 import breaks from "remark-breaks"
 import remarkGfm from "remark-gfm"
 
@@ -14,11 +13,11 @@ import remarkGfm from "remark-gfm"
 const MarkdownEditor: React.FC<{ initialMarkdown?: string }> = ({
   initialMarkdown = "",
 }) => {
-  const [markdown, setMarkdown] = useState<string>(initialMarkdown)
+  const [markdown, setMarkdown] = useState(initialMarkdown)
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit")
 
   return (
-    <div className="p-4 overflow-auto">
+    <div className="p-4">
       <div className="flex mb-4">
         <button
           onClick={() => setActiveTab("edit")}
@@ -34,13 +33,12 @@ const MarkdownEditor: React.FC<{ initialMarkdown?: string }> = ({
         </button>
       </div>
       {activeTab === "edit" ? (
-        <SimpleMDE
+        // TODO: Replace this textarea with react-simplemde-editor in the future
+        <textarea
           value={markdown}
-          onChange={setMarkdown}
-          options={{
-            spellChecker: false,
-            placeholder: "Type here...",
-          }}
+          onChange={(e) => setMarkdown(e.target.value)}
+          className="w-full h-96 p-2 border bg-slate-800 rounded-md markdown-input"
+          placeholder="Type here..."
         />
       ) : (
         <div className="markdown-body">
