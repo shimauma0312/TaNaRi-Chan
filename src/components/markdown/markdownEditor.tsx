@@ -1,12 +1,14 @@
+import "easymde/dist/easymde.min.css"
+import "github-markdown-css/github-markdown.css"
 import React, { useState } from "react"
 import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
+import SimpleMDE from "react-simplemde-editor"
 import breaks from "remark-breaks"
-import "github-markdown-css/github-markdown.css"
+import remarkGfm from "remark-gfm"
 
 /**
  * MarkdownEditorコンポーネント
- * 
+ *
  * @param {string} [initialMarkdown=""] - 初期表示するMarkdownテキスト。省略可能で、デフォルト値は空の文字列。
  */
 const MarkdownEditor: React.FC<{ initialMarkdown?: string }> = ({
@@ -16,7 +18,7 @@ const MarkdownEditor: React.FC<{ initialMarkdown?: string }> = ({
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit")
 
   return (
-    <div className="p-4">
+    <div className="p-4 overflow-auto">
       <div className="flex mb-4">
         <button
           onClick={() => setActiveTab("edit")}
@@ -32,14 +34,19 @@ const MarkdownEditor: React.FC<{ initialMarkdown?: string }> = ({
         </button>
       </div>
       {activeTab === "edit" ? (
-        <textarea
+        <SimpleMDE
           value={markdown}
-          onChange={(e) => setMarkdown(e.target.value)}
-          className="w-full h-96 p-2 border bg-slate-800 rounded-md markdown-input"
+          onChange={setMarkdown}
+          options={{
+            spellChecker: false,
+            placeholder: "Type here...",
+          }}
         />
       ) : (
         <div className="markdown-body">
-          <ReactMarkdown remarkPlugins={[remarkGfm, breaks]}>{markdown}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm, breaks]}>
+            {markdown}
+          </ReactMarkdown>
         </div>
       )}
     </div>
