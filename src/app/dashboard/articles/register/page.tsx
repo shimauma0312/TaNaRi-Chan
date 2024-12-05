@@ -1,5 +1,6 @@
 "use client"
 
+import MarkdownEditor from "@/components/markdown/markdownEditor"
 import React, { useState } from "react"
 
 const RegisterArticlePage: React.FC = () => {
@@ -66,14 +67,7 @@ const RegisterArticlePage: React.FC = () => {
           >
             Content:
           </label>
-          <textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-            rows={10} // ここで行数を指定
-            className="bg-slate-800 w-full px-3 py-2 border rounded-lg focus:outline-none"
-          />
+          <MarkdownEditor />
         </div>
         <button
           type="submit"
