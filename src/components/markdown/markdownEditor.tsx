@@ -1,11 +1,12 @@
+import React, { useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-
-import React, { useState } from "react"
+import breaks from "remark-breaks"
+import "github-markdown-css/github-markdown.css"
 
 /**
  * MarkdownEditorコンポーネント
- *
+ * 
  * @param {string} [initialMarkdown=""] - 初期表示するMarkdownテキスト。省略可能で、デフォルト値は空の文字列。
  */
 const MarkdownEditor: React.FC<{ initialMarkdown?: string }> = ({
@@ -30,15 +31,15 @@ const MarkdownEditor: React.FC<{ initialMarkdown?: string }> = ({
           Preview
         </button>
       </div>
-    {activeTab === "edit" ? (
-      <textarea
-        value={markdown}
-        onChange={(e) => setMarkdown(e.target.value)}
-        className="w-full h-96 p-2 border bg-slate-800 rounded-md markdown-input"
-      />
-    ) : (
-        <div className="w-full h-64 p-2 border rounded-md markdown-preview">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+      {activeTab === "edit" ? (
+        <textarea
+          value={markdown}
+          onChange={(e) => setMarkdown(e.target.value)}
+          className="w-full h-96 p-2 border bg-slate-800 rounded-md markdown-input"
+        />
+      ) : (
+        <div className="markdown-body">
+          <ReactMarkdown remarkPlugins={[remarkGfm, breaks]}>{markdown}</ReactMarkdown>
         </div>
       )}
     </div>
