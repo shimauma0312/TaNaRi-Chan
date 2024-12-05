@@ -1,5 +1,6 @@
 "use client"
 
+import MinLoader from "@/components/MinLoader"
 import useAuth from "@/hooks/useAuth"
 import { useEffect, useState } from "react"
 
@@ -25,7 +26,7 @@ const ArticlesPage = () => {
   }, [user])
 
   if (!user) {
-    return <div>Loading...</div>
+    return <MinLoader />
   }
 
   return (
