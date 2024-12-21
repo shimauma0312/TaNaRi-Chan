@@ -10,10 +10,15 @@ import remarkGfm from "remark-gfm"
  *
  * @param {string} [initialMarkdown=""] - 初期表示するMarkdownテキスト。省略可能で、デフォルト値は空の文字列。
  */
-const MarkdownEditor: React.FC<{ initialMarkdown?: string }> = ({
-  initialMarkdown = "",
-}) => {
+const MarkdownEditor: React.FC<{
+  initialMarkdown?: string
+  onChange: (value: string) => void
+}> = ({ initialMarkdown = "", onChange }) => {
   const [markdown, setMarkdown] = useState(initialMarkdown)
+  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMarkdown(event.target.value)
+    onChange(event.target.value)
+  }
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit")
 
   return (
@@ -36,7 +41,7 @@ const MarkdownEditor: React.FC<{ initialMarkdown?: string }> = ({
         // TODO: Replace this textarea with react-simplemde-editor in the future
         <textarea
           value={markdown}
-          onChange={(e) => setMarkdown(e.target.value)}
+          onChange={handleChange}
           className="w-full h-96 p-2 border bg-slate-800 rounded-md markdown-input"
           placeholder="Type here..."
         />
