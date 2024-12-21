@@ -1,6 +1,6 @@
+import logger from "@/logging/logging"
 import { PrismaClient } from "@prisma/client"
 import { NextResponse } from "next/server"
-
 const prisma = new PrismaClient()
 
 /*
@@ -36,13 +36,14 @@ export async function POST(req: Request): Promise<NextResponse> {
  */
 async function getArticles(req: Request) {
     const postId = req.headers.get("post_id");
-
+    logger.info(postId);
     if (postId !== null) {
         return await prisma.post.findUnique({
             where: {
                 post_id: Number(postId)
             },
             select: {
+                post_id: true,
                 title: true,
                 content: true,
             }
@@ -50,6 +51,7 @@ async function getArticles(req: Request) {
     } else {
         return await prisma.post.findMany({
             select: {
+                post_id: true,
                 title: true,
                 content: true,
                 // 他の必要なカラムを追加
