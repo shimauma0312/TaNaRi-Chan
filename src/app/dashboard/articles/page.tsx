@@ -46,7 +46,7 @@ const ArticlesPage = () => {
         <ul className="space-y-4">
           {articles.map((article) => (
             <li
-              key={article.article_id}
+              key={article.post_id}
               className="p-4 border rounded-lg shadow-md"
             >
               <h2 className="text-xl font-semibold">{article.title}</h2>
