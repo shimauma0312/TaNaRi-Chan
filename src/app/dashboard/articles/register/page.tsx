@@ -37,11 +37,9 @@ const RegisterArticlePage: React.FC = () => {
 
       // レスポンスの確認
       if (response.ok) {
-        alert("Article created successfully!")
         // フォームをリセット
         setTitle("")
         setContent("")
-
         // 一覧ページに遷移
         window.location.href = "/dashboard/articles"
       } else {
