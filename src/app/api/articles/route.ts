@@ -3,10 +3,12 @@ import { NextResponse } from "next/server"
 
 const prisma = new PrismaClient()
 
-// 全ての記事を取得
-export async function GET(): Promise<NextResponse> {
+/*
+* 記事一覧を取得する。
+*/
+export async function GET(req: Request): Promise<NextResponse> {
     try {
-        const todos = await getArticles()
+        const todos = await getArticles(req)
         return NextResponse.json(todos)
     } catch (error) {
         // 空を返す
@@ -30,9 +32,30 @@ export async function POST(req: Request): Promise<NextResponse> {
 
 /**
  * 記事リストを取得する
+ * reqがnullの場合は全ての記事を取得する
  */
-async function getArticles() {
-    return await prisma.post.findMany()
+async function getArticles(req: Request) {
+    const postId = req.headers.get("post_id");
+
+    if (postId !== null) {
+        return await prisma.post.findUnique({
+            where: {
+                post_id: Number(postId)
+            },
+            select: {
+                title: true,
+                content: true,
+            }
+        })
+    } else {
+        return await prisma.post.findMany({
+            select: {
+                title: true,
+                content: true,
+                // 他の必要なカラムを追加
+            }
+        })
+    }
 }
 
 /**
