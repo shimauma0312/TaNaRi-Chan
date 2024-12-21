@@ -1,23 +1,32 @@
 "use client"
 
+// MarkdownEditorコンポーネントをインポート
 import MarkdownEditor from "@/components/markdown/markdownEditor"
+// 認証フックをインポート
+import useAuth from "@/hooks/useAuth"
 import React, { useState } from "react"
 
+// RegisterArticlePageコンポーネントの定義
 const RegisterArticlePage: React.FC = () => {
+  // ユーザー情報を取得
+  const user = useAuth()
+  // タイトルとコンテンツの状態を管理
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
-  const [authorId, setAuthorId] = useState("")
 
+  // フォーム送信時の処理
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
+    // 新しい記事のデータを作成
     const newPost = {
       title,
       content,
-      author_id: authorId,
+      author_id: user?.uid,
     }
 
     try {
+      // APIに記事をPOSTリクエストで送信
       const response = await fetch("/api/articles", {
         method: "POST",
         headers: {
@@ -26,11 +35,15 @@ const RegisterArticlePage: React.FC = () => {
         body: JSON.stringify(newPost),
       })
 
+      // レスポンスの確認
       if (response.ok) {
         alert("Article created successfully!")
+        // フォームをリセット
         setTitle("")
         setContent("")
-        setAuthorId("")
+
+        // 一覧ページに遷移
+        window.location.href = "/dashboard/articles"
       } else {
         alert("Failed to create article.")
       }
@@ -67,7 +80,8 @@ const RegisterArticlePage: React.FC = () => {
           >
             Content:
           </label>
-          <MarkdownEditor />
+          {/* MarkdownEditorコンポーネントを使用 */}
+          <MarkdownEditor initialMarkdown={content} onChange={setContent} />
         </div>
         <button
           type="submit"
