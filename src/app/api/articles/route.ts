@@ -12,7 +12,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         return NextResponse.json(todos)
     } catch (error) {
         // 空を返す
-        console.error(error)
+        logger.error(error)
         return NextResponse.json([])
     }
 }
@@ -22,13 +22,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
         const newPost = await createArticle(data)
+        logger.info(newPost)
         return NextResponse.json(newPost)
     } catch (error) {
-        console.error(error)
+        logger.error(error)
         return NextResponse.json({ error: "Failed to create article" }, { status: 500 })
     }
 }
-
 
 /**
  * 記事リストを取得する
@@ -64,11 +64,16 @@ async function getArticles(req: Request) {
  * 記事を作成する
  */
 async function createArticle(data: any) {
-    return await prisma.post.create({
-        data: {
-            title: data.title,
-            content: data.content,
-            author_id: data.author_id,
-        },
-    })
+    try {
+        return await prisma.post.create({
+            data: {
+                title: data.title,
+                content: data.content,
+                author_id: data.author_id,
+            },
+        })
+    } catch (error) {
+        logger.error('Error creating article', { error });
+        throw error;
+    }
 }
