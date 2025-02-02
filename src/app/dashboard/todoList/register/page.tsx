@@ -21,12 +21,12 @@ export default function RegisterForm() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4">
-      {/* ダッシュボードへ戻るボタン */}
+      {/* todoリスト画面へ戻るボタン */}
       <button
-        onClick={() => router.push("/dashboard")}
+        onClick={() => router.push("/todoList")}
         className="self-start mb-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
       >
-        ダッシュボードへ戻る
+        todoリストへ戻る
       </button>
 
       {/* フォーム */}
