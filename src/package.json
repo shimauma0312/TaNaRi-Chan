@@ -16,7 +16,8 @@
     "prisma": "^5.21.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eslint/config-array": "^0.18.0",
