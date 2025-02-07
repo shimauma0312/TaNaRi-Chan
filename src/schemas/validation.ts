@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const useValidation = () => {
+export const validation = () => {
   return z.object({
     username: z
       .string()
@@ -18,4 +18,4 @@ export const useValidation = () => {
   })
 }
 
-export type LoginSchema = z.infer<ReturnType<typeof useValidation>>
+export type LoginSchema = z.infer<ReturnType<typeof validation>>
