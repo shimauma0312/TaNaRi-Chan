@@ -2,7 +2,7 @@ import { z } from "zod"
 
 export const validation = () => {
   return z.object({
-    username: z
+    userName: z
       .string()
       .min(6, "パスワードは6文字以上で入力してください。")
       .max(50, "ユーザー名は50文字以内で入力してください")
