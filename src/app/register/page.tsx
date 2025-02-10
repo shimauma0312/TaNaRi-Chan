@@ -17,12 +17,11 @@ const RegisterPage = () => {
     userName,
     setUserName,
     error,
-    handleSubmit: registerUser,
+    handleSubmit: registerUser, //useUserRegisterのhandleSubmit
   } = useUserRegister()
 
   const {
-    register,
-    handleSubmit,
+    handleSubmit, //useFormのhandleSubmit
     formState: { errors },
     setValue, // useUserRegister の状態と同期するために使用
   } = useForm<LoginSchema>({
@@ -41,7 +40,7 @@ const RegisterPage = () => {
   }
 
   const onSubmit = (data: LoginSchema) => {
-    registerUser(data) // useUserRegister の関数を呼ぶ（API連携など）
+    registerUser(data)
   }
 
   return (
