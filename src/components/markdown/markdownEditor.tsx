@@ -19,25 +19,27 @@ const MarkdownEditor: React.FC<{
     setMarkdown(event.target.value)
     onChange(event.target.value)
   }
-  const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit")
+  const [activeTab, setActiveTab] = useState<1 | 0>(1)
 
   return (
     <div className="p-4">
       <div className="flex mb-4">
         <button
-          onClick={() => setActiveTab("edit")}
-          className={`px-4 py-2 mr-2 ${activeTab === "edit" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          type="button"
+          onClick={() => setActiveTab(1)}
+          className={`px-4 py-2 mr-2 ${activeTab === 1 ? "bg-blue-500 text-white" : "bg-gray-200"}`}
         >
           Edit
         </button>
         <button
-          onClick={() => setActiveTab("preview")}
-          className={`px-4 py-2 ${activeTab === "preview" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          type="button"
+          onClick={() => setActiveTab(0)}
+          className={`px-4 py-2 ${activeTab === 0 ? "bg-blue-500 text-white" : "bg-gray-200"}`}
         >
           Preview
         </button>
       </div>
-      {activeTab === "edit" ? (
+      {activeTab === 1 ? (
         // TODO: Replace this textarea with react-simplemde-editor in the future
         <textarea
           value={markdown}
