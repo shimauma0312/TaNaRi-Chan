@@ -25,6 +25,39 @@ const ArticlesPage = () => {
     }
   }, [user])
 
+  /**
+   * 記事を編集する
+   * @param postId : number
+   */
+  const handleEdit = (postId: number) => {
+    window.location.href = `/dashboard/articles/edit?post_id=${postId}`
+  }
+
+  /**
+   * 記事を削除する
+   * @param postId : number
+   */
+  const handleDelete = async (postId: number) => {
+    try {
+      const response = await fetch(`/api/articles`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ post_id: postId }),
+      })
+
+      if (response.ok) {
+        setArticles(articles.filter((article) => article.post_id !== postId))
+      } else {
+        alert("Failed to delete article.")
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      alert("An error occurred while deleting the article.")
+    }
+  }
+
   if (!user) {
     return <MinLoader />
   }
@@ -54,6 +87,20 @@ const ArticlesPage = () => {
               <p className="text-white">
                 Published: {new Date(article.published_at).toLocaleDateString()}
               </p>
+              <div className="flex space-x-2 mt-2">
+                <button
+                  onClick={() => handleEdit(article.post_id)}
+                  className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-700"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(article.post_id)}
+                  className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>

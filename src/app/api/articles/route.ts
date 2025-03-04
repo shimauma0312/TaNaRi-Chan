@@ -30,6 +30,32 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 }
 
+// 記事PUT
+export async function PUT(req: Request): Promise<NextResponse> {
+    try {
+        const data = await req.json()
+        const updatedPost = await updateArticle(data)
+        logger.info(updatedPost)
+        return NextResponse.json(updatedPost)
+    } catch (error) {
+        logger.error(error)
+        return NextResponse.json({ error: "Failed to update article" }, { status: 500 })
+    }
+}
+
+// 記事DELETE
+export async function DELETE(req: Request): Promise<NextResponse> {
+    try {
+        const data = await req.json()
+        const deletedPost = await deleteArticle(data.post_id)
+        logger.info(deletedPost)
+        return NextResponse.json(deletedPost)
+    } catch (error) {
+        logger.error(error)
+        return NextResponse.json({ error: "Failed to delete article" }, { status: 500 })
+    }
+}
+
 /**
  * 記事リストを取得する
  * reqがnullの場合は全ての記事を取得する
@@ -74,6 +100,42 @@ async function createArticle(data: any) {
         })
     } catch (error) {
         logger.error('Error creating article', { error });
+        throw error;
+    }
+}
+
+/**
+ * 記事を更新する
+ */
+async function updateArticle(data: any) {
+    try {
+        return await prisma.post.update({
+            where: {
+                post_id: data.post_id,
+            },
+            data: {
+                title: data.title,
+                content: data.content,
+            },
+        })
+    } catch (error) {
+        logger.error('Error updating article', { error });
+        throw error;
+    }
+}
+
+/**
+ * 記事を削除する
+ */
+async function deleteArticle(post_id: number) {
+    try {
+        return await prisma.post.delete({
+            where: {
+                post_id: post_id,
+            },
+        })
+    } catch (error) {
+        logger.error('Error deleting article', { error });
         throw error;
     }
 }
