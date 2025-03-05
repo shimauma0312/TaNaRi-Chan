@@ -1,23 +1,23 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function RegisterForm() {
-  const router = useRouter();
+  const router = useRouter()
 
   // フォームの状態管理
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [visibility, setVisibility] = useState("private");
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [deadline, setDeadline] = useState<Date | null>(null)
+  const [is_public, setIsPublic] = useState<boolean>(false)
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newTodo = { title, description, dueDate, visibility };
-    console.log("New Todo:", newTodo);
+    e.preventDefault()
+    const newTodo = { title, description, deadline, is_public }
+    console.log("New Todo:", newTodo)
     // ここでAPIにデータを送信する処理を追加
-  };
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4">
@@ -59,8 +59,10 @@ export default function RegisterForm() {
             <label className="block font-medium">期限</label>
             <input
               type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
+              value={deadline ? deadline.toISOString().split("T")[0] : ""}
+              onChange={(e) =>
+                setDeadline(e.target.value ? new Date(e.target.value) : null)
+              }
               className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
               required
             />
@@ -69,14 +71,13 @@ export default function RegisterForm() {
           <div>
             <label className="block font-medium">公開範囲</label>
             <select
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
+              value={is_public ? "public" : "private"}
+              onChange={(e) => setIsPublic(e.target.value === "public")}
               className="w-full p-2 border rounded-lg bg-black text-white border-gray-400 focus:ring-2 focus:ring-blue-400"
->
+            >
               <option value="private">自分のみ</option>
               <option value="public">全体公開</option>
             </select>
-
           </div>
 
           <button
@@ -88,5 +89,5 @@ export default function RegisterForm() {
         </form>
       </div>
     </div>
-  );
+  )
 }
