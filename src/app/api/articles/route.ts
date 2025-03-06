@@ -8,12 +8,14 @@ const prisma = new PrismaClient()
 */
 export async function GET(req: Request): Promise<NextResponse> {
     try {
-        const todos = await getArticles(req)
-        return NextResponse.json(todos)
+        const url = new URL(req.url);
+        const postId = url.searchParams.get('postId');
+        const todos = await getArticles(postId);
+        return NextResponse.json(todos);
     } catch (error) {
         // 空を返す
-        logger.error(error)
-        return NextResponse.json([])
+        logger.error(error);
+        return NextResponse.json([]);
     }
 }
 
