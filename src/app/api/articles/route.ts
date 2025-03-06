@@ -60,8 +60,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
  * 記事リストを取得する
  * reqがnullの場合は全ての記事を取得する
  */
-async function getArticles(req: Request) {
-    const postId = req.headers.get("post_id");
+async function getArticles(postId: string | null) {
     logger.info(postId);
     if (postId !== null) {
         return await prisma.post.findUnique({
