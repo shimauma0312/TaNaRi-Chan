@@ -19,7 +19,7 @@ export default function RegisterForm() {
     console.log("New Todo:", newTodo)
 
     try {
-      const response = await fetch(`/api/todoList/{userId}/register`, {
+      const response = await fetch(`/api/todoList/${userId}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newTodo),
