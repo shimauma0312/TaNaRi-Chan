@@ -18,7 +18,7 @@ export async function getTodo(userId: string) {
 /**
  * ユーザーのToDoを作成する
  * */
-async function insertTodo(
+export async function insertTodo(
   userId: string,
   todoData: {
     title: string

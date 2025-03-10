@@ -12,6 +12,7 @@ const getTodoList = async (id: string) => {
 
 const ToDoListPage = () => {
   const user = useAuth()
+  const router = useRouter()
   const [todoList, setTodoList] = useState<any[]>([]) // ToDoリストデータの状態を追加
 
   useEffect(() => {
@@ -30,8 +31,27 @@ const ToDoListPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 relative">
+      {/* ヘッダー */}
+      <div className="absolute top-4 right-4 flex space-x-2">
+        <button
+          onClick={() => router.push("/dashboard/todoList/register")}
+          className="px-4 py-2 bg-red-500 text-lg text-white rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Todoを登録
+        </button>
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="px-4 py-2 bg-red-500 text-lg text-white rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          戻る
+        </button>
+      </div>
+
+      {/* タイトル */}
       <h1 className="text-2xl font-bold mb-4">To Do List</h1>
+
+      {/* TODOリスト */}
       <ul className="space-y-4">
         {todoList.map((todo) => (
           <li key={todo.todo_id} className="p-4 border rounded-lg shadow-md">

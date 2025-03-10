@@ -8,8 +8,15 @@ export const useUserRegister = () => {
   const [error, setError] = useState("")
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async ({
+    email,
+    password,
+    userName,
+  }: {
+    email: string
+    password: string
+    userName: string
+  }) => {
     try {
       const response = await fetch("/api/createUser", {
         method: "POST",

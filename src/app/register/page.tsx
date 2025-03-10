@@ -1,9 +1,14 @@
 "use client"
 
 import Link from "next/link"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { validation, LoginSchema } from "@/schemas/validation"
 import { useUserRegister } from "@/hooks/useUserRegister"
 
 const RegisterPage = () => {
+  const schema = validation()
+
   const {
     email,
     setEmail,
@@ -12,8 +17,31 @@ const RegisterPage = () => {
     userName,
     setUserName,
     error,
-    handleSubmit,
+    handleSubmit: registerUser, //useUserRegisterのhandleSubmit
   } = useUserRegister()
+
+  const {
+    handleSubmit, //useFormのhandleSubmit
+    formState: { errors },
+    setValue, // useUserRegister の状態と同期するために使用
+  } = useForm<LoginSchema>({
+    resolver: zodResolver(schema),
+  })
+
+  // useUserRegister の状態と同期
+  const handleInputChange = (
+    field: "userName" | "email" | "password",
+    value: string,
+  ) => {
+    setValue(field, value, { shouldValidate: true }) // バリデーションを即時反映
+    if (field === "userName") setUserName(value)
+    if (field === "email") setEmail(value)
+    if (field === "password") setPassword(value)
+  }
+
+  const onSubmit = (data: LoginSchema) => {
+    registerUser(data)
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
@@ -21,7 +49,7 @@ const RegisterPage = () => {
         <h1 className="text-2xl font-bold mb-6 text-center text-white">
           Register Page
         </h1>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-4">
             <label
               htmlFor="username"
@@ -34,10 +62,14 @@ const RegisterPage = () => {
               id="username"
               name="username"
               value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              required
+              onChange={(e) => handleInputChange("userName", e.target.value)}
               className="mt-1 block w-full px-3 py-2 bg-transparent border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-white"
             />
+            {errors.userName && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.userName.message}
+              </p>
+            )}
           </div>
           <div className="mb-4">
             <label
@@ -51,10 +83,14 @@ const RegisterPage = () => {
               id="email"
               name="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              onChange={(e) => handleInputChange("email", e.target.value)}
               className="mt-1 block w-full px-3 py-2 bg-transparent border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-white"
             />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.email.message}
+              </p>
+            )}
           </div>
           <div className="mb-4">
             <label
@@ -68,10 +104,14 @@ const RegisterPage = () => {
               id="password"
               name="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              onChange={(e) => handleInputChange("password", e.target.value)}
               className="mt-1 block w-full px-3 py-2 bg-transparent border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-white"
             />
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.password.message}
+              </p>
+            )}
           </div>
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
           <button

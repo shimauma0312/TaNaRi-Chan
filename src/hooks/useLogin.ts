@@ -22,21 +22,18 @@ export const useLogin = () => {
   const [error, setError] = useState("")
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    // アクセス数をカウントアップする関数
-    const incrementAccessCount = () => {
-      const accessCountRef = ref(db, "dashboard/accessCount")
-      update(accessCountRef, { count: increment(1) })
-    }
+  // アクセス数をカウントアップする関数
+  const incrementAccessCount = () => {
+    const accessCountRef = ref(db, "dashboard/accessCount")
+    update(accessCountRef, { count: increment(1) })
+  }
 
-    e.preventDefault()
+  const login = async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      // メソッドが起動するたびにアクセス数をカウントアップ
-      incrementAccessCount()
-      router.push("/dashboard")
-    } catch (error) {
-      setError("Failed to log in. Please check your credentials.")
+      await incrementAccessCount() // ログイン成功時にアクセスカウントを増やす
+    } catch (err) {
+      setError("Login failed. Please check your credentials.")
     }
   }
 
@@ -46,6 +43,6 @@ export const useLogin = () => {
     password,
     setPassword,
     error,
-    handleSubmit,
+    login,
   }
 }
