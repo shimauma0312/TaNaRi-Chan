@@ -12,27 +12,11 @@ export default function RegisterForm() {
   const [deadline, setDeadline] = useState<Date | null>(null)
   const [is_public, setIsPublic] = useState<boolean>(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-
     const newTodo = { title, description, deadline, is_public }
     console.log("New Todo:", newTodo)
-
-    try {
-      const response = await fetch(`/api/todoList/{userId}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newTodo),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to register todo")
-      }
-
-      router.push("/dashboard/todoList")
-    } catch (error) {
-      console.error("Error registering todo:", error)
-    }
+    // ここでAPIにデータを送信する処理を追加
   }
 
   return (
