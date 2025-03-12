@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { insertTodo } from "@/service/todoService"
-import { getAuth } from "firebase-admin/auth"
 
 export async function POST(
   req: NextRequest,
@@ -12,17 +11,6 @@ export async function POST(
 
     if (!user_id || !todoData) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 })
-    }
-
-    // Firebase 認証チェック
-    const authToken = req.headers.get("authorization")?.split("Bearer ")[1]
-    if (!authToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const decodedToken = await getAuth().verifyIdToken(authToken)
-    if (decodedToken.uid !== user_id) {
-      return NextResponse.json({ error: "Invalid user" }, { status: 403 })
     }
 
     // ToDo登録処理
