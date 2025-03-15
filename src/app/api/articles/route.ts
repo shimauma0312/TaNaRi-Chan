@@ -1,6 +1,6 @@
-import logger from "@/logging/logging"
-import { PrismaClient } from "@prisma/client"
-import { NextResponse } from "next/server"
+import logger from "@/logging/logging";
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 const prisma = new PrismaClient()
 
 /*
@@ -99,9 +99,14 @@ async function createArticle(data: any) {
                 author_id: data.author_id,
             },
         })
-    } catch (error) {
-        logger.error('Error creating article', { error });
-        throw error;
+    } catch (error: any) {
+        // author_idが存在しない場合のエラー
+        if (error.code === 'P2003' && error.meta?.field_name?.includes('author_id')) {
+            logger.error('Error creating article: Author ID does not exist', { error })
+        } else {
+            logger.error('Error creating article', { error })
+        }
+        throw error
     }
 }
 
