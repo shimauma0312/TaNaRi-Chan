@@ -43,6 +43,7 @@ const RegisterArticlePage: React.FC = () => {
         // 一覧ページに遷移
         window.location.href = "/dashboard/articles"
       } else {
+        console.error(response.statusText)
         alert("Failed to create article.")
       }
     } catch (error) {
