@@ -1,9 +1,10 @@
 "use client"
 
 import MarkdownEditor from "@/components/markdown/markdownEditor"
+import MinLoader from "@/components/MinLoader"
 import useAuth from "@/hooks/useAuth"
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 const EditArticlePage = () => {
   const user = useAuth()
