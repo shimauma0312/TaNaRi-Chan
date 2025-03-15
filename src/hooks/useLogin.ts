@@ -32,6 +32,7 @@ export const useLogin = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password)
       await incrementAccessCount() // ログイン成功時にアクセスカウントを増やす
+      router.push("/dashboard")
     } catch (err) {
       setError("Login failed. Please check your credentials.")
     }
