@@ -1,0 +1,37 @@
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --text-primary: #171717;
+  --text-secondary: #6b7280;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --text-primary: #ededed;
+    --text-secondary: #9ca3af;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+.text-gray-700 {
+  color: var(--text-primary);
+}
+
+.text-gray-500 {
+  color: var(--text-secondary);
+}
+
+.dark .text-gray-700 {
+  color: var(--text-primary);
+}
+
+.dark .text-gray-500 {
+  color: var(--text-secondary);
+}
