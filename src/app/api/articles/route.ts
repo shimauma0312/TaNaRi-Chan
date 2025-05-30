@@ -23,12 +23,43 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
+
+        // バリデーション：必須フィールドのチェック
+        if (!data.title || !data.content || !data.author_id) {
+            return NextResponse.json(
+                { error: "Missing required fields: title, content, and author_id are required" },
+                { status: 400 }
+            )
+        }
+
         const newPost = await createArticle(data)
         logger.info(newPost)
         return NextResponse.json(newPost)
-    } catch (error) {
-        logger.error(error)
-        return NextResponse.json({ error: "Failed to create article" }, { status: 500 })
+    } catch (error: any) {
+        logger.error("Error creating article", { error })
+
+        // エラーコードに基づいた適切なレスポンスを返す
+        if (error.code === 'P2003') {
+            return NextResponse.json(
+                { error: "Referenced author does not exist" },
+                { status: 400 }
+            )
+        } else if (error.code === 'P2021') {
+            return NextResponse.json(
+                { error: "Database table does not exist" },
+                { status: 500 }
+            )
+        } else if (error.name === 'PrismaClientValidationError') {
+            return NextResponse.json(
+                { error: "Invalid data format" },
+                { status: 400 }
+            )
+        }
+
+        return NextResponse.json(
+            { error: "Failed to create article" },
+            { status: 500 }
+        )
     }
 }
 
