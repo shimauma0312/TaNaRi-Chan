@@ -1,14 +1,16 @@
 "use client"
 
+import { useUserRegister } from "@/hooks/useUserRegister"
+import { RegisterSchema, registerValidation } from "@/schemas/validation"
+import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { validation, LoginSchema } from "@/schemas/validation"
-import { useUserRegister } from "@/hooks/useUserRegister"
 
 const RegisterPage = () => {
-  const schema = validation()
+  // バリデーションスキーマを取得
+  const schema = registerValidation()
 
+  // カスタムフックから状態と関数を取得
   const {
     email,
     setEmail,
@@ -17,29 +19,35 @@ const RegisterPage = () => {
     userName,
     setUserName,
     error,
-    handleSubmit: registerUser, //useUserRegisterのhandleSubmit
+    handleSubmit: registerUser, // ユーザー登録関数
   } = useUserRegister()
 
+  // react-hook-form の設定
   const {
-    handleSubmit, //useFormのhandleSubmit
+    handleSubmit, // フォーム送信ハンドラー
     formState: { errors },
-    setValue, // useUserRegister の状態と同期するために使用
-  } = useForm<LoginSchema>({
+    setValue, // フィールド値を設定
+  } = useForm<RegisterSchema>({
     resolver: zodResolver(schema),
   })
 
-  // useUserRegister の状態と同期
+  // フォーム入力の変更ハンドラー
+  // useUserRegister の状態と form の状態を同期する
   const handleInputChange = (
     field: "userName" | "email" | "password",
     value: string,
   ) => {
-    setValue(field, value, { shouldValidate: true }) // バリデーションを即時反映
+    // フォームの値を更新し、バリデーションを実行
+    setValue(field, value, { shouldValidate: true })
+    
+    // 対応する状態を更新
     if (field === "userName") setUserName(value)
     if (field === "email") setEmail(value)
     if (field === "password") setPassword(value)
   }
 
-  const onSubmit = (data: LoginSchema) => {
+  // フォーム送信ハンドラー
+  const onSubmit = (data: RegisterSchema) => {
     registerUser(data)
   }
 
