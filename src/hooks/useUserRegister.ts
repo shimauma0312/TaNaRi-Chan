@@ -34,7 +34,7 @@ export const useUserRegister = () => {
       // レスポンス処理
       if (response.ok) {
         console.log("ユーザー登録が完了しました")
-        router.push("login") // ログインページへリダイレクト
+        router.push("/login") // ログインページへリダイレクト
       } else {
         const errorData = await response.json()
         setError(errorData.error || "ユーザー登録中にエラーが発生しました。")
