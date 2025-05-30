@@ -1,16 +1,19 @@
 "use client"
 
-import Link from "next/link"
 import { useLogin } from "@/hooks/useLogin"
-import { useForm } from "react-hook-form"
+import { LoginSchema, loginValidation } from "@/schemas/validation"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { validation, LoginSchema } from "@/schemas/validation"
+import Link from "next/link"
+import { useForm } from "react-hook-form"
 
 const LoginPage = () => {
-  const schema = validation()
+  // バリデーションスキーマを取得
+  const schema = loginValidation()
 
+  // カスタムフックから状態と関数を取得
   const { email, setEmail, password, setPassword, error, login } = useLogin()
 
+  // react-hook-form の設定
   const {
     handleSubmit,
     formState: { errors },
@@ -19,13 +22,17 @@ const LoginPage = () => {
     resolver: zodResolver(schema),
   })
 
-  // useUserRegister の状態と同期
+  // フォーム入力の変更ハンドラー
   const handleInputChange = (field: "email" | "password", value: string) => {
-    setValue(field, value, { shouldValidate: true }) // バリデーションを即時反映
+    // フォームの値を更新し、バリデーションを実行
+    setValue(field, value, { shouldValidate: true })
+    
+    // 対応する状態を更新
     if (field === "email") setEmail(value)
     if (field === "password") setPassword(value)
   }
 
+  // フォーム送信ハンドラー
   const onSubmit = (data: LoginSchema) => {
     const { email, password } = data
     login(email, password)

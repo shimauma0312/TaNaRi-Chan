@@ -1,0 +1,21 @@
+{
+  "name": "Next.js Development Container",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "app",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "prisma.prisma",
+        "ms-vscode.js-debug",
+        "github.copilot"
+      ]
+    }
+  },
+  "forwardPorts": [3000, 5555],
+  "postCreateCommand": "npm install",
+  "remoteUser": "node"
+}
