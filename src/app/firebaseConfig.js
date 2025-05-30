@@ -1,8 +1,7 @@
 // [src/firebaseConfig.js](src/firebaseConfig.js)
 import { initializeApp } from "firebase/app"
-import { getAnalytics } from "firebase/analytics"
 import { getAuth } from "firebase/auth"
-import { Database } from "firebase/database"
+import { getDatabase } from "firebase/database"
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,4 +16,5 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
-export { app, auth }
+const database = getDatabase(app)
+export { app, auth, database }
