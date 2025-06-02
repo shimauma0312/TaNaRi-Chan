@@ -2,6 +2,7 @@
 
 import { auth } from "@/app/firebaseConfig"
 import MinLoader from "@/components/MinLoader"
+import ShakeImage from "@/components/ShakeImage"
 import { useAccess } from "@/hooks/useDashboardAccess"
 import { onAuthStateChanged, signOut, User } from "firebase/auth"
 import Link from "next/link"
@@ -132,7 +133,7 @@ const DashboardPage = () => {
           </button>
         </nav>
       </div>
-      <div className="w-4/5 p-4">
+      <div className="w-4/5 p-4 relative">
         <div className="container mx-auto">
           <div className="mb-6">
             <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -142,6 +143,9 @@ const DashboardPage = () => {
             </p>
             <p className="text-lg">Access Count: {accessCount}</p>
           </div>
+          
+          <ShakeImage />
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
               <h2 className="text-2xl font-bold mb-4">
