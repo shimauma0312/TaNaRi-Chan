@@ -9,7 +9,7 @@ const prisma = new PrismaClient()
 export async function GET(req: Request): Promise<NextResponse> {
     try {
         const url = new URL(req.url);
-        const postId = url.searchParams.get('postId');
+        const postId = url.searchParams.get('post_id');
         const todos = await getArticles(postId);
         return NextResponse.json(todos);
     } catch (error) {
