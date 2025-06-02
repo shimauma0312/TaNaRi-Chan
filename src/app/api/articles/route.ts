@@ -4,12 +4,12 @@ import { NextResponse } from "next/server";
 const prisma = new PrismaClient()
 
 /*
-* 記事一覧を取得する。
+* 記事を取得する。
 */
 export async function GET(req: Request): Promise<NextResponse> {
     try {
         const url = new URL(req.url);
-        const postId = url.searchParams.get('postId');
+        const postId = url.searchParams.get('post_id');
         const todos = await getArticles(postId);
         return NextResponse.json(todos);
     } catch (error) {
@@ -23,12 +23,43 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
+
+        // バリデーション：必須フィールドのチェック
+        if (!data.title || !data.content || !data.author_id) {
+            return NextResponse.json(
+                { error: "Missing required fields: title, content, and author_id are required" },
+                { status: 400 }
+            )
+        }
+
         const newPost = await createArticle(data)
         logger.info(newPost)
         return NextResponse.json(newPost)
-    } catch (error) {
-        logger.error(error)
-        return NextResponse.json({ error: "Failed to create article" }, { status: 500 })
+    } catch (error: any) {
+        logger.error("Error creating article", { error })
+
+        // エラーコードに基づいた適切なレスポンスを返す
+        if (error.code === 'P2003') {
+            return NextResponse.json(
+                { error: "Referenced author does not exist" },
+                { status: 400 }
+            )
+        } else if (error.code === 'P2021') {
+            return NextResponse.json(
+                { error: "Database table does not exist" },
+                { status: 500 }
+            )
+        } else if (error.name === 'PrismaClientValidationError') {
+            return NextResponse.json(
+                { error: "Invalid data format" },
+                { status: 400 }
+            )
+        }
+
+        return NextResponse.json(
+            { error: "Failed to create article" },
+            { status: 500 }
+        )
     }
 }
 
@@ -73,6 +104,7 @@ async function getArticles(postId: string | null) {
                 post_id: true,
                 title: true,
                 content: true,
+                createdAt: true,
             }
         })
     } else {
@@ -80,8 +112,7 @@ async function getArticles(postId: string | null) {
             select: {
                 post_id: true,
                 title: true,
-                content: true,
-                // 他の必要なカラムを追加
+                createdAt: true,
             }
         })
     }

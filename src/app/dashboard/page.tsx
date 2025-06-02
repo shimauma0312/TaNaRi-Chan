@@ -116,7 +116,7 @@ const DashboardPage = () => {
             href="/dashboard/articles"
             className="block text-lg text-indigo-400 hover:text-indigo-300"
           >
-            Other's Articles
+            My Articles
           </Link>
           <Link
             href="/dashboard/myPage"
