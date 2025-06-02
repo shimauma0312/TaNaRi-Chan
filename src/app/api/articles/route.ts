@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 const prisma = new PrismaClient()
 
 /*
-* 記事一覧を取得する。
+* 記事を取得する。
 */
 export async function GET(req: Request): Promise<NextResponse> {
     try {
@@ -112,7 +112,6 @@ async function getArticles(postId: string | null) {
             select: {
                 post_id: true,
                 title: true,
-                content: true,
                 createdAt: true,
             }
         })
