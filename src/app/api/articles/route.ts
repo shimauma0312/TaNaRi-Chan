@@ -104,6 +104,7 @@ async function getArticles(postId: string | null) {
                 post_id: true,
                 title: true,
                 content: true,
+                createdAt: true,
             }
         })
     } else {
@@ -112,7 +113,7 @@ async function getArticles(postId: string | null) {
                 post_id: true,
                 title: true,
                 content: true,
-                // 他の必要なカラムを追加
+                createdAt: true,
             }
         })
     }
