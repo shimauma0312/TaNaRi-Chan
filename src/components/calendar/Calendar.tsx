@@ -1,6 +1,11 @@
 "use client"
 
+// Reusable monthly calendar component. It expects a list of todo items with
+// deadlines and highlights the days that have todos attached.
+
 import { useMemo } from "react"
+
+// Shape of a todo item used by the calendar. `todo_deadline` should be an ISO date string so it can be compared against calendar dates.
 
 export interface TodoItem {
   todo_id: number
@@ -8,6 +13,7 @@ export interface TodoItem {
   todo_deadline: string
 }
 
+// Props required by the Calendar component
 interface CalendarProps {
   currentDate: Date
   todos: TodoItem[]
@@ -16,6 +22,7 @@ interface CalendarProps {
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 const Calendar = ({ currentDate, todos }: CalendarProps) => {
+  // Calculate all cells (days) for the current month only when inputs change
   const days = useMemo(() => {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
@@ -25,9 +32,11 @@ const Calendar = ({ currentDate, todos }: CalendarProps) => {
     const offset = firstDay.getDay()
     const items: { date: Date | null; todos: TodoItem[] }[] = []
 
+    // Add empty cells for days before the first of the month
     for (let i = 0; i < offset; i++) {
       items.push({ date: null, todos: [] })
     }
+    // Fill in each day of the month with any matching todos
     for (let i = 1; i <= totalDays; i++) {
       const date = new Date(year, month, i)
       const iso = date.toISOString().split("T")[0]
@@ -40,6 +49,7 @@ const Calendar = ({ currentDate, todos }: CalendarProps) => {
     return items
   }, [currentDate, todos])
 
+  // Render the calendar grid with day headers and todo titles
   return (
     <div className="grid grid-cols-7 gap-2 text-center">
       {dayNames.map((day) => (
@@ -72,4 +82,5 @@ const Calendar = ({ currentDate, todos }: CalendarProps) => {
   )
 }
 
+// Export so other pages can use this calendar component
 export default Calendar
