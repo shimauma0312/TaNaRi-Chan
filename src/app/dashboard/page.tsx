@@ -119,6 +119,12 @@ const DashboardPage = () => {
             Other's Articles
           </Link>
           <Link
+            href="/dashboard/calendar"
+            className="block text-lg text-indigo-400 hover:text-indigo-300"
+          >
+            Calendar
+          </Link>
+          <Link
             href="/dashboard/myPage"
             className="block text-lg text-indigo-400 hover:text-indigo-300"
           >
