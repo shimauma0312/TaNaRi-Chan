@@ -1,7 +1,7 @@
 "use client"
 
-// This page shows a monthly calendar with the current user's todo deadlines.
-// It fetches the user's todos via API and displays them using the Calendar component.
+// このページではログインユーザーのTodoの締切を月別カレンダーで表示します。
+// APIからTodoを取得し、Calendarコンポーネントで表示します。
 
 import MinLoader from "@/components/MinLoader"
 import Calendar, { TodoItem } from "@/components/calendar/Calendar"
@@ -9,8 +9,8 @@ import useAuth from "@/hooks/useAuth"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
-// Fetches todos for the given user ID.
-// Throws an error if the API call does not succeed.
+// 指定したユーザーIDのTodoを取得する。
+// 取得に失敗した場合はエラーを投げる。
 const getTodoList = async (id: string) => {
   const response = await fetch(`/api/todoList/${id}`)
   if (!response.ok) {
@@ -20,27 +20,27 @@ const getTodoList = async (id: string) => {
   return data
 }
 
-// Main component rendered at /dashboard/calendar
+// /dashboard/calendar で描画されるメインコンポーネント
 const CalendarPage = () => {
   const user = useAuth()
-  // Month currently shown in the calendar
+  // 現在表示している月
   const [currentDate, setCurrentDate] = useState(new Date())
-  // Todos to display; fetched from the API
+  // 表示するTodo (APIから取得)
   const [todos, setTodos] = useState<TodoItem[]>([])
-  // Loading and error states for better user feedback
+  // 読み込み状態とエラー状態を保持
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    // Fetch the user's todos whenever the user object becomes available
+    // userが取得でき次第Todoを取得する
     const fetchData = async () => {
       if (!user) return
       try {
         const data = await getTodoList(user.uid)
         setTodos(data)
       } catch (err) {
-        // Log errors for debugging and show a friendly message on the UI
+        // エラーをログに出してユーザーにメッセージを表示
         console.error("Error fetching user todos:", err)
         setError("Failed to load todos. Please try again later.")
       } finally {
@@ -92,7 +92,7 @@ const CalendarPage = () => {
       <Calendar currentDate={currentDate} todos={todos} />
 
       <div className="mt-4">
-        {/* Simple navigation back to the main dashboard */}
+        {/* ダッシュボードへ戻るボタン */}
         <button
           onClick={() => router.push("/dashboard")}
           className="px-4 py-2 bg-red-500 text-white rounded-md"

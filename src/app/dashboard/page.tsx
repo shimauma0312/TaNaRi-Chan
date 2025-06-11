@@ -124,7 +124,7 @@ const DashboardPage = () => {
           >
             My Page
           </Link>
-          {/* Link to the monthly calendar view showing todo deadlines */}
+          {/* Todoの期限を確認できるカレンダーへのリンク */}
           <Link
             href="/dashboard/calendar"
             className="block text-lg text-indigo-400 hover:text-indigo-300"
