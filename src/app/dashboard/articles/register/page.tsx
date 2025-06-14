@@ -18,11 +18,17 @@ const RegisterArticlePage: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
+    // ユーザーが認証されているか確認
+    if (!user || !user.uid) {
+      alert("You must be logged in to create an article.")
+      return
+    }
+
     // 新しい記事のデータを作成
     const newPost = {
       title,
       content,
-      author_id: user?.uid,
+      author_id: user.uid,
     }
 
     try {
@@ -43,8 +49,11 @@ const RegisterArticlePage: React.FC = () => {
         // 一覧ページに遷移
         window.location.href = "/dashboard/articles"
       } else {
-        console.error(response.statusText)
-        alert("Failed to create article.")
+        const errorData = await response.json()
+        console.error(errorData)
+        alert(
+          `Failed to create article: ${errorData.error || response.statusText}`,
+        )
       }
     } catch (error) {
       console.error("Error:", error)
