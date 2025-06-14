@@ -1,0 +1,147 @@
+.shakeContainer {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  z-index: 10;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.shake1 {
+  animation: shake1 0.3s infinite;
+}
+
+.shake2 {
+  animation: shake2 0.25s infinite;
+}
+
+.shake3 {
+  animation: shake3 0.2s infinite;
+}
+
+.shake4 {
+  animation: shake4 0.15s infinite;
+}
+
+.shake5 {
+  animation: shake5 0.1s infinite;
+}
+
+.shake6 {
+  animation: shake6 0.08s infinite;
+}
+
+.explosion {
+  animation: explode 1s forwards;
+}
+
+@keyframes shake1 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(1px, 1px) rotate(0.5deg); }
+  50% { transform: translate(-1px, -1px) rotate(-0.5deg); }
+  75% { transform: translate(1px, -1px) rotate(0.5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes shake2 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(2px, 2px) rotate(1deg); }
+  50% { transform: translate(-2px, -2px) rotate(-1deg); }
+  75% { transform: translate(2px, -2px) rotate(1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes shake3 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(3px, 3px) rotate(1.5deg); }
+  50% { transform: translate(-3px, -3px) rotate(-1.5deg); }
+  75% { transform: translate(3px, -3px) rotate(1.5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes shake4 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(5px, 5px) rotate(2deg); }
+  50% { transform: translate(-5px, -5px) rotate(-2deg); }
+  75% { transform: translate(5px, -5px) rotate(2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes shake5 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(7px, 7px) rotate(3deg); }
+  50% { transform: translate(-7px, -7px) rotate(-3deg); }
+  75% { transform: translate(7px, -7px) rotate(3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes shake6 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(10px, 10px) rotate(5deg); }
+  50% { transform: translate(-10px, -10px) rotate(-5deg); }
+  75% { transform: translate(10px, -10px) rotate(5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes explode {
+  0% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  20% { 
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.5);
+    opacity: 0.8;
+    filter: brightness(1.5) contrast(1.5);
+  }
+  100% { 
+    transform: scale(2);
+    opacity: 0;
+    filter: brightness(2) contrast(2);
+  }
+}
+
+.resetButton {
+  display: none;
+  padding: 8px 16px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.resetButtonVisible {
+  display: block;
+}
+
+.clickCounter {
+  text-align: center;
+  font-size: 18px;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.danger {
+  color: #ff4d4d;
+  animation: blink 0.5s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
