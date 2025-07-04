@@ -11,6 +11,7 @@ model User {
   user_id      String  @id @unique
   user_name    String
   user_email   String  @unique
+  password     String
   icon_number  Int
   todos        Todo[] 
   posts        Post[]

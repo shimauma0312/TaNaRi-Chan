@@ -11,14 +11,14 @@ const getTodoList = async (id: string) => {
 }
 
 const ToDoListPage = () => {
-  const user = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [todoList, setTodoList] = useState<any[]>([]) // ToDoリストデータの状態を追加
 
   useEffect(() => {
     if (user) {
       const fetchData = async () => {
-        const todos = await getTodoList(user.uid) // ToDoリストデータを取得
+        const todos = await getTodoList(user.user_id) // ToDoリストデータを取得
         setTodoList(todos) // ToDoリストデータを状態に設定
       }
 
@@ -26,7 +26,7 @@ const ToDoListPage = () => {
     }
   }, [user])
 
-  if (!user) {
+  if (loading || !user) {
     return <div>Loading...</div>
   }
 

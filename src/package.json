@@ -11,6 +11,8 @@
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "^5.22.0",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.2",
     "easymde": "^2.18.0",
     "firebase": "*",
     "github-markdown-css": "^5.8.1",

@@ -9,10 +9,14 @@ import React, { useState } from "react"
 // RegisterArticlePageコンポーネントの定義
 const RegisterArticlePage: React.FC = () => {
   // ユーザー情報を取得
-  const user = useAuth()
+  const { user, loading } = useAuth()
   // タイトルとコンテンツの状態を管理
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
+
+  if (loading || !user) {
+    return <div>Loading...</div>
+  }
 
   // フォーム送信時の処理
   const handleSubmit = async (event: React.FormEvent) => {
