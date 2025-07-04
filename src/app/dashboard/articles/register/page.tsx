@@ -26,7 +26,7 @@ const RegisterArticlePage: React.FC = () => {
     const newPost = {
       title,
       content,
-      author_id: user?.uid,
+      author_id: user?.user_id,
     }
 
     try {
