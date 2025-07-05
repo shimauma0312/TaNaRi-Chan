@@ -12,13 +12,13 @@ const getArticles = async () => {
 
 const ArticlesPage = () => {
   const user = useAuth()
-  const [articles, setArticles] = useState<any[]>([]) // 記事データの状態を追加
+  const [articles, setArticles] = useState<any[]>([])
 
   useEffect(() => {
     if (user) {
       const fetchData = async () => {
-        const articlesData = await getArticles() // 記事データを取得
-        setArticles(articlesData) // 記事データを状態に設定
+        const articlesData = await getArticles()
+        setArticles(articlesData)
       }
 
       fetchData()
@@ -63,48 +63,57 @@ const ArticlesPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Articles</h1>
-        <a
-          href="/dashboard/articles/register"
-          className="inline-block px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700"
-        >
-          New Article
-        </a>
-      </div>
-      {articles.length === 0 ? (
-        <p>記事が見つかりません</p>
-      ) : (
-        <ul className="space-y-4">
-          {articles.map((article) => (
-            <li
-              key={article.post_id}
-              className="p-4 border rounded-lg shadow-md"
-            >
-              <h2 className="text-xl font-semibold">{article.title}</h2>
-              <p className="text-white">{article.content}</p>
-              <p className="text-white">
-                Published: {new Date(article.published_at).toLocaleDateString()}
-              </p>
-              <div className="flex space-x-2 mt-2">
-                <button
-                  onClick={() => handleEdit(article.post_id)}
-                  className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-700"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(article.post_id)}
-                  className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"
-                >
-                  Delete
-                </button>
+    <div className="min-h-screen bg-black text-white">
+      <div className="container mx-auto p-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Articles</h1>
+          <a
+            href="/dashboard/articles/register"
+            className="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300"
+          >
+            New Article
+          </a>
+        </div>
+        
+        {articles.length === 0 ? (
+          <div className="p-6 border border-gray-800 rounded-lg text-center">
+            <p className="text-xl text-gray-400">記事が見つかりません</p>
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {articles.map((article) => (
+              <div
+                key={article.post_id}
+                className="p-6 border border-gray-800 rounded-lg hover:border-gray-700 transition duration-300"
+              >
+                <h2 className="text-2xl font-bold mb-3">{article.title}</h2>
+                <p className="text-gray-400 mb-4">{article.content}</p>
+                <p className="text-gray-500 mb-4">
+                  Published: {new Date(article.published_at).toLocaleDateString('ja-JP', { 
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                  }).replace(/\//g, '-')}
+                </p>
+                <div className="flex space-x-4 mt-4">
+                  <button
+                    onClick={() => handleEdit(article.post_id)}
+                    className="px-4 py-2 bg-gray-800 text-white font-medium rounded-lg hover:bg-gray-700 transition duration-300"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(article.post_id)}
+                    className="px-4 py-2 bg-red-900 text-white font-medium rounded-lg hover:bg-red-800 transition duration-300"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-            </li>
-          ))}
-        </ul>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
