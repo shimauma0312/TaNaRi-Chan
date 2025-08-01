@@ -1,4 +1,4 @@
-FROM node:lts-buster-slim
+FROM node:lts-slim
 
 WORKDIR /app
 
