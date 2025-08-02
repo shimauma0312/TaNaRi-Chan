@@ -33,11 +33,13 @@ const CalendarPage = () => {
   const router = useRouter()
 
   useEffect(() => {
-    // userが取得でき次第Todoを取得する
+    // userのIDが変わったときだけTodoを取得する
     const fetchData = async () => {
-      if (!user) return
       try {
-        const data = await getTodoList(user.uid)
+        if (!user.user) {
+          throw new Error("User is not authenticated")
+        }
+        const data = await getTodoList(user.user.id)
         setTodos(data)
       } catch (err) {
         // エラーをログに出してユーザーにメッセージを表示
@@ -49,7 +51,7 @@ const CalendarPage = () => {
     }
 
     fetchData()
-  }, [user])
+  }, [user.user?.id])
 
   if (!user || loading) {
     return <MinLoader />
