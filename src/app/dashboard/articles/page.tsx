@@ -11,7 +11,7 @@ const getArticles = async () => {
 }
 
 const ArticlesPage = () => {
-  const user = useAuth()
+  const { user, loading } = useAuth()
   const [articles, setArticles] = useState<any[]>([]) // 記事データの状態を追加
 
   useEffect(() => {
@@ -24,6 +24,10 @@ const ArticlesPage = () => {
       fetchData()
     }
   }, [user])
+
+  if (loading || !user) {
+    return <MinLoader />
+  }
 
   /**
    * 記事を編集する

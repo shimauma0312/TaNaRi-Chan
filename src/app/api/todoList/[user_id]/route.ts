@@ -2,8 +2,6 @@ import { NextApiRequest, NextApiResponse } from "next"
 import { NextRequest, NextResponse } from "next/server"
 import { getTodo } from "@/service/todoService"
 import { PrismaClient } from "@prisma/client"
-import { createUserWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/app/firebaseConfig"
 import { get } from "http"
 
 const prisma = new PrismaClient()

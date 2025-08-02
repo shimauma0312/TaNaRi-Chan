@@ -1,13 +1,11 @@
 "use client"
 
-import { auth } from "@/app/firebaseConfig"
 import MinLoader from "@/components/MinLoader"
+import useAuth from "@/hooks/useAuth"
 import ShakeImage from "@/components/ShakeImage"
 import { useAccess } from "@/hooks/useDashboardAccess"
-import { onAuthStateChanged, signOut, User } from "firebase/auth"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 
 const mockData = {
   timelineArticles: [
@@ -72,28 +70,20 @@ const mockData = {
 }
 
 const DashboardPage = () => {
-  const [user, setUser] = useState<User | null>(null)
+  const { user, loading } = useAuth()
   const router = useRouter()
-  const accessCount = useAccess()
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user)
-      } else {
-        router.push("login")
-      }
-    })
-
-    return () => unsubscribe()
-  }, [router])
 
   const handleLogout = async () => {
-    await signOut(auth)
-    router.push("login")
+    try {
+      await fetch('/api/logout', { method: 'POST' })
+      router.push("/login")
+    } catch (error) {
+      console.error('Logout error:', error)
+      router.push("/login")
+    }
   }
 
-  if (!user) {
+  if (loading || !user) {
     return <MinLoader />
   }
 
@@ -137,11 +127,10 @@ const DashboardPage = () => {
         <div className="container mx-auto">
           <div className="mb-6">
             <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-xl">Welcome, {user.email}</p>
+            <p className="text-xl">Welcome, {user.user_email}</p>
             <p className="text-lg">
               Today's Date: {new Date().toLocaleDateString()}
             </p>
-            <p className="text-lg">Access Count: {accessCount}</p>
           </div>
           
           <ShakeImage />

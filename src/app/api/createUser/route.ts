@@ -1,9 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next"
 import { NextRequest, NextResponse } from "next/server"
-
 import { PrismaClient } from "@prisma/client"
-import { createUserWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/app/firebaseConfig"
+import { hashPassword, generateUserId } from "@/lib/auth"
 
 const prisma = new PrismaClient()
 
@@ -16,11 +13,32 @@ interface UserRequestBody {
 export async function POST(req: NextRequest) {
   const body: UserRequestBody = await req.json()
   try {
-    // firebaseに認証ユーザーを作成
-    const uid = await firebaseCreateUser(body)
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { user_email: body.email },
+    })
 
-    // データベースにユーザー情報を保存
-    saveUserToDatabase(body, uid)
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "このメールアドレスは既に登録されています" },
+        { status: 400 },
+      )
+    }
+
+    // Generate user ID and hash password
+    const userId = generateUserId()
+    const hashedPassword = await hashPassword(body.password)
+
+    // Save user to database
+    await prisma.user.create({
+      data: {
+        user_id: userId,
+        user_name: body.userName,
+        user_email: body.email,
+        password: hashedPassword,
+        icon_number: 1, // デフォルトのアイコン番号
+      },
+    })
 
     return NextResponse.json(
       { message: "User registered successfully" },
@@ -33,34 +51,4 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     )
   }
-}
-
-/**
- * firebaseにユーザーを作成し、作成されたuidを返す
- * @param body : UserRequestBody
- * @returns User
- */
-async function firebaseCreateUser(body: UserRequestBody) {
-  const userCredential = await createUserWithEmailAndPassword(
-    auth,
-    body.email,
-    body.password,
-  )
-  return userCredential.user.uid
-}
-
-/**
- * prismaにユーザー情報を保存する
- * @param body : UserRequestBody
- * @param userId : string
- */
-async function saveUserToDatabase(body: UserRequestBody, userId: string) {
-  await prisma.user.create({
-    data: {
-      user_id: userId,
-      user_name: body.userName,
-      user_email: body.email,
-      icon_number: 1, // デフォルトのアイコン番号
-    },
-  })
 }
