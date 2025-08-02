@@ -87,9 +87,8 @@ const ArticlesPage = () => {
               className="p-4 border rounded-lg shadow-md"
             >
               <h2 className="text-xl font-semibold">{article.title}</h2>
-              <p className="text-white">{article.content}</p>
               <p className="text-white">
-                Published: {new Date(article.published_at).toLocaleDateString()}
+                Published: {new Date(article.createdAt).toLocaleDateString()}
               </p>
               <div className="flex space-x-2 mt-2">
                 <button
