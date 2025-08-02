@@ -4,60 +4,63 @@ import MarkdownEditor from "@/components/markdown/markdownEditor"
 import MinLoader from "@/components/MinLoader"
 import useAuth from "@/hooks/useAuth"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { use, useEffect, useState, Suspense } from "react"
 
-const EditArticlePage = () => {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  const [title, setTitle] = useState("")
-  const [content, setContent] = useState("")
-  const [postId, setPostId] = useState<number | null>(null)
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const postIdParam = urlParams.get("post_id")
-    if (postIdParam) {
-      setPostId(Number(postIdParam))
-    }
-  }, [])
-  
-  useEffect(() => {
-    if (postId !== null) {
-      fetchArticle(postId)
-    }
-  }, [postId])
-
-  if (loading || !user) {
-    return <MinLoader />
+function useArticleData(postId: number | null) {
+  if (postId === null) {
+    return { title: "", content: "" };
   }
-  const fetchArticle = async (postId: number) => {
-    try {
-      const response = await fetch(`/api/articles?post_id=${postId}`)
-      const data = await response.json()
-      setTitle(data.title)
-      setContent(data.content)
-    } catch (error) {
-      console.error("Error fetching article:", error)
-    }
+  const articleDataPromise = fetchArticleData(postId);
+
+  return use(articleDataPromise);
+}
+
+async function fetchArticleData(postId: number) {
+  try {
+    const response = await fetch(`/api/articles?post_id=${postId}`);
+    const data = await response.json();
+    console.log("Fetched article:", data);
+    return {
+      title: data.title ?? "",
+      content: data.content ?? ""
+    };
+  } catch (error) {
+    console.error("Error fetching article:", error);
+    return { title: "", content: "" };
   }
+}
+
+// メインコンテンツをラップするためのコンポーネント
+function EditArticleContent({ postId }: { postId: number | null }) {
+  const router = useRouter();
+  const { title, content } = useArticleData(postId);
+  const [editableTitle, setEditableTitle] = useState(title);
+  const [editableContent, setEditableContent] = useState(content);
+
+  // 初期データが変わったら編集可能な状態も更新
+  useEffect(() => {
+    setEditableTitle(title);
+    setEditableContent(content);
+  }, [title, content]);
 
   /**
    * 記事を更新する
    * @param event : React.FormEvent
    */
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+    event.preventDefault();
 
     if (!postId) {
-      alert("Invalid post ID.")
-      return
+      alert("Invalid post ID.");
+      return;
     }
 
     const updatedPost = {
       post_id: postId,
-      title,
-      content,
-    }
+      title: editableTitle,
+      content: editableContent,
+    };
 
     try {
       const response = await fetch("/api/articles", {
@@ -66,22 +69,18 @@ const EditArticlePage = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(updatedPost),
-      })
+      });
 
       if (response.ok) {
-        router.push("/dashboard/articles")
+        router.push("/dashboard/articles");
       } else {
-        alert("Failed to update article.")
+        alert("Failed to update article.");
       }
     } catch (error) {
-      console.error("Error:", error)
-      alert("An error occurred while updating the article.")
+      console.error("Error:", error);
+      alert("An error occurred while updating the article.");
     }
-  }
-
-  if (!user) {
-    return <MinLoader />
-  }
+  };
 
   return (
     <div className="max-w-md mx-auto p-8 rounded-lg shadow-md">
@@ -97,8 +96,8 @@ const EditArticlePage = () => {
           <input
             type="text"
             id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={editableTitle}
+            onChange={(e) => setEditableTitle(e.target.value)}
             required
             className="bg-slate-800 w-full px-3 py-2 border rounded-lg focus:outline-none"
           />
@@ -110,7 +109,7 @@ const EditArticlePage = () => {
           >
             Content:
           </label>
-          <MarkdownEditor initialMarkdown={content} onChange={setContent} />
+          <MarkdownEditor initialMarkdown={editableContent} onChange={setEditableContent} />
         </div>
         <button
           type="submit"
@@ -120,7 +119,35 @@ const EditArticlePage = () => {
         </button>
       </form>
     </div>
-  )
+  );
 }
 
-export default EditArticlePage
+const EditArticlePage = ({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
+  const { user, loading } = useAuth();
+  const [postId, setPostId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const getSearchParams = async () => {
+      const params = await searchParams;
+      const postIdParam = params.post_id;
+      if (postIdParam) {
+        setPostId(Number(postIdParam));
+      }
+    };
+
+    getSearchParams();
+  }, [searchParams]);
+
+  if (!user) {
+    return <MinLoader />;
+  }
+
+  return (
+    <Suspense fallback={<MinLoader />}>
+      {postId && <EditArticleContent postId={postId} />}
+      {!postId && <div className="text-center p-8">Invalid article ID.</div>}
+    </Suspense>
+  );
+}
+
+export default EditArticlePage;

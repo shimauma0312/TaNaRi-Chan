@@ -9,9 +9,18 @@ const prisma = new PrismaClient()
 export async function GET(req: Request): Promise<NextResponse> {
     try {
         const url = new URL(req.url);
-        const postId = url.searchParams.get('postId');
-        const todos = await getArticles(postId);
-        return NextResponse.json(todos);
+        const postId = url.searchParams.get('post_id');
+        if(!postId) {
+            const todos = await getArticles(null);
+            return NextResponse.json(todos);
+        } else {
+            const article = await getArticle(postId);
+            if (article) {
+                return NextResponse.json(article);
+            } else {
+                return NextResponse.json({ error: "Article not found" }, { status: 404 });
+            }
+        }
     } catch (error) {
         // 空を返す
         logger.error(error);
@@ -60,9 +69,23 @@ export async function DELETE(req: Request): Promise<NextResponse> {
 
 /**
  * 記事リストを取得する
- * reqがnullの場合は全ての記事を取得する
  */
 async function getArticles(postId: string | null) {
+    logger.info(postId);
+    return await prisma.post.findMany({
+        select: {
+            post_id: true,
+            title: true,
+            content: true,
+        }
+    })
+}
+
+
+/**
+ * 指定された記事を取得する
+ */
+async function getArticle(postId: string | null) {
     logger.info(postId);
     if (postId !== null) {
         return await prisma.post.findUnique({
@@ -75,17 +98,10 @@ async function getArticles(postId: string | null) {
                 content: true,
             }
         })
-    } else {
-        return await prisma.post.findMany({
-            select: {
-                post_id: true,
-                title: true,
-                content: true,
-                // 他の必要なカラムを追加
-            }
-        })
     }
+    return null; // postIdがnullの場合はnullを返す
 }
+
 
 /**
  * 記事を作成する
