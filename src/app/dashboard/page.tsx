@@ -1,7 +1,6 @@
 "use client"
 
 import MinLoader from "@/components/MinLoader"
-import { useAccess } from "@/hooks/useDashboardAccess"
 import useAuth from "@/hooks/useAuth"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -71,7 +70,6 @@ const mockData = {
 const DashboardPage = () => {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const accessCount = useAccess()
 
   const handleLogout = async () => {
     try {
@@ -131,7 +129,6 @@ const DashboardPage = () => {
             <p className="text-lg">
               Today's Date: {new Date().toLocaleDateString()}
             </p>
-            <p className="text-lg">Access Count: {accessCount}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
