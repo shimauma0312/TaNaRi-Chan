@@ -60,3 +60,19 @@ This project requires environment variables to be set up. Follow these steps to 
 
    Replace the placeholder values with your actual Firebase project credentials.  
     Note: You do not need to modify the DATABASE_URL value.
+
+
+## Prisma Migration Instructions
+
+Follow these steps to set up the database. This process is required when starting the application for the first time or after changing the Prisma schema.
+
+```bash
+# Generate Prisma migration files
+npx prisma migrate dev --name init
+
+# Apply migrations
+npx prisma migrate deploy
+
+# Regenerate Prisma Client
+npx prisma generate
+```
