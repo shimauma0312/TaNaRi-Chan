@@ -103,10 +103,10 @@ async function getArticles(postId: string | null) {
             post_id: true,
             title: true,
             content: true,
+            createdAt: true,
         }
     })
 }
-
 
 /**
  * 指定された記事を取得する
@@ -122,12 +122,12 @@ async function getArticle(postId: string | null) {
                 post_id: true,
                 title: true,
                 content: true,
+                createdAt: true,
             }
         })
     }
     return null; // postIdがnullの場合はnullを返す
 }
-
 
 /**
  * 記事を作成する
