@@ -13,19 +13,23 @@ const EditArticlePage = () => {
   const [content, setContent] = useState("")
   const [postId, setPostId] = useState<number | null>(null)
 
-  if (loading || !user) {
-    return <MinLoader />
-  }
-
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const postIdParam = urlParams.get("post_id")
     if (postIdParam) {
       setPostId(Number(postIdParam))
-      fetchArticle(Number(postIdParam))
     }
   }, [])
+  
+  useEffect(() => {
+    if (postId !== null) {
+      fetchArticle(postId)
+    }
+  }, [postId])
 
+  if (loading || !user) {
+    return <MinLoader />
+  }
   const fetchArticle = async (postId: number) => {
     try {
       const response = await fetch(`/api/articles?post_id=${postId}`)
