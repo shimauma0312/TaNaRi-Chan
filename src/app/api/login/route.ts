@@ -1,23 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser, setAuthCookie } from '@/lib/auth'
-import { database } from "@/app/firebaseConfig"
-import {
-  increment,
-  ref,
-  update
-} from "firebase/database"
 
 interface LoginRequestBody {
   email: string
   password: string
-}
-
-/**
- * Increment dashboard access count
- */
-const incrementAccessCount = () => {
-  const accessCountRef = ref(database, "dashboard/accessCount")
-  update(accessCountRef, { count: increment(1) })
 }
 
 export async function POST(req: NextRequest) {
@@ -42,14 +28,6 @@ export async function POST(req: NextRequest) {
 
     // Set authentication cookie
     setAuthCookie(user.user_id)
-
-    // Increment access count
-    try {
-      await incrementAccessCount()
-    } catch (error) {
-      console.error('Failed to increment access count:', error)
-      // Don't fail login if access count increment fails
-    }
 
     return NextResponse.json(
       { 
