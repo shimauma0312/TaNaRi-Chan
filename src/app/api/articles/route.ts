@@ -22,9 +22,11 @@ export async function GET(req: Request): Promise<NextResponse> {
             }
         }
     } catch (error) {
-        // 空を返す
         logger.error(error);
-        return NextResponse.json([]);
+        return NextResponse.json(
+            { error: "Failed to fetch articles", detail: (error instanceof Error ? error.message : String(error)) },
+            { status: 500 }
+        );
     }
 }
 
@@ -32,6 +34,14 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
+
+        if (!data.title || !data.content || !data.author_id) {
+            return NextResponse.json(
+                { error: "Missing required fields: title, content, and author_id are required" },
+                { status: 400 }
+            )
+        }
+
         const newPost = await createArticle(data)
         logger.info(newPost)
         return NextResponse.json(newPost)
@@ -45,6 +55,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 export async function PUT(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
+
+        if (!data.title || !data.content) {
+            return NextResponse.json(
+                { error: "Missing required fields: title, content, and author_id are required" },
+                { status: 400 }
+            )
+        }
+
         const updatedPost = await updateArticle(data)
         logger.info(updatedPost)
         return NextResponse.json(updatedPost)
@@ -58,6 +76,14 @@ export async function PUT(req: Request): Promise<NextResponse> {
 export async function DELETE(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
+
+        if (!data.post_id) {
+            return NextResponse.json(
+                { error: "Missing required field: post_id is required" },
+                { status: 400 }
+            )
+        }
+
         const deletedPost = await deleteArticle(data.post_id)
         logger.info(deletedPost)
         return NextResponse.json(deletedPost)
