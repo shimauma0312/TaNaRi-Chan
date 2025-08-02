@@ -3,7 +3,6 @@
 import MinLoader from "@/components/MinLoader"
 import useAuth from "@/hooks/useAuth"
 import ShakeImage from "@/components/ShakeImage"
-import { useAccess } from "@/hooks/useDashboardAccess"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -107,7 +106,7 @@ const DashboardPage = () => {
             href="/dashboard/articles"
             className="block text-lg text-indigo-400 hover:text-indigo-300"
           >
-            Other's Articles
+            My Articles
           </Link>
           <Link
             href="/dashboard/myPage"
