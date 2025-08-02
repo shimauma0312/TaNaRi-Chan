@@ -7,11 +7,15 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 const EditArticlePage = () => {
-  const user = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [postId, setPostId] = useState<number | null>(null)
+
+  if (loading || !user) {
+    return <MinLoader />
+  }
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
