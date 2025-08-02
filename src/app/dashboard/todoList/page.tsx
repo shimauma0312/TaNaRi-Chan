@@ -18,7 +18,7 @@ const ToDoListPage = () => {
   useEffect(() => {
     if (user) {
       const fetchData = async () => {
-        const todos = await getTodoList(user.user_id) // ToDoリストデータを取得
+        const todos = await getTodoList(user.id) // ToDoリストデータを取得
         setTodoList(todos) // ToDoリストデータを状態に設定
       }
 

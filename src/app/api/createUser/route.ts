@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     // Save user to database
     await prisma.user.create({
       data: {
-        user_id: userId,
+        id: userId,
         user_name: body.userName,
         user_email: body.email,
         password: hashedPassword,
