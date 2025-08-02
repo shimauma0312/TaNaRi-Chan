@@ -6,7 +6,7 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export interface AuthUser {
-  user_id: string
+  id: string
   user_name: string
   user_email: string
   icon_number: number
@@ -41,7 +41,7 @@ export async function authenticateUser(email: string, password: string): Promise
     const user = await prisma.user.findUnique({
       where: { user_email: email },
       select: {
-        user_id: true,
+        id: true,
         user_name: true,
         user_email: true,
         icon_number: true,
@@ -108,9 +108,9 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     }
 
     const user = await prisma.user.findUnique({
-      where: { user_id: userId },
+      where: { id: userId },
       select: {
-        user_id: true,
+        id: true,
         user_name: true,
         user_email: true,
         icon_number: true,

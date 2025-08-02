@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
 export interface AuthUser {
-  user_id: string
+  id: string
   user_name: string
   user_email: string
   icon_number: number

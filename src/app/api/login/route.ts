@@ -27,13 +27,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Set authentication cookie
-    setAuthCookie(user.user_id)
+    setAuthCookie(user.id)
 
     return NextResponse.json(
       { 
         message: 'ログインに成功しました',
         user: {
-          user_id: user.user_id,
+          id: user.id,
           user_name: user.user_name,
           user_email: user.user_email,
           icon_number: user.icon_number,

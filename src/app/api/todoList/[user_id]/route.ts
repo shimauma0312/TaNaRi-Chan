@@ -7,9 +7,9 @@ import { get } from "http"
 const prisma = new PrismaClient()
 export async function GET(
   request: NextRequest,
-  { params }: { params: { user_id: string } },
+  { params }: { params: { id: string } },
 ): Promise<NextResponse> {
-  const todos = await getTodo(params.user_id)
+  const todos = await getTodo(params.id)
   return NextResponse.json(todos)
 }
 
