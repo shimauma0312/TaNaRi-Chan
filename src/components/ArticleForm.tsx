@@ -1,7 +1,6 @@
 "use client"
 
 import MarkdownEditor from "@/components/markdown/markdownEditor"
-import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
 import React, { useEffect, useState } from "react"
 
@@ -123,8 +122,6 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
   const buttonText = isEditMode ? "Update Article" : "Create Article"
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
-      <SideMenu />
       <div className="w-4/5 p-4">
         <div className="max-w-md mx-auto p-8 rounded-lg shadow-md">
           <h1 className="text-2xl font-bold mb-6">{formTitle}</h1>
@@ -163,7 +160,6 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
           </form>
         </div>
       </div>
-    </div>
   )
 }
 

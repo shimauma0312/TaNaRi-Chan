@@ -2,6 +2,7 @@
 
 import ArticleForm from "@/components/ArticleForm"
 import MinLoader from "@/components/MinLoader"
+import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
 import { useRouter } from "next/navigation"
 import { Suspense, use, useEffect, useState } from "react"
@@ -43,12 +44,15 @@ function EditArticleContent({ postId }: { postId: number | null }) {
   }
 
   return (
-    <ArticleForm 
-      postId={postId}
-      initialTitle={title}
-      initialContent={content}
-      onSuccess={handleSuccess}
-    />
+      <div className="min-h-screen text-white p-4 flex">
+        <SideMenu />
+        <ArticleForm 
+          postId={postId}
+          initialTitle={title}
+          initialContent={content}
+          onSuccess={handleSuccess}
+        />
+      </div>
   );
 }
 
