@@ -3,6 +3,7 @@
 import MinLoader from "@/components/MinLoader"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 const getArticles = async () => {
@@ -14,6 +15,7 @@ const getArticles = async () => {
 const ArticlesPage = () => {
   const { user, loading } = useAuth()
   const [articles, setArticles] = useState<any[]>([])
+  const router = useRouter()
 
   useEffect(() => {
     if (user) {
@@ -35,7 +37,7 @@ const ArticlesPage = () => {
    * @param postId : number
    */
   const handleEdit = (postId: number) => {
-    window.location.href = `/dashboard/articles/edit?post_id=${postId}`
+    router.push(`/dashboard/articles/edit?post_id=${postId}`)
   }
 
   /**

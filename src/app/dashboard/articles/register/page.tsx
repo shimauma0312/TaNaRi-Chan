@@ -3,12 +3,14 @@
 import MarkdownEditor from "@/components/markdown/markdownEditor"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
 import React, { useState } from "react"
 
 const RegisterArticlePage: React.FC = () => {
   const { user, loading } = useAuth()
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
+  const router = useRouter()
 
   if (loading || !user) {
     return <div>Loading...</div>
@@ -35,7 +37,7 @@ const RegisterArticlePage: React.FC = () => {
       if (response.ok) {
         setTitle("")
         setContent("")
-        window.location.href = "/dashboard/articles"
+        router.push("/dashboard/articles")
       } else {
         console.error(response.statusText)
         alert("Failed to create article.")
