@@ -6,6 +6,12 @@ import useAuth from "@/hooks/useAuth"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+interface Article {
+  post_id: number;
+  title: string;
+  createdAt: string;
+}
+
 const getArticles = async () => {
   const response = await fetch("/api/articles")
   const data = await response.json()
@@ -14,7 +20,7 @@ const getArticles = async () => {
 
 const ArticlesPage = () => {
   const { user, loading } = useAuth()
-  const [articles, setArticles] = useState<any[]>([])
+  const [articles, setArticles] = useState<Article[]>([])
   const router = useRouter()
 
   useEffect(() => {
