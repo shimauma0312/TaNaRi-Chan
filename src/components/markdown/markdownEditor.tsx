@@ -47,15 +47,15 @@ const MarkdownEditor: React.FC<{
   return (
     <div className="w-full">
       {/* タブ切り替えボタン（Edit/Preview） */}
-      <div className="flex mb-4 bg-slate-800/50 rounded-t-lg p-1 border border-slate-600">
+      <div className="flex mb-4 bg-slate-800 rounded-t border border-slate-600">
         {/* 編集タブボタン */}
         <button
           type="button"
           onClick={() => setActiveTab(1)}
-          className={`flex-1 px-6 py-3 rounded-md font-medium transition-all duration-200 ${
+          className={`flex-1 px-4 py-2 font-medium ${
             activeTab === 1 
-              ? "bg-blue-600 text-white shadow-lg transform scale-105" 
-              : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+              ? "bg-blue-600 text-white" 
+              : "text-slate-300 bg-slate-700"
           }`}
         >
           Edit
@@ -64,10 +64,10 @@ const MarkdownEditor: React.FC<{
         <button
           type="button"
           onClick={() => setActiveTab(0)}
-          className={`flex-1 px-6 py-3 rounded-md font-medium transition-all duration-200 ${
+          className={`flex-1 px-4 py-2 font-medium ${
             activeTab === 0 
-              ? "bg-purple-600 text-white shadow-lg transform scale-105" 
-              : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+              ? "bg-blue-600 text-white" 
+              : "text-slate-300 bg-slate-700"
           }`}
         >
           Preview
@@ -75,37 +75,18 @@ const MarkdownEditor: React.FC<{
       </div>
 
       {/* 編集 or プレビュー */}
-      <div className="border border-slate-600 rounded-b-lg bg-slate-800/30 backdrop-blur-sm overflow-hidden">
+      <div className="border border-slate-600 rounded-b bg-slate-800">
         {activeTab === 1 ? (
           // --- 編集タブ ---
-          <div className="relative">
-            <textarea
-              value={markdown}
-              onChange={handleChange}
-              className="w-full h-96 p-6 bg-transparent text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-inset font-mono text-sm leading-relaxed"
-              placeholder={`✨ Write your article in Markdown...
-
-          # Heading 1
-          ## Heading 2
-
-          **Bold** *Italic* \`Code\`
-
-          - List item 1
-          - List item 2
-
-          \`\`\`code
-          Code block
-          \`\`\`
-
-          [Link](https://example.com)`}
-            />
-            <div className="absolute bottom-4 right-4 text-slate-500 text-xs">
-              Markdown supported
-            </div>
-          </div>
+          <textarea
+            value={markdown}
+            onChange={handleChange}
+            className="w-full h-96 p-4 bg-transparent text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+            placeholder="マークダウンで記事を書いてください..."
+          />
         ) : (
           // --- プレビュタブ ---
-          <div className={`p-6 bg-white/5 text-white min-h-96 max-w-none ${styles.markdownPreview}`}>
+          <div className={`p-4 text-white min-h-96 ${styles.markdownPreview}`}>
             {/*
               ReactMarkdown:
               - remarkGfm: GFM拡張（テーブル・チェックボックス等）を有効化
@@ -120,7 +101,7 @@ const MarkdownEditor: React.FC<{
               </ReactMarkdown>
             ) : (
               <div className="text-slate-400 italic text-center py-20">
-                Please enter Markdown in the Edit tab to see the preview.
+                Editタブでマークダウンを入力してください
               </div>
             )}
           </div>

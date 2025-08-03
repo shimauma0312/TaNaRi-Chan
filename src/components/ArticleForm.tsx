@@ -121,14 +121,14 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
   const buttonText = isEditMode ? "Update Article" : "Create Article"
 
   return (
-      <div className="w-4/5 p-8">
-        <div className="max-w-4xl p-8 rounded-lg shadow-md bg-slate-900/50 backdrop-blur-sm border border-slate-700">
-          <h1 className="text-3xl font-bold mb-8 text-white">{formTitle}</h1>
+      <div className="w-full p-8">
+        <div className="max-w-8xl p-8 rounded-lg bg-slate-800 border border-slate-600">
+          <h1 className="text-2xl font-bold mb-6 text-white">{formTitle}</h1>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label
                 htmlFor="title"
-                className="block text-white font-semibold mb-3 text-lg"
+                className="block text-white font-medium mb-2"
               >
                 Title:
               </label>
@@ -138,14 +138,14 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="bg-slate-800/80 border border-slate-600 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-slate-400 transition-all duration-200"
-                placeholder="Enter the article title"
+                className="bg-slate-700 border border-slate-600 w-full px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-400"
+                placeholder="記事のタイトルを入力してください"
               />
             </div>
-            <div className="mb-6">
+            <div className="mb-4">
               <label
                 htmlFor="content"
-                className="block text-white font-semibold mb-3 text-lg"
+                className="block text-white font-medium mb-2"
               >
                 Content:
               </label>
@@ -153,7 +153,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
             </div>
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             >
               {buttonText}
             </button>
