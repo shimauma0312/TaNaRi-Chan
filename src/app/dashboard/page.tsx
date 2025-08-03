@@ -4,7 +4,6 @@ import MinLoader from "@/components/MinLoader"
 import ShakeImage from "@/components/ShakeImage"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
-import Link from "next/link"
 
 const mockData = {
   timelineArticles: [
@@ -98,10 +97,10 @@ const DashboardPage = () => {
               <ul className="space-y-2">
                 {mockData.timelineArticles.map((article) => (
                   <li key={article.id} className="p-2 border rounded-md">
-                    <Link href="" className="block hover:underline">
+                    <div className="block hover:underline cursor-pointer">
                       <h3 className="font-bold">{article.title}</h3>
                       <p>{article.content}</p>
-                    </Link>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -111,13 +110,13 @@ const DashboardPage = () => {
               <ul className="space-y-2">
                 {mockData.activeTodos.map((todo) => (
                   <li key={todo.id} className="p-2 border rounded-md">
-                    <Link href="" className="block hover:underline">
+                    <div className="block hover:underline cursor-pointer">
                       <h3 className="font-bold">{todo.title}</h3>
                       <p>{todo.description}</p>
                       <p>
                         Deadline: {new Date(todo.deadline).toLocaleDateString()}
                       </p>
-                    </Link>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -127,13 +126,13 @@ const DashboardPage = () => {
               <ul className="space-y-2">
                 {mockData.publicTodos.map((todo) => (
                   <li key={todo.id} className="p-2 border rounded-md">
-                    <Link href="" className="block hover:underline">
+                    <div className="block hover:underline cursor-pointer">
                       <h3 className="font-bold">{todo.title}</h3>
                       <p>{todo.description}</p>
                       <p>
                         Deadline: {new Date(todo.deadline).toLocaleDateString()}
                       </p>
-                    </Link>
+                    </div>
                   </li>
                 ))}
               </ul>
