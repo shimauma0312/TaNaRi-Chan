@@ -6,7 +6,6 @@ import React, { useEffect, useState } from "react"
 
 /**
  * 記事フォームコンポーネントのプロパティ
- * 記事の作成と編集の両方に対応する共通フォーム
  */
 interface ArticleFormProps {
   postId?: number               // 投稿ID（undefined: 新規作成, number: 編集）
@@ -122,14 +121,14 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
   const buttonText = isEditMode ? "Update Article" : "Create Article"
 
   return (
-      <div className="w-4/5 p-4">
-        <div className="max-w-md mx-auto p-8 rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold mb-6">{formTitle}</h1>
+      <div className="w-4/5 p-8">
+        <div className="max-w-4xl p-8 rounded-lg shadow-md bg-slate-900/50 backdrop-blur-sm border border-slate-700">
+          <h1 className="text-3xl font-bold mb-8 text-white">{formTitle}</h1>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label
                 htmlFor="title"
-                className="block text-gray-700 font-semibold mb-2"
+                className="block text-white font-semibold mb-3 text-lg"
               >
                 Title:
               </label>
@@ -139,13 +138,14 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="bg-slate-800 w-full px-3 py-2 border rounded-lg focus:outline-none"
+                className="bg-slate-800/80 border border-slate-600 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-slate-400 transition-all duration-200"
+                placeholder="Enter the article title"
               />
             </div>
-            <div className="mb-4">
+            <div className="mb-6">
               <label
                 htmlFor="content"
-                className="block text-gray-700 font-semibold mb-2"
+                className="block text-white font-semibold mb-3 text-lg"
               >
                 Content:
               </label>
@@ -153,7 +153,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               {buttonText}
             </button>
