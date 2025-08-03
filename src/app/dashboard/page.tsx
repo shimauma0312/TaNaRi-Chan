@@ -1,10 +1,10 @@
 "use client"
 
 import MinLoader from "@/components/MinLoader"
-import useAuth from "@/hooks/useAuth"
 import ShakeImage from "@/components/ShakeImage"
+import SideMenu from "@/components/SideMenu"
+import useAuth from "@/hooks/useAuth"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 
 const mockData = {
   timelineArticles: [
@@ -70,17 +70,6 @@ const mockData = {
 
 const DashboardPage = () => {
   const { user, loading } = useAuth()
-  const router = useRouter()
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/logout', { method: 'POST' })
-      router.push("/login")
-    } catch (error) {
-      console.error('Logout error:', error)
-      router.push("/login")
-    }
-  }
 
   if (loading || !user) {
     return <MinLoader />
@@ -88,46 +77,7 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen text-white p-4 flex">
-      <div className="w-1/5 p-4">
-        <nav className="space-y-4">
-          <Link
-            href="/dashboard/todoList"
-            className="block text-lg text-indigo-400 hover:text-indigo-300"
-          >
-            My Todo List
-          </Link>
-          <Link
-            href="/dashboard/otherTodos"
-            className="block text-lg text-indigo-400 hover:text-indigo-300"
-          >
-            Other's Todo List
-          </Link>
-          <Link
-            href="/dashboard/articles"
-            className="block text-lg text-indigo-400 hover:text-indigo-300"
-          >
-            My Articles
-          </Link>
-          <Link
-            href="/dashboard/myPage"
-            className="block text-lg text-indigo-400 hover:text-indigo-300"
-          >
-            My Page
-          </Link>
-          {/* <Link
-            href="/dashboard/calendar"
-            className="block text-lg text-indigo-400 hover:text-indigo-300"
-          >
-            Calendar
-          </Link> */}
-          <button
-            className="block w-full bg-red-500 text-lg text-white py-1 px-3 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </nav>
-      </div>
+      <SideMenu />
       <div className="w-4/5 p-4 relative">
         <div className="container mx-auto">
           <div className="mb-6">

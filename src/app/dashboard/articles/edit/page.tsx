@@ -2,9 +2,10 @@
 
 import MarkdownEditor from "@/components/markdown/markdownEditor"
 import MinLoader from "@/components/MinLoader"
+import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
 import { useRouter } from "next/navigation"
-import { use, useEffect, useState, Suspense } from "react"
+import { Suspense, use, useEffect, useState } from "react"
 
 
 function useArticleData(postId: number | null) {
@@ -31,7 +32,6 @@ async function fetchArticleData(postId: number) {
   }
 }
 
-// メインコンテンツをラップするためのコンポーネント
 function EditArticleContent({ postId }: { postId: number | null }) {
   const router = useRouter();
   const { title, content } = useArticleData(postId);
@@ -83,41 +83,46 @@ function EditArticleContent({ postId }: { postId: number | null }) {
   };
 
   return (
-    <div className="max-w-md mx-auto p-8 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Edit Article</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label
-            htmlFor="title"
-            className="block text-gray-700 font-semibold mb-2"
-          >
-            Title:
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={editableTitle}
-            onChange={(e) => setEditableTitle(e.target.value)}
-            required
-            className="bg-slate-800 w-full px-3 py-2 border rounded-lg focus:outline-none"
-          />
+    <div className="min-h-screen text-white p-4 flex">
+      <SideMenu />
+      <div className="w-4/5 p-4">
+        <div className="max-w-md mx-auto p-8 rounded-lg shadow-md">
+          <h1 className="text-2xl font-bold mb-6">Edit Article</h1>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label
+                htmlFor="title"
+                className="block text-gray-700 font-semibold mb-2"
+              >
+                Title:
+              </label>
+              <input
+                type="text"
+                id="title"
+                value={editableTitle}
+                onChange={(e) => setEditableTitle(e.target.value)}
+                required
+                className="bg-slate-800 w-full px-3 py-2 border rounded-lg focus:outline-none"
+              />
+            </div>
+            <div className="mb-4">
+              <label
+                htmlFor="content"
+                className="block text-gray-700 font-semibold mb-2"
+              >
+                Content:
+              </label>
+              <MarkdownEditor initialMarkdown={editableContent} onChange={setEditableContent} />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Update Article
+            </button>
+          </form>
         </div>
-        <div className="mb-4">
-          <label
-            htmlFor="content"
-            className="block text-gray-700 font-semibold mb-2"
-          >
-            Content:
-          </label>
-          <MarkdownEditor initialMarkdown={editableContent} onChange={setEditableContent} />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Update Article
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
