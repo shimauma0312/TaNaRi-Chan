@@ -1,26 +1,16 @@
 "use client"
 
-import MarkdownEditor from "@/components/markdown/markdownEditor"
+import ArticleForm from "@/components/ArticleForm"
 import MinLoader from "@/components/MinLoader"
+import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
-import { useRouter } from "next/navigation"
-import { use, useEffect, useState, Suspense } from "react"
-
-
-function useArticleData(postId: number | null) {
-  if (postId === null) {
-    return { title: "", content: "" };
-  }
-  const articleDataPromise = fetchArticleData(postId);
-
-  return use(articleDataPromise);
-}
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 async function fetchArticleData(postId: number) {
   try {
     const response = await fetch(`/api/articles?post_id=${postId}`);
     const data = await response.json();
-    console.log("Fetched article:", data);
     return {
       title: data.title ?? "",
       content: data.content ?? ""
@@ -31,123 +21,75 @@ async function fetchArticleData(postId: number) {
   }
 }
 
-// メインコンテンツをラップするためのコンポーネント
 function EditArticleContent({ postId }: { postId: number | null }) {
   const router = useRouter();
-  const { title, content } = useArticleData(postId);
-  const [editableTitle, setEditableTitle] = useState(title);
-  const [editableContent, setEditableContent] = useState(content);
+  const [articleData, setArticleData] = useState({ title: "", content: "" });
+  const [loading, setLoading] = useState(true);
 
-  // 初期データが変わったら編集可能な状態も更新
   useEffect(() => {
-    setEditableTitle(title);
-    setEditableContent(content);
-  }, [title, content]);
-
-  /**
-   * 記事を更新する
-   * @param event : React.FormEvent
-   */
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!postId) {
-      alert("Invalid post ID.");
+    if (postId === null) {
+      setLoading(false);
       return;
     }
 
-    const updatedPost = {
-      post_id: postId,
-      title: editableTitle,
-      content: editableContent,
+    const loadArticleData = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchArticleData(postId);
+        setArticleData(data);
+      } catch (error) {
+        console.error("Failed to load article:", error);
+        setArticleData({ title: "", content: "" });
+      } finally {
+        setLoading(false);
+      }
     };
 
-    try {
-      const response = await fetch("/api/articles", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedPost),
-      });
+    loadArticleData();
+  }, [postId]);
 
-      if (response.ok) {
-        router.push("/dashboard/articles");
-      } else {
-        alert("Failed to update article.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred while updating the article.");
-    }
+  const handleSuccess = () => {
+    router.push("/dashboard/articles");
   };
 
-  return (
-    <div className="max-w-md mx-auto p-8 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Edit Article</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label
-            htmlFor="title"
-            className="block text-gray-700 font-semibold mb-2"
-          >
-            Title:
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={editableTitle}
-            onChange={(e) => setEditableTitle(e.target.value)}
-            required
-            className="bg-slate-800 w-full px-3 py-2 border rounded-lg focus:outline-none"
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            htmlFor="content"
-            className="block text-gray-700 font-semibold mb-2"
-          >
-            Content:
-          </label>
-          <MarkdownEditor initialMarkdown={editableContent} onChange={setEditableContent} />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Update Article
-        </button>
-      </form>
-    </div>
-  );
-}
+  if (postId === null) {
+    return <div className="text-center p-8">Invalid article ID.</div>;
+  }
 
-const EditArticlePage = ({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
-  const { user, loading } = useAuth();
-  const [postId, setPostId] = useState<number | null>(null);
-
-  useEffect(() => {
-    const getSearchParams = async () => {
-      const params = await searchParams;
-      const postIdParam = params.post_id;
-      if (postIdParam) {
-        setPostId(Number(postIdParam));
-      }
-    };
-
-    getSearchParams();
-  }, [searchParams]);
-
-  if (!user) {
+  if (loading) {
     return <MinLoader />;
   }
 
   return (
-    <Suspense fallback={<MinLoader />}>
-      {postId && <EditArticleContent postId={postId} />}
-      {!postId && <div className="text-center p-8">Invalid article ID.</div>}
-    </Suspense>
+      <div className="min-h-screen text-white p-4 flex">
+        <SideMenu />
+        <ArticleForm 
+          postId={postId}
+          initialTitle={articleData.title}
+          initialContent={articleData.content}
+          onSuccess={handleSuccess}
+        />
+      </div>
   );
+}
+
+const EditArticlePage = () => {
+  const { user, loading } = useAuth();
+  const [postId, setPostId] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const postIdParam = searchParams.get('post_id');
+    if (postIdParam) {
+      setPostId(Number(postIdParam));
+    }
+  }, [searchParams]);
+
+  if (loading || !user) {
+    return <MinLoader />;
+  }
+
+  return <EditArticleContent postId={postId} />;
 }
 
 export default EditArticlePage;

@@ -10,8 +10,8 @@ export async function GET(req: Request): Promise<NextResponse> {
     try {
         const url = new URL(req.url);
         const postId = url.searchParams.get('post_id');
-        if(!postId) {
-            const todos = await getArticles(null);
+        if (!postId) {
+            const todos = await getArticles();
             return NextResponse.json(todos);
         } else {
             const article = await getArticle(postId);
@@ -56,9 +56,9 @@ export async function PUT(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
 
-        if (!data.title || !data.content) {
+        if (!data.post_id || !data.title || !data.content) {
             return NextResponse.json(
-                { error: "Missing required fields: title, content, and author_id are required" },
+                { error: "Missing required fields: post_id, title, and content are required" },
                 { status: 400 }
             )
         }
@@ -96,8 +96,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
 /**
  * 記事リストを取得する
  */
-async function getArticles(postId: string | null) {
-    logger.info(postId);
+async function getArticles() {
     return await prisma.post.findMany({
         select: {
             post_id: true,
