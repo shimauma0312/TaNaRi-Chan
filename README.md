@@ -25,7 +25,7 @@
 3. Start the application:
 
    ```bash
-   docker compose up
+   docker compose up -d
    ```
 
 4. Access
@@ -67,12 +67,12 @@ This project requires environment variables to be set up. Follow these steps to 
 Follow these steps to set up the database. This process is required when starting the application for the first time or after changing the Prisma schema.
 
 ```bash
-# Generate Prisma migration files
+# Prismaのマイグレーションファイルを生成（初期スキーマ定義時などに使用）
 npx prisma migrate dev --name init
 
-# Apply migrations
+# 既存のマイグレーションを本番環境に適応（開発環境では不要
 npx prisma migrate deploy
 
-# Regenerate Prisma Client
+# Prisma Client最新化
 npx prisma generate
 ```
