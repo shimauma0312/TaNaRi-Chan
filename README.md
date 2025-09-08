@@ -70,7 +70,7 @@ Follow these steps to set up the database. This process is required when startin
 # Prismaのマイグレーションファイルを生成（初期スキーマ定義時などに使用）
 npx prisma migrate dev --name init
 
-# 既存のマイグレーションを本番環境に適応（開発環境では不要
+# 既存のマイグレーションを本番環境に適応（ビルドしないなら不要
 npx prisma migrate deploy
 
 # Prisma Client最新化
