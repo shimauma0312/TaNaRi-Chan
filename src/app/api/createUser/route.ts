@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+import { generateUserId, hashPassword } from "@/lib/auth"
+import { AppError, createApiErrorResponse, ErrorType } from "@/utils/errorHandler"
 import { PrismaClient } from "@prisma/client"
-import { hashPassword, generateUserId } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
 
 const prisma = new PrismaClient()
 
@@ -11,18 +12,29 @@ interface UserRequestBody {
 }
 
 export async function POST(req: NextRequest) {
-  const body: UserRequestBody = await req.json()
   try {
+    const body: UserRequestBody = await req.json()
+    
+    // バリデーション
+    if (!body.email || !body.password || !body.userName) {
+      throw new AppError(
+        'Email, password, and username are required',
+        ErrorType.VALIDATION,
+        400
+      );
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { user_email: body.email },
     })
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "このメールアドレスは既に登録されています" },
-        { status: 400 },
-      )
+      throw new AppError(
+        'Email address is already registered',
+        ErrorType.VALIDATION,
+        400
+      );
     }
 
     // Generate user ID and hash password
@@ -42,13 +54,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       { message: "User registered successfully" },
-      { status: 200 },
+      { status: 201 },
     )
-  } catch (error: any) {
-    console.error("Error registering user:", error)
-    return NextResponse.json(
-      { error: error.message || "Error registering user" },
-      { status: 500 },
-    )
+  } catch (error) {
+    const errorResponse = createApiErrorResponse(error, 'Failed to register user');
+    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
   }
 }

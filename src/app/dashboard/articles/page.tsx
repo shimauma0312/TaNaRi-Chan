@@ -3,6 +3,7 @@
 import MinLoader from "@/components/MinLoader"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
+import { handleClientError } from "@/utils/errorHandler"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -51,6 +52,10 @@ const ArticlesPage = () => {
    * @param postId : number
    */
   const handleDelete = async (postId: number) => {
+    if (!confirm("Are you sure you want to delete this article?")) {
+      return;
+    }
+
     try {
       const response = await fetch(`/api/articles`, {
         method: "DELETE",
@@ -63,11 +68,13 @@ const ArticlesPage = () => {
       if (response.ok) {
         setArticles(articles.filter((article) => article.post_id !== postId))
       } else {
-        alert("Failed to delete article.")
+        const errorData = await response.json()
+        const errorMessage = errorData.error || "Failed to delete article"
+        alert(errorMessage)
       }
     } catch (error) {
-      console.error("Error:", error)
-      alert("An error occurred while deleting the article.")
+      const errorMessage = handleClientError(error, "An error occurred while deleting the article")
+      alert(errorMessage)
     }
   }
 
