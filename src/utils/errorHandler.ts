@@ -247,7 +247,7 @@ export const handleAuthError = (error: any): AppError => {
  * @returns AppError インスタンス
  */
 export const handleNetworkError = (error: any): AppError => {
-  if (error.name === 'NetworkError' || error.message.includes('fetch')) {
+  if (error.name === 'NetworkError' || (error.message && error.message.includes('fetch'))) {
     return new AppError(
       'Network connection failed. Please check your internet connection',
       ErrorType.NETWORK_ERROR,
