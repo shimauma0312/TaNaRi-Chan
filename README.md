@@ -76,3 +76,37 @@ npx prisma migrate deploy
 # Prisma Client最新化
 npx prisma generate
 ```
+
+## Testing
+
+This project includes comprehensive test coverage for error handling functionality using Jest.
+
+### Running Tests
+
+```bash
+# Navigate to src directory
+cd src
+
+# Run all tests once
+npm test
+
+# Run tests in watch mode (automatically re-run when files change)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Alternative: Use the test runner script
+chmod +x run-tests.sh
+./run-tests.sh --coverage
+```
+
+### Test Files
+
+- `__tests__/errorHandler.test.ts` - Comprehensive error handler test suite
+
+### Coverage Reports
+
+When running tests with coverage, reports are generated in:
+- `coverage/lcov-report/index.html` - HTML coverage report
+- `coverage/lcov.info` - LCOV format for CI/CD integration
