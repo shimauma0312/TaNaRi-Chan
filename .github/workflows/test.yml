@@ -35,7 +35,7 @@ jobs:
     - name: 依存関係をインストール
       run: |
         cd src
-        npm install --legacy-peer-deps
+        npm ci
     
     # セキュリティ監査
     - name: セキュリティ監査
