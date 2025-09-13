@@ -101,12 +101,3 @@ chmod +x run-tests.sh
 ./run-tests.sh --coverage
 ```
 
-### Test Files
-
-- `__tests__/errorHandler.test.ts` - Comprehensive error handler test suite
-
-### Coverage Reports
-
-When running tests with coverage, reports are generated in:
-- `coverage/lcov-report/index.html` - HTML coverage report
-- `coverage/lcov.info` - LCOV format for CI/CD integration
