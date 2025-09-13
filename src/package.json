@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@eslint/config-array": "^0.18.0",
+    "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.12.0",
     "@eslint/object-schema": "^2.1.4",
     "@testing-library/jest-dom": "^6.8.0",
