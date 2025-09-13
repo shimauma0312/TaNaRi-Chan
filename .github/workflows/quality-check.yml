@@ -1,7 +1,12 @@
 name: 品質チェック統合
 
-on:
-  push:
+on:    # Node.js をセットアップ
+    - name: Node.js をセットアップ
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'src/package*.json':
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
@@ -29,6 +34,10 @@ jobs:
     - name: 依存関係をインストール
       run: |
         cd src
+        # package-lock.jsonが存在しない場合は生成
+        if [ ! -f package-lock.json ]; then
+          npm install --package-lock-only
+        fi
         npm ci
     
     # TypeScript 型チェック
