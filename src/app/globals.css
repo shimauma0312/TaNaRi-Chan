@@ -20,6 +20,16 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* カスタムユーティリティを直接定義 */
+.bg-custom-bg {
+  background-color: #171A0F !important;
+}
+
+.bg-tile {
+  background-image: url('/images/tile.png') !important;
+  background-repeat: repeat !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
