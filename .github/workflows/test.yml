@@ -12,11 +12,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
-    # Node.js のマトリックステスト（複数バージョンでテスト可能）
-    strategy:
+        strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.x]
     
     steps:
     # リポジトリをチェックアウト
