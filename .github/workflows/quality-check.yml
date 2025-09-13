@@ -48,6 +48,10 @@ jobs:
       run: |
         cd src
         npm run test -- --verbose --coverage --watchAll=false --passWithNoTests
+      env:
+        NODE_ENV: test
+        CI: true
+        DATABASE_URL: "postgresql://test:test@localhost:5432/testdb"
     
     # テスト結果をコメントに追加（PR時のみ）
     - name: テスト結果をPRにコメント

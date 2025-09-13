@@ -12,7 +12,14 @@ services:
     environment:
       - WATCHPACK_POLLING=true
       - DATABASE_URL=postgresql://postgres:example_password@db:5432/app_db
+      - NODE_OPTIONS=--max-old-space-size=4096
     command: sh -c "npm install --legacy-peer-deps && npx prisma generate && npx prisma migrate deploy && npm run dev"
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+        reservations:
+          memory: 2G
     depends_on:
       - db
 

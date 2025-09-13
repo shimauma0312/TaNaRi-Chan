@@ -38,6 +38,7 @@ jobs:
         npm run build
       env:
         NODE_ENV: production
+        DATABASE_URL: "postgresql://test:test@localhost:5432/testdb"
     
     # ビルド成果物を一時保存（デプロイ用）
     - name: ビルド成果物を保存

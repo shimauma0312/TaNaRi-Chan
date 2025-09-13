@@ -147,6 +147,7 @@ async function createArticle(data: { title: string; content: string; author_id: 
             },
         })
     } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         throw handleDatabaseError(error as any);
     }
 }
@@ -166,6 +167,7 @@ async function updateArticle(data: { post_id: number; title: string; content: st
             },
         })
     } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         throw handleDatabaseError(error as any);
     }
 }
@@ -181,6 +183,7 @@ async function deleteArticle(post_id: number) {
             },
         })
     } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         throw handleDatabaseError(error as any);
     }
 }

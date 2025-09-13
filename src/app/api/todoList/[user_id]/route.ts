@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server"
 import { getTodo } from "@/service/todoService"
+import { NextRequest, NextResponse } from "next/server"
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } },

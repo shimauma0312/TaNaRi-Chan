@@ -48,6 +48,10 @@ jobs:
       run: |
         cd src
         npm run test -- --passWithNoTests --silent --watchAll=false
+      env:
+        NODE_ENV: test
+        CI: true
+        DATABASE_URL: "postgresql://test:test@localhost:5432/testdb"
     
     # ESLint 実行
     - name: ESLint 実行
@@ -68,6 +72,7 @@ jobs:
         npm run build
       env:
         NODE_ENV: production
+        DATABASE_URL: "postgresql://test:test@localhost:5432/testdb"
     
     # 検証完了メッセージ
     - name: 検証完了
