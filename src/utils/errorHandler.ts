@@ -16,6 +16,49 @@ export enum ErrorType {
 }
 
 /**
+ * Prismaエラー型
+ */
+export interface PrismaError extends Error {
+  /** Prismaエラーコード (例: P2002, P2003, P2025) */
+  code: string;
+  /** エラーメタ */
+  meta?: {
+    /** 対象フィールド名 */
+    target?: string | string[];
+    /** 制約名 */
+    constraint?: string;
+    /** 詳細 */
+    [key: string]: any;
+  };
+  /** クライアントバージョン */
+  clientVersion?: string;
+  /** その他プロパティ */
+  [key: string]: any;
+}
+
+/**
+ * 認証エラーの型定義
+ */
+export interface AuthError extends Error {
+  /** 認証エラーコード */
+  code: string;
+  /** その他のプロパティ */
+  [key: string]: any;
+}
+
+/**
+ * ネットワークエラーの型定義
+ */
+export interface NetworkError extends Error {
+  /** エラーの名前 */
+  name: string;
+  /** エラーメッセージ */
+  message: string;
+  /** その他のプロパティ */
+  [key: string]: any;
+}
+
+/**
  * カスタムエラークラス
  *
  * @example
@@ -165,12 +208,20 @@ export const handleClientError = (error: unknown, fallbackMessage: string): stri
  * @param error - Prismaエラー
  * @returns AppError インスタンス
  */
-export const handleDatabaseError = (error: any): AppError => {
+export const handleDatabaseError = (error: PrismaError): AppError => {
+  logger.error('Database Error', {
+    code: error.code,
+    message: error.message,
+    meta: error.meta,
+    clientVersion: error.clientVersion,
+  });
+
   // Prismaエラーコードに基づく処理
   switch (error.code) {
     case 'P2002':
+      const duplicateField = error.meta?.target ? ` (${Array.isArray(error.meta.target) ? error.meta.target.join(', ') : error.meta.target})` : '';
       return new AppError(
-        'Duplicate data constraint violation',
+        `Duplicate data constraint violation${duplicateField}`,
         ErrorType.VALIDATION,
         400
       );
@@ -186,9 +237,39 @@ export const handleDatabaseError = (error: any): AppError => {
         ErrorType.NOT_FOUND,
         404
       );
+    case 'P2004':
+      return new AppError(
+        'A constraint failed on the database',
+        ErrorType.VALIDATION,
+        400
+      );
+    case 'P2015':
+      return new AppError(
+        'A related record could not be found',
+        ErrorType.NOT_FOUND,
+        404
+      );
+    case 'P2016':
+      return new AppError(
+        'Query interpretation error',
+        ErrorType.VALIDATION,
+        400
+      );
+    case 'P2021':
+      return new AppError(
+        'The table does not exist in the current database',
+        ErrorType.DATABASE_ERROR,
+        500
+      );
+    case 'P2022':
+      return new AppError(
+        'The column does not exist in the current database',
+        ErrorType.DATABASE_ERROR,
+        500
+      );
     default:
       return new AppError(
-        'Database error occurred',
+        `Database error occurred: ${error.message}`,
         ErrorType.DATABASE_ERROR,
         500
       );
@@ -200,7 +281,12 @@ export const handleDatabaseError = (error: any): AppError => {
  * @param error - 認証エラー
  * @returns AppError インスタンス
  */
-export const handleAuthError = (error: any): AppError => {
+export const handleAuthError = (error: AuthError): AppError => {
+  logger.error('Authentication Error', {
+    code: error.code,
+    message: error.message,
+  });
+
   switch (error.code) {
     case 'auth/user-not-found':
       return new AppError(
@@ -234,7 +320,7 @@ export const handleAuthError = (error: any): AppError => {
       );
     default:
       return new AppError(
-        'Authentication error occurred',
+        `Authentication error occurred: ${error.message}`,
         ErrorType.AUTHENTICATION,
         401
       );
@@ -246,7 +332,12 @@ export const handleAuthError = (error: any): AppError => {
  * @param error - ネットワークエラー
  * @returns AppError インスタンス
  */
-export const handleNetworkError = (error: any): AppError => {
+export const handleNetworkError = (error: NetworkError): AppError => {
+  logger.error('Network Error', {
+    name: error.name,
+    message: error.message,
+  });
+
   if (error.name === 'NetworkError' || (error.message && error.message.includes('fetch'))) {
     return new AppError(
       'Network connection failed. Please check your internet connection',
@@ -256,7 +347,7 @@ export const handleNetworkError = (error: any): AppError => {
   }
 
   return new AppError(
-    'Communication error occurred',
+    `Communication error occurred: ${error.message}`,
     ErrorType.NETWORK_ERROR,
     503
   );
