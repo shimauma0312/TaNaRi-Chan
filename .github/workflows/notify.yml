@@ -13,7 +13,7 @@ jobs:
     
     steps:
     - name: テスト失敗を通知
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const workflowName = '${{ github.event.workflow_run.name }}';
@@ -40,7 +40,7 @@ jobs:
     
     steps:
     - name: テスト成功を通知
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const workflowName = '${{ github.event.workflow_run.name }}';
