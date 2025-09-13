@@ -1,0 +1,65 @@
+name: テスト自動実行
+
+# プッシュとプルリクエストのトリガー
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+    # feature ブランチから develop への PR も含む
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    # Node.js のマトリックステスト（複数バージョンでテスト可能）
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    # リポジトリをチェックアウト
+    - name: リポジトリをチェックアウト
+      uses: actions/checkout@v4
+    
+    # Node.js をセットアップ
+    - name: Node.js ${{ matrix.node-version }} をセットアップ
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: src/package-lock.json
+    
+    # 依存関係をインストール
+    - name: 依存関係をインストール
+      run: |
+        cd src
+        npm ci
+    
+    # ESLint によるコード検証
+    - name: ESLint 実行
+      run: |
+        cd src
+        npm run lint
+    
+    # Jest テストを実行
+    - name: Jest テスト実行
+      run: |
+        cd src
+        npm run test
+    
+    # テストカバレッジを生成
+    - name: テストカバレッジ生成
+      run: |
+        cd src
+        npm run test:coverage
+    
+    # カバレッジレポートをアップロード（オプション）
+    - name: カバレッジレポートをアップロード
+      uses: codecov/codecov-action@v3
+      with:
+        file: src/coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false

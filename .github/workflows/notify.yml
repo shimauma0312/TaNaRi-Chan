@@ -1,0 +1,62 @@
+name: テスト失敗時の通知
+
+on:
+  workflow_run:
+    workflows: ["テスト自動実行", "品質チェック統合"]
+    types:
+      - completed
+
+jobs:
+  notify-on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    
+    steps:
+    - name: テスト失敗を通知
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const workflowName = '${{ github.event.workflow_run.name }}';
+          const runUrl = '${{ github.event.workflow_run.html_url }}';
+          const headSha = '${{ github.event.workflow_run.head_sha }}';
+          
+          // コミットに対してステータスを設定
+          await github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: headSha,
+            state: 'failure',
+            target_url: runUrl,
+            description: `${workflowName} が失敗しました`,
+            context: 'continuous-integration'
+          });
+          
+          console.log(`❌ ${workflowName} が失敗しました`);
+          console.log(`🔗 詳細: ${runUrl}`);
+  
+  notify-on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+    - name: テスト成功を通知
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const workflowName = '${{ github.event.workflow_run.name }}';
+          const runUrl = '${{ github.event.workflow_run.html_url }}';
+          const headSha = '${{ github.event.workflow_run.head_sha }}';
+          
+          // コミットに対してステータスを設定
+          await github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: headSha,
+            state: 'success',
+            target_url: runUrl,
+            description: `${workflowName} が正常に完了しました`,
+            context: 'continuous-integration'
+          });
+          
+          console.log(`✅ ${workflowName} が正常に完了しました`);
+          console.log(`🔗 詳細: ${runUrl}`);

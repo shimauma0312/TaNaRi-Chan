@@ -1,0 +1,48 @@
+name: ビルド検証
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+    # feature ブランチから develop への PR も含む
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # リポジトリをチェックアウト
+    - name: リポジトリをチェックアウト
+      uses: actions/checkout@v4
+    
+    # Node.js をセットアップ
+    - name: Node.js をセットアップ
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: src/package-lock.json
+    
+    # 依存関係をインストール
+    - name: 依存関係をインストール
+      run: |
+        cd src
+        npm ci
+    
+    # Next.js アプリケーションをビルド
+    - name: Next.js ビルド
+      run: |
+        cd src
+        npm run build
+      env:
+        NODE_ENV: production
+    
+    # ビルド成果物を一時保存（デプロイ用）
+    - name: ビルド成果物を保存
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-files
+        path: src/.next/
+        retention-days: 1
