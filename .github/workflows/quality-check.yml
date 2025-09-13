@@ -29,7 +29,7 @@ jobs:
     - name: 依存関係をインストール
       run: |
         cd src
-        npm ci
+        npm install --legacy-peer-deps
     
     # TypeScript 型チェック
     - name: TypeScript 型チェック
