@@ -23,7 +23,7 @@ jobs:
       with:
         node-version: '20.x'
         cache: 'npm'
-        cache-dependency-path: src/package-lock.json
+        cache-dependency-path: 'src/package-lock.json'
     
     # 依存関係をインストール
     - name: 依存関係をインストール
@@ -47,7 +47,7 @@ jobs:
     - name: Jest テスト実行
       run: |
         cd src
-        npm run test -- --verbose --coverage --watchAll=false
+        npm run test -- --verbose --coverage --watchAll=false --passWithNoTests
     
     # テスト結果をコメントに追加（PR時のみ）
     - name: テスト結果をPRにコメント

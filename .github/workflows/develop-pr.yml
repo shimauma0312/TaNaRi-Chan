@@ -35,7 +35,7 @@ jobs:
       with:
         node-version: '20.x'
         cache: 'npm'
-        cache-dependency-path: src/package-lock.json
+        cache-dependency-path: 'src/package-lock.json'
     
     # 依存関係をインストール
     - name: 依存関係をインストール
@@ -47,7 +47,7 @@ jobs:
     - name: 高速テスト実行
       run: |
         cd src
-        npm run test -- --passWithNoTests --silent
+        npm run test -- --passWithNoTests --silent --watchAll=false
     
     # ESLint 実行
     - name: ESLint 実行

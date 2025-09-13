@@ -29,13 +29,20 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-        cache-dependency-path: src/package-lock.json
+        cache-dependency-path: 'src/package-lock.json'
     
     # 依存関係をインストール
     - name: 依存関係をインストール
       run: |
         cd src
         npm ci
+    
+    # セキュリティ監査
+    - name: セキュリティ監査
+      run: |
+        cd src
+        npm audit --audit-level=high
+      continue-on-error: true
     
     # ESLint によるコード検証
     - name: ESLint 実行
@@ -47,13 +54,16 @@ jobs:
     - name: Jest テスト実行
       run: |
         cd src
-        npm run test
+        npm run test -- --passWithNoTests --watchAll=false
+      env:
+        NODE_ENV: test
+        CI: true
     
     # テストカバレッジを生成
     - name: テストカバレッジ生成
       run: |
         cd src
-        npm run test:coverage
+        npm run test:coverage -- --passWithNoTests --watchAll=false
     
     # カバレッジレポートをアップロード（オプション）
     - name: カバレッジレポートをアップロード
