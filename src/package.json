@@ -16,6 +16,7 @@
     "@prisma/client": "^6.16.1",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/bcryptjs": "^2.4.6",
+    "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.2",
     "easymde": "^2.20.0",
     "github-markdown-css": "^5.8.1",
