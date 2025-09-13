@@ -1,0 +1,172 @@
+/**
+ * ロギングユーティリティ
+ * 
+ * - サーバーサイド: winston ライブラリによるファイル出力
+ * - クライアントサイド: console API によるフォールバック
+ * 
+ * @example
+ * import logger from '@/utils/logger';
+ * 
+ * logger.info('処理開始');
+ * logger.error('エラーが発生しました');
+ * logger.warn('警告メッセージ');
+ * logger.debug('デバッグ情報');
+ * 
+ * // コンテキスト情報付きログ
+ * logger.info('ユーザーログイン', { userId: '12345' });
+ */
+
+/**
+ * ログコンテキスト情報の型定義
+ */
+interface LogContext {
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+/**
+ * ロガーインターフェース
+ * winston,ClientLogger の共通メソッド
+ */
+interface ILogger {
+  /**
+   * 情報レベルログ出力
+   * @param message ログメッセージ
+   * @param context 追加コンテキスト情報
+   */
+  info(message: string, context?: LogContext): void;
+
+  /**
+   * エラーレベルログ出力
+   * @param message エラーメッセージ
+   * @param context エラー詳細情報
+   */
+  error(message: string, context?: LogContext): void;
+
+  /**
+   * 警告レベルログ出力
+   * @param message 警告メッセージ
+   * @param context 警告関連情報
+   */
+  warn(message: string, context?: LogContext): void;
+
+  /**
+   * デバッグレベルログ出力
+   * @param message デバッグメッセージ
+   * @param context デバッグ情報
+   */
+  debug(message: string, context?: LogContext): void;
+}
+
+/**
+ * クライアントサイドで使うコンソールベースロガー
+ * 
+ * - ブラウザ向け Console API ラッパー
+ * 
+ * @example
+ * const logger = new ClientLogger();
+ * logger.info('情報ログ');
+ * logger.error('エラーログ');
+ * logger.warn('警告ログ');
+ * logger.debug('デバッグログ');
+ */
+class ClientLogger implements ILogger {
+  /**
+   * 情報レベルログ出力
+   * @param message ログメッセージ
+   * @param context 追加コンテキスト情報
+   */
+  info(message: string, context?: LogContext) {
+    if (typeof window !== 'undefined') {
+      console.log(`[INFO] ${message}`, context || '');
+    }
+  }
+
+  /**
+   * エラーレベルログ出力
+   * @param message エラーメッセージ
+   * @param context エラー詳細情報
+   */
+  error(message: string, context?: LogContext) {
+    if (typeof window !== 'undefined') {
+      console.error(`[ERROR] ${message}`, context || '');
+    }
+  }
+
+  /**
+   * 警告レベルログ出力
+   * @param message 警告メッセージ
+   * @param context 警告関連情報
+   */
+  warn(message: string, context?: LogContext) {
+    if (typeof window !== 'undefined') {
+      console.warn(`[WARN] ${message}`, context || '');
+    }
+  }
+
+  /**
+   * デバッグレベルログ出力
+   * @param message デバッグメッセージ
+   * @param context デバッグ情報
+   */
+  debug(message: string, context?: LogContext) {
+    if (typeof window !== 'undefined') {
+      console.debug(`[DEBUG] ${message}`, context || '');
+    }
+  }
+}
+
+/**
+ * ロガーインスタンス変数
+ * 
+ * 概要
+ * - 実行環境に応じて格納するロガーインスタンスをかえる
+ * - サーバーサイド: winston ベース
+ * - クライアントサイド: console ベース
+ * 
+ * 型定義
+ * 
+ * @type {ILogger}
+ */
+let logger: ILogger;
+
+/**
+ * 環境別ロガーインスタンス初期化処理
+ * 
+ */
+if (typeof window === 'undefined') {
+  // サーバーサイド環境: winston ロガー使用を試行
+  try {
+    logger = require('@/logging/logging').default;
+  } catch (error) {
+    // winston が利用できない場合はクライアントロガーにフォールバック
+    logger = new ClientLogger();
+  }
+} else {
+  // クライアントサイド環境: console ベースのロガー使用
+  logger = new ClientLogger();
+}
+
+/**
+ * 統一ロガーインスタンス
+ * 
+ * ```typescript
+ * import logger from '@/utils/logger';
+ * 
+ * // 各ログレベルでの出力
+ * logger.info('情報ログ');
+ * logger.error('エラーログ');
+ * logger.warn('警告ログ');
+ * logger.debug('デバッグログ');
+ * 
+ * // コンテキスト付きログ
+ * logger.info('処理完了', { duration: 100, status: 'success' });
+ * ```
+ * 
+ * - 環境で自動的にロガーを切り替える
+ * 
+ * @exports logger
+ * @default logger
+ */
+export default logger;
+
+export type { ILogger, LogContext };

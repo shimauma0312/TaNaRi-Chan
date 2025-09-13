@@ -1,12 +1,9 @@
 "use client"
 
-import { auth } from "@/app/firebaseConfig"
 import MinLoader from "@/components/MinLoader"
-import { useAccess } from "@/hooks/useDashboardAccess"
-import { onAuthStateChanged, signOut, User } from "firebase/auth"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import ShakeImage from "@/components/ShakeImage"
+import SideMenu from "@/components/SideMenu"
+import useAuth from "@/hooks/useAuth"
 
 const mockData = {
   timelineArticles: [
@@ -71,77 +68,27 @@ const mockData = {
 }
 
 const DashboardPage = () => {
-  const [user, setUser] = useState<User | null>(null)
-  const router = useRouter()
-  const accessCount = useAccess()
+  const { user, loading } = useAuth()
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user)
-      } else {
-        router.push("login")
-      }
-    })
-
-    return () => unsubscribe()
-  }, [router])
-
-  const handleLogout = async () => {
-    await signOut(auth)
-    router.push("login")
-  }
-
-  if (!user) {
+  if (loading || !user) {
     return <MinLoader />
   }
 
   return (
     <div className="min-h-screen text-white p-4 flex">
-      <div className="w-1/5 p-4">
-        <nav className="space-y-4">
-          <Link
-            href="/dashboard/todoList"
-            className="block text-lg text-indigo-400 hover:text-indigo-300"
-          >
-            My Todo List
-          </Link>
-          <Link
-            href="/dashboard/otherTodos"
-            className="block text-lg text-indigo-400 hover:text-indigo-300"
-          >
-            Other's Todo List
-          </Link>
-          <Link
-            href="/dashboard/articles"
-            className="block text-lg text-indigo-400 hover:text-indigo-300"
-          >
-            Other's Articles
-          </Link>
-          <Link
-            href="/dashboard/myPage"
-            className="block text-lg text-indigo-400 hover:text-indigo-300"
-          >
-            My Page
-          </Link>
-          <button
-            className="block w-full bg-red-500 text-lg text-white py-1 px-3 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </nav>
-      </div>
-      <div className="w-4/5 p-4">
+      <SideMenu />
+      <div className="w-4/5 p-4 relative">
         <div className="container mx-auto">
           <div className="mb-6">
             <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-xl">Welcome, {user.email}</p>
+            <p className="text-xl">Welcome, {user.user_email}</p>
             <p className="text-lg">
               Today's Date: {new Date().toLocaleDateString()}
             </p>
-            <p className="text-lg">Access Count: {accessCount}</p>
           </div>
+          
+          <ShakeImage />
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
               <h2 className="text-2xl font-bold mb-4">
@@ -150,10 +97,10 @@ const DashboardPage = () => {
               <ul className="space-y-2">
                 {mockData.timelineArticles.map((article) => (
                   <li key={article.id} className="p-2 border rounded-md">
-                    <Link href="" className="block hover:underline">
+                    <div className="block hover:underline cursor-pointer">
                       <h3 className="font-bold">{article.title}</h3>
                       <p>{article.content}</p>
-                    </Link>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -163,13 +110,13 @@ const DashboardPage = () => {
               <ul className="space-y-2">
                 {mockData.activeTodos.map((todo) => (
                   <li key={todo.id} className="p-2 border rounded-md">
-                    <Link href="" className="block hover:underline">
+                    <div className="block hover:underline cursor-pointer">
                       <h3 className="font-bold">{todo.title}</h3>
                       <p>{todo.description}</p>
                       <p>
                         Deadline: {new Date(todo.deadline).toLocaleDateString()}
                       </p>
-                    </Link>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -179,13 +126,13 @@ const DashboardPage = () => {
               <ul className="space-y-2">
                 {mockData.publicTodos.map((todo) => (
                   <li key={todo.id} className="p-2 border rounded-md">
-                    <Link href="" className="block hover:underline">
+                    <div className="block hover:underline cursor-pointer">
                       <h3 className="font-bold">{todo.title}</h3>
                       <p>{todo.description}</p>
                       <p>
                         Deadline: {new Date(todo.deadline).toLocaleDateString()}
                       </p>
-                    </Link>
+                    </div>
                   </li>
                 ))}
               </ul>

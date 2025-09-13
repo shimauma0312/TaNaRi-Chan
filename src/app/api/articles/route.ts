@@ -1,6 +1,8 @@
 import logger from "@/logging/logging";
+import { AppError, createApiErrorResponse, ErrorType, handleDatabaseError } from "@/utils/errorHandler";
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
+
 const prisma = new PrismaClient()
 
 /*
@@ -9,13 +11,25 @@ const prisma = new PrismaClient()
 export async function GET(req: Request): Promise<NextResponse> {
     try {
         const url = new URL(req.url);
-        const postId = url.searchParams.get('postId');
-        const todos = await getArticles(postId);
-        return NextResponse.json(todos);
+        const postId = url.searchParams.get('post_id');
+        if (!postId) {
+            const todos = await getArticles();
+            return NextResponse.json(todos);
+        } else {
+            const article = await getArticle(postId);
+            if (article) {
+                return NextResponse.json(article);
+            } else {
+                throw new AppError(
+                    'Article not found',
+                    ErrorType.NOT_FOUND,
+                    404
+                );
+            }
+        }
     } catch (error) {
-        // 空を返す
-        logger.error(error);
-        return NextResponse.json([]);
+        const errorResponse = createApiErrorResponse(error, 'Failed to fetch articles');
+        return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
 
@@ -23,12 +37,21 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
+
+        if (!data.title || !data.content || !data.author_id) {
+            throw new AppError(
+                'Title, content, and author ID are required',
+                ErrorType.VALIDATION,
+                400
+            );
+        }
+
         const newPost = await createArticle(data)
-        logger.info(newPost)
-        return NextResponse.json(newPost)
+        logger.info('Article created successfully', { postId: newPost.post_id });
+        return NextResponse.json(newPost, { status: 201 })
     } catch (error) {
-        logger.error(error)
-        return NextResponse.json({ error: "Failed to create article" }, { status: 500 })
+        const errorResponse = createApiErrorResponse(error, 'Failed to create article');
+        return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
 
@@ -36,12 +59,21 @@ export async function POST(req: Request): Promise<NextResponse> {
 export async function PUT(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
+
+        if (!data.post_id || !data.title || !data.content) {
+            throw new AppError(
+                'Post ID, title, and content are required',
+                ErrorType.VALIDATION,
+                400
+            );
+        }
+
         const updatedPost = await updateArticle(data)
-        logger.info(updatedPost)
+        logger.info('Article updated successfully', { postId: updatedPost.post_id });
         return NextResponse.json(updatedPost)
     } catch (error) {
-        logger.error(error)
-        return NextResponse.json({ error: "Failed to update article" }, { status: 500 })
+        const errorResponse = createApiErrorResponse(error, 'Failed to update article');
+        return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
 
@@ -49,20 +81,42 @@ export async function PUT(req: Request): Promise<NextResponse> {
 export async function DELETE(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
+
+        if (!data.post_id) {
+            throw new AppError(
+                'Post ID is required',
+                ErrorType.VALIDATION,
+                400
+            );
+        }
+
         const deletedPost = await deleteArticle(data.post_id)
-        logger.info(deletedPost)
+        logger.info('Article deleted successfully', { postId: data.post_id });
         return NextResponse.json(deletedPost)
     } catch (error) {
-        logger.error(error)
-        return NextResponse.json({ error: "Failed to delete article" }, { status: 500 })
+        const errorResponse = createApiErrorResponse(error, 'Failed to delete article');
+        return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
 
 /**
  * 記事リストを取得する
- * reqがnullの場合は全ての記事を取得する
  */
-async function getArticles(postId: string | null) {
+async function getArticles() {
+    return await prisma.post.findMany({
+        select: {
+            post_id: true,
+            title: true,
+            content: true,
+            createdAt: true,
+        }
+    })
+}
+
+/**
+ * 指定された記事を取得する
+ */
+async function getArticle(postId: string | null) {
     logger.info(postId);
     if (postId !== null) {
         return await prisma.post.findUnique({
@@ -73,18 +127,11 @@ async function getArticles(postId: string | null) {
                 post_id: true,
                 title: true,
                 content: true,
-            }
-        })
-    } else {
-        return await prisma.post.findMany({
-            select: {
-                post_id: true,
-                title: true,
-                content: true,
-                // 他の必要なカラムを追加
+                createdAt: true,
             }
         })
     }
+    return null; // postIdがnullの場合はnullを返す
 }
 
 /**
@@ -100,13 +147,7 @@ async function createArticle(data: any) {
             },
         })
     } catch (error: any) {
-        // author_idが存在しない場合のエラー
-        if (error.code === 'P2003' && error.meta?.field_name?.includes('author_id')) {
-            logger.error('Error creating article: Author ID does not exist', { error })
-        } else {
-            logger.error('Error creating article', { error })
-        }
-        throw error
+        throw handleDatabaseError(error);
     }
 }
 
@@ -125,8 +166,7 @@ async function updateArticle(data: any) {
             },
         })
     } catch (error) {
-        logger.error('Error updating article', { error });
-        throw error;
+        throw handleDatabaseError(error);
     }
 }
 
@@ -141,7 +181,6 @@ async function deleteArticle(post_id: number) {
             },
         })
     } catch (error) {
-        logger.error('Error deleting article', { error });
-        throw error;
+        throw handleDatabaseError(error);
     }
 }

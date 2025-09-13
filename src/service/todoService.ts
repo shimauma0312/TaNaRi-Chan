@@ -9,7 +9,7 @@ const prisma = new PrismaClient()
 export async function getTodo(userId: string) {
   const todos = await prisma.todo.findMany({
     where: {
-      user_id: userId,
+      id: userId,
     },
   })
   return todos
@@ -33,7 +33,7 @@ async function insertTodo(
       description: todoData.description,
       todo_deadline: todoData.deadline,
       is_public: todoData.is_public,
-      user_id: userId,
+      id: userId,
     },
   })
 }

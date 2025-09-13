@@ -1,8 +1,17 @@
 "use client"
 
 import MinLoader from "@/components/MinLoader"
+import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
+import { handleClientError } from "@/utils/errorHandler"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+
+interface Article {
+  post_id: number;
+  title: string;
+  createdAt: string;
+}
 
 const getArticles = async () => {
   const response = await fetch("/api/articles")
@@ -11,26 +20,31 @@ const getArticles = async () => {
 }
 
 const ArticlesPage = () => {
-  const user = useAuth()
-  const [articles, setArticles] = useState<any[]>([]) // 記事データの状態を追加
+  const { user, loading } = useAuth()
+  const [articles, setArticles] = useState<Article[]>([])
+  const router = useRouter()
 
   useEffect(() => {
     if (user) {
       const fetchData = async () => {
-        const articlesData = await getArticles() // 記事データを取得
-        setArticles(articlesData) // 記事データを状態に設定
+        const articlesData = await getArticles()
+        setArticles(articlesData)
       }
 
       fetchData()
     }
   }, [user])
 
+  if (loading || !user) {
+    return <MinLoader />
+  }
+
   /**
    * 記事を編集する
    * @param postId : number
    */
   const handleEdit = (postId: number) => {
-    window.location.href = `/dashboard/articles/edit?post_id=${postId}`
+    router.push(`/dashboard/articles/edit?post_id=${postId}`)
   }
 
   /**
@@ -38,6 +52,10 @@ const ArticlesPage = () => {
    * @param postId : number
    */
   const handleDelete = async (postId: number) => {
+    if (!confirm("Are you sure you want to delete this article?")) {
+      return;
+    }
+
     try {
       const response = await fetch(`/api/articles`, {
         method: "DELETE",
@@ -50,11 +68,13 @@ const ArticlesPage = () => {
       if (response.ok) {
         setArticles(articles.filter((article) => article.post_id !== postId))
       } else {
-        alert("Failed to delete article.")
+        const errorData = await response.json()
+        const errorMessage = errorData.error || "Failed to delete article"
+        alert(errorMessage)
       }
     } catch (error) {
-      console.error("Error:", error)
-      alert("An error occurred while deleting the article.")
+      const errorMessage = handleClientError(error, "An error occurred while deleting the article")
+      alert(errorMessage)
     }
   }
 
@@ -63,48 +83,52 @@ const ArticlesPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Articles</h1>
-        <a
-          href="/dashboard/articles/register"
-          className="inline-block px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700"
-        >
-          New Article
-        </a>
-      </div>
-      {articles.length === 0 ? (
-        <p>記事が見つかりません</p>
-      ) : (
-        <ul className="space-y-4">
-          {articles.map((article) => (
-            <li
-              key={article.post_id}
-              className="p-4 border rounded-lg shadow-md"
+    <div className="min-h-screen text-white p-4 flex">
+      <SideMenu />
+      <div className="w-4/5 p-4">
+        <div className="container mx-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold">Articles</h1>
+            <button
+              onClick={() => router.push("/dashboard/articles/register")}
+              className="inline-block px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700"
             >
-              <h2 className="text-xl font-semibold">{article.title}</h2>
-              <p className="text-white">{article.content}</p>
-              <p className="text-white">
-                Published: {new Date(article.published_at).toLocaleDateString()}
-              </p>
-              <div className="flex space-x-2 mt-2">
-                <button
-                  onClick={() => handleEdit(article.post_id)}
-                  className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-700"
+              New Article
+            </button>
+          </div>
+          {articles.length === 0 ? (
+            <p>記事が見つかりません</p>
+          ) : (
+            <ul className="space-y-4">
+              {articles.map((article) => (
+                <li
+                  key={article.post_id}
+                  className="p-4 border rounded-lg shadow-md"
                 >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(article.post_id)}
-                  className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+                  <h2 className="text-xl font-semibold">{article.title}</h2>
+                  <p className="text-white">
+                    Published: {new Date(article.createdAt).toLocaleDateString()}
+                  </p>
+                  <div className="flex space-x-2 mt-2">
+                    <button
+                      onClick={() => handleEdit(article.post_id)}
+                      className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(article.post_id)}
+                      className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

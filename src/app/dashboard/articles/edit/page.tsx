@@ -1,118 +1,95 @@
 "use client"
 
-import MarkdownEditor from "@/components/markdown/markdownEditor"
+import ArticleForm from "@/components/ArticleForm"
 import MinLoader from "@/components/MinLoader"
+import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
-const EditArticlePage = () => {
-  const user = useAuth()
-  const router = useRouter()
-  const [title, setTitle] = useState("")
-  const [content, setContent] = useState("")
-  const [postId, setPostId] = useState<number | null>(null)
+async function fetchArticleData(postId: number) {
+  try {
+    const response = await fetch(`/api/articles?post_id=${postId}`);
+    const data = await response.json();
+    return {
+      title: data.title ?? "",
+      content: data.content ?? ""
+    };
+  } catch (error) {
+    console.error("Error fetching article:", error);
+    return { title: "", content: "" };
+  }
+}
+
+function EditArticleContent({ postId }: { postId: number | null }) {
+  const router = useRouter();
+  const [articleData, setArticleData] = useState({ title: "", content: "" });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const postIdParam = urlParams.get("post_id")
-    if (postIdParam) {
-      setPostId(Number(postIdParam))
-      fetchArticle(Number(postIdParam))
-    }
-  }, [])
-
-  const fetchArticle = async (postId: number) => {
-    try {
-      const response = await fetch(`/api/articles?post_id=${postId}`)
-      const data = await response.json()
-      setTitle(data.title)
-      setContent(data.content)
-    } catch (error) {
-      console.error("Error fetching article:", error)
-    }
-  }
-
-  /**
-   * 記事を更新する
-   * @param event : React.FormEvent
-   */
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-
-    if (!postId) {
-      alert("Invalid post ID.")
-      return
+    if (postId === null) {
+      setLoading(false);
+      return;
     }
 
-    const updatedPost = {
-      post_id: postId,
-      title,
-      content,
-    }
-
-    try {
-      const response = await fetch("/api/articles", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedPost),
-      })
-
-      if (response.ok) {
-        router.push("/dashboard/articles")
-      } else {
-        alert("Failed to update article.")
+    const loadArticleData = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchArticleData(postId);
+        setArticleData(data);
+      } catch (error) {
+        console.error("Failed to load article:", error);
+        setArticleData({ title: "", content: "" });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error:", error)
-      alert("An error occurred while updating the article.")
-    }
+    };
+
+    loadArticleData();
+  }, [postId]);
+
+  const handleSuccess = () => {
+    router.push("/dashboard/articles");
+  };
+
+  if (postId === null) {
+    return <div className="text-center p-8">Invalid article ID.</div>;
   }
 
-  if (!user) {
-    return <MinLoader />
+  if (loading) {
+    return <MinLoader />;
   }
 
   return (
-    <div className="max-w-md mx-auto p-8 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Edit Article</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label
-            htmlFor="title"
-            className="block text-gray-700 font-semibold mb-2"
-          >
-            Title:
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="bg-slate-800 w-full px-3 py-2 border rounded-lg focus:outline-none"
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            htmlFor="content"
-            className="block text-gray-700 font-semibold mb-2"
-          >
-            Content:
-          </label>
-          <MarkdownEditor initialMarkdown={content} onChange={setContent} />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Update Article
-        </button>
-      </form>
-    </div>
-  )
+      <div className="min-h-screen text-white p-4 flex">
+        <SideMenu />
+        <ArticleForm 
+          postId={postId}
+          initialTitle={articleData.title}
+          initialContent={articleData.content}
+          onSuccess={handleSuccess}
+        />
+      </div>
+  );
 }
 
-export default EditArticlePage
+const EditArticlePage = () => {
+  const { user, loading } = useAuth();
+  const [postId, setPostId] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const postIdParam = searchParams.get('post_id');
+    if (postIdParam) {
+      setPostId(Number(postIdParam));
+    }
+  }, [searchParams]);
+
+  if (loading || !user) {
+    return <MinLoader />;
+  }
+
+  return <EditArticleContent postId={postId} />;
+}
+
+export default EditArticlePage;

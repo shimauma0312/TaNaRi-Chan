@@ -2,16 +2,14 @@ import { NextApiRequest, NextApiResponse } from "next"
 import { NextRequest, NextResponse } from "next/server"
 import { getTodo } from "@/service/todoService"
 import { PrismaClient } from "@prisma/client"
-import { createUserWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/app/firebaseConfig"
 import { get } from "http"
 
 const prisma = new PrismaClient()
 export async function GET(
   request: NextRequest,
-  { params }: { params: { user_id: string } },
+  { params }: { params: { id: string } },
 ): Promise<NextResponse> {
-  const todos = await getTodo(params.user_id)
+  const todos = await getTodo(params.id)
   return NextResponse.json(todos)
 }
 

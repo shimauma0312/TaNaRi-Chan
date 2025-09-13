@@ -1,10 +1,4 @@
-import { auth, database } from "@/app/firebaseConfig"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import {
-  increment,
-  ref,
-  update
-} from "firebase/database"
+import { handleClientError } from "@/utils/errorHandler"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -16,15 +10,8 @@ export const useLogin = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
-
-  /**
-   * ダッシュボードのアクセスカウンターを増加させる
-   */
-  const incrementAccessCount = () => {
-    const accessCountRef = ref(database, "dashboard/accessCount")
-    update(accessCountRef, { count: increment(1) })
-  }
 
   /**
    * メールアドレスとパスワードでログイン処理を実行する
@@ -33,18 +20,31 @@ export const useLogin = () => {
    * @param password ユーザーのパスワード
    */
   const login = async (email: string, password: string) => {
+    setLoading(true)
+    setError("")
+    
     try {
-      // Firebase認証
-      await signInWithEmailAndPassword(auth, email, password)
-      
-      // アクセスカウントを増やす
-      await incrementAccessCount()
-      
-      // ダッシュボードへリダイレクト
-      router.push('/dashboard')
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (response.ok) {
+        // ダッシュボードへリダイレクト
+        router.push('/dashboard')
+      } else {
+        const errorData = await response.json()
+        const errorMessage = errorData.error || "Login failed. Please check your email and password."
+        setError(errorMessage)
+      }
     } catch (err) {
-      setError("ログインに失敗しました。メールアドレスとパスワードを確認してください。")
-      console.error("ログインエラー:", err)
+      const errorMessage = handleClientError(err, "Login failed. Please check your network connection.")
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -55,6 +55,7 @@ export const useLogin = () => {
     password,
     setPassword,
     error,
+    loading,
     login,
   }
 }

@@ -8,9 +8,10 @@ datasource db {
 }
 
 model User {
-  user_id      String  @id @unique
+  id      String  @id @unique
   user_name    String
   user_email   String  @unique
+  password     String
   icon_number  Int
   todos        Todo[] 
   posts        Post[]
@@ -25,8 +26,8 @@ model Todo {
   todo_deadline DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  user_id      String
-  user         User    @relation(fields: [user_id], references: [user_id])
+  id      String
+  user         User    @relation(fields: [id], references: [id])
   is_completed Boolean  @default(false)
   is_public    Boolean  @default(false)
   comments     TodoComment[]
@@ -39,7 +40,7 @@ model Post {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   author_id    String
-  author       User     @relation(fields: [author_id], references: [user_id])
+  author       User     @relation(fields: [author_id], references: [id])
   tags         PostTag[]    @relation()
   comments     PostComment[]
 }
@@ -56,7 +57,7 @@ model PostComment {
   createdAt  DateTime @default(now())
   author_id  String
   post_id    Int
-  author     User    @relation(fields: [author_id], references: [user_id])
+  author     User    @relation(fields: [author_id], references: [id])
   post       Post    @relation(fields: [post_id], references: [post_id])
 }
 
@@ -66,6 +67,6 @@ model TodoComment {
   createdAt  DateTime @default(now())
   author_id  String
   todo_id    Int
-  author     User    @relation(fields: [author_id], references: [user_id])
+  author     User    @relation(fields: [author_id], references: [id])
   todo       Todo   @relation(fields: [todo_id], references: [todo_id])
 }

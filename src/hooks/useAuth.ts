@@ -1,25 +1,42 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { auth } from "@/app/firebaseConfig"
-import { onAuthStateChanged, User } from "firebase/auth"
+
+export interface AuthUser {
+  id: string
+  user_name: string
+  user_email: string
+  icon_number: number
+}
 
 const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user)
-      } else {
-        router.push("login")
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/me')
+        if (response.ok) {
+          const userData = await response.json()
+          setUser(userData)
+        } else {
+          setUser(null)
+          router.push("/login")
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        setUser(null)
+        router.push("/login")
+      } finally {
+        setLoading(false)
       }
-    })
+    }
 
-    return () => unsubscribe()
+    checkAuth()
   }, [router])
 
-  return user
+  return { user, loading }
 }
 
 export default useAuth

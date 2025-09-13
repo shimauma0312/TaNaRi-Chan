@@ -1,4 +1,5 @@
 import { RegisterSchema } from "@/schemas/validation"
+import { handleClientError } from "@/utils/errorHandler"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -33,15 +34,16 @@ export const useUserRegister = () => {
 
       // レスポンス処理
       if (response.ok) {
-        console.log("ユーザー登録が完了しました")
+        console.log("User registration completed successfully")
         router.push("/login") // ログインページへリダイレクト
       } else {
         const errorData = await response.json()
-        setError(errorData.error || "ユーザー登録中にエラーが発生しました。")
+        const errorMessage = errorData.error || "An error occurred during user registration."
+        setError(errorMessage)
       }
     } catch (error) {
-      console.error("ユーザー登録エラー:", error)
-      setError("ユーザー登録中にエラーが発生しました。サーバーに接続できません。")
+      const errorMessage = handleClientError(error, "An error occurred during user registration. Cannot connect to server.")
+      setError(errorMessage)
     }
   }
 
