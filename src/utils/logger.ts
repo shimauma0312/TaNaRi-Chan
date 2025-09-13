@@ -20,7 +20,7 @@
  * ログコンテキスト情報の型定義
  */
 interface LogContext {
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 /**
