@@ -247,9 +247,9 @@ describe('handleDatabaseError Function', () => {
 });
 
 describe('handleAuthError Function', () => {
-  test('should handle auth/user-not-found', () => {
-    const firebaseError = { code: 'auth/user-not-found', name: 'FirebaseError', message: 'User not found' };
-    const result = handleAuthError(firebaseError);
+  test('should handle USER_NOT_FOUND', () => {
+    const authError = { code: 'USER_NOT_FOUND', name: 'AuthError', message: 'User not found' };
+    const result = handleAuthError(authError);
     
     expect(result).toBeInstanceOf(AppError);
     expect(result.message).toBe('User not found');
@@ -257,9 +257,9 @@ describe('handleAuthError Function', () => {
     expect(result.statusCode).toBe(401);
   });
 
-  test('should handle auth/wrong-password', () => {
-    const firebaseError = { code: 'auth/wrong-password', name: 'FirebaseError', message: 'Wrong password' };
-    const result = handleAuthError(firebaseError);
+  test('should handle INVALID_PASSWORD', () => {
+    const authError = { code: 'INVALID_PASSWORD', name: 'AuthError', message: 'Invalid password' };
+    const result = handleAuthError(authError);
     
     expect(result).toBeInstanceOf(AppError);
     expect(result.message).toBe('Invalid password');
@@ -267,9 +267,9 @@ describe('handleAuthError Function', () => {
     expect(result.statusCode).toBe(401);
   });
 
-  test('should handle auth/email-already-in-use', () => {
-    const firebaseError = { code: 'auth/email-already-in-use', name: 'FirebaseError', message: 'Email already in use' };
-    const result = handleAuthError(firebaseError);
+  test('should handle EMAIL_ALREADY_EXISTS', () => {
+    const authError = { code: 'EMAIL_ALREADY_EXISTS', name: 'AuthError', message: 'Email already exists' };
+    const result = handleAuthError(authError);
     
     expect(result).toBeInstanceOf(AppError);
     expect(result.message).toBe('Email address is already in use');
@@ -277,9 +277,9 @@ describe('handleAuthError Function', () => {
     expect(result.statusCode).toBe(400);
   });
 
-  test('should handle auth/weak-password', () => {
-    const firebaseError = { code: 'auth/weak-password', name: 'FirebaseError', message: 'Weak password' };
-    const result = handleAuthError(firebaseError);
+  test('should handle WEAK_PASSWORD', () => {
+    const authError = { code: 'WEAK_PASSWORD', name: 'AuthError', message: 'Weak password' };
+    const result = handleAuthError(authError);
     
     expect(result).toBeInstanceOf(AppError);
     expect(result.message).toBe('Password is too weak. Please use at least 6 characters');
@@ -287,9 +287,9 @@ describe('handleAuthError Function', () => {
     expect(result.statusCode).toBe(400);
   });
 
-  test('should handle auth/invalid-email', () => {
-    const firebaseError = { code: 'auth/invalid-email', name: 'FirebaseError', message: 'Invalid email' };
-    const result = handleAuthError(firebaseError);
+  test('should handle INVALID_EMAIL', () => {
+    const authError = { code: 'INVALID_EMAIL', name: 'AuthError', message: 'Invalid email' };
+    const result = handleAuthError(authError);
     
     expect(result).toBeInstanceOf(AppError);
     expect(result.message).toBe('Invalid email address format');
@@ -297,9 +297,39 @@ describe('handleAuthError Function', () => {
     expect(result.statusCode).toBe(400);
   });
 
+  test('should handle INVALID_CREDENTIALS', () => {
+    const authError = { code: 'INVALID_CREDENTIALS', name: 'AuthError', message: 'Invalid credentials' };
+    const result = handleAuthError(authError);
+    
+    expect(result).toBeInstanceOf(AppError);
+    expect(result.message).toBe('Invalid email or password');
+    expect(result.type).toBe(ErrorType.AUTHENTICATION);
+    expect(result.statusCode).toBe(401);
+  });
+
+  test('should handle ACCOUNT_DISABLED', () => {
+    const authError = { code: 'ACCOUNT_DISABLED', name: 'AuthError', message: 'Account disabled' };
+    const result = handleAuthError(authError);
+    
+    expect(result).toBeInstanceOf(AppError);
+    expect(result.message).toBe('Account has been disabled');
+    expect(result.type).toBe(ErrorType.AUTHORIZATION);
+    expect(result.statusCode).toBe(403);
+  });
+
+  test('should handle TOKEN_EXPIRED', () => {
+    const authError = { code: 'TOKEN_EXPIRED', name: 'AuthError', message: 'Token expired' };
+    const result = handleAuthError(authError);
+    
+    expect(result).toBeInstanceOf(AppError);
+    expect(result.message).toBe('Authentication token has expired');
+    expect(result.type).toBe(ErrorType.AUTHENTICATION);
+    expect(result.statusCode).toBe(401);
+  });
+
   test('should handle unknown authentication error', () => {
-    const firebaseError = { code: 'auth/unknown-error', message: undefined, name: 'AuthError' } as any;
-    const result = handleAuthError(firebaseError);
+    const authError = { code: 'UNKNOWN_AUTH_ERROR', message: undefined, name: 'AuthError' } as any;
+    const result = handleAuthError(authError);
     
     expect(result).toBeInstanceOf(AppError);
     expect(result.message).toBe('Authentication error occurred: undefined');
@@ -390,8 +420,8 @@ describe('Integration Tests', () => {
   });
 
   test('should work together: auth error -> client handling', () => {
-    const firebaseError = { code: 'auth/invalid-email', name: 'FirebaseError', message: 'Invalid email' };
-    const appError = handleAuthError(firebaseError);
+    const authError = { code: 'INVALID_EMAIL', name: 'AuthError', message: 'Invalid email' };
+    const appError = handleAuthError(authError);
     const clientMessage = handleClientError(appError, 'Auth failed');
     
     expect(clientMessage).toBe('Invalid email address format');

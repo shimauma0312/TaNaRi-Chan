@@ -288,35 +288,53 @@ export const handleAuthError = (error: AuthError): AppError => {
   });
 
   switch (error.code) {
-    case 'auth/user-not-found':
+    case 'USER_NOT_FOUND':
       return new AppError(
         'User not found',
         ErrorType.AUTHENTICATION,
         401
       );
-    case 'auth/wrong-password':
+    case 'INVALID_PASSWORD':
       return new AppError(
         'Invalid password',
         ErrorType.AUTHENTICATION,
         401
       );
-    case 'auth/email-already-in-use':
+    case 'EMAIL_ALREADY_EXISTS':
       return new AppError(
         'Email address is already in use',
         ErrorType.VALIDATION,
         400
       );
-    case 'auth/weak-password':
+    case 'WEAK_PASSWORD':
       return new AppError(
         'Password is too weak. Please use at least 6 characters',
         ErrorType.VALIDATION,
         400
       );
-    case 'auth/invalid-email':
+    case 'INVALID_EMAIL':
       return new AppError(
         'Invalid email address format',
         ErrorType.VALIDATION,
         400
+      );
+    case 'INVALID_CREDENTIALS':
+      return new AppError(
+        'Invalid email or password',
+        ErrorType.AUTHENTICATION,
+        401
+      );
+    case 'ACCOUNT_DISABLED':
+      return new AppError(
+        'Account has been disabled',
+        ErrorType.AUTHORIZATION,
+        403
+      );
+    case 'TOKEN_EXPIRED':
+      return new AppError(
+        'Authentication token has expired',
+        ErrorType.AUTHENTICATION,
+        401
       );
     default:
       return new AppError(
