@@ -2,6 +2,7 @@
 
 import MarkdownEditor from "@/components/markdown/markdownEditor"
 import useAuth from "@/hooks/useAuth"
+import { AppError, ErrorType, handleClientError } from "@/utils/errorHandler"
 import React, { useEffect, useState } from "react"
 
 /**
@@ -36,6 +37,8 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
   // フォームの状態管理
   const [title, setTitle] = useState(initialTitle)
   const [content, setContent] = useState(initialContent)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
 
   /**
    * 初期データが変更された際にフォームの状態を更新
@@ -58,28 +61,33 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
    */
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-
-    // 編集モード時のバリデーション：投稿IDが必須
-    if (isEditMode && !postId) {
-      alert("Invalid post ID.")
-      return
-    }
-
-    // APIリクエスト用のデータ構築
-    // 作成時は author_id が必要、編集時は post_id が必要
-    const articleData = isEditMode 
-      ? {
-          post_id: postId,
-          title,
-          content,
-        }
-      : {
-          title,
-          content,
-          author_id: user?.id,
-        }
+    setError("")
+    setIsSubmitting(true)
 
     try {
+      // 編集モード時のバリデーション：投稿IDが必須
+      if (isEditMode && !postId) {
+        throw new AppError(
+          "Invalid post ID",
+          ErrorType.VALIDATION,
+          400
+        );
+      }
+
+      // APIリクエスト用のデータ構築
+      // 作成時は author_id が必要、編集時は post_id が必要
+      const articleData = isEditMode 
+        ? {
+            post_id: postId,
+            title,
+            content,
+          }
+        : {
+            title,
+            content,
+            author_id: user?.id,
+          }
+
       // APIエンドポイントへのリクエスト送信
       // 作成時はPOST、編集時はPUTメソッドを使用
       const response = await fetch("/api/articles", {
@@ -106,13 +114,16 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
           window.location.href = "/dashboard/articles"
         }
       } else {
-        console.error(response.statusText)
-        alert(`Failed to ${isEditMode ? "update" : "create"} article.`)
+        const errorData = await response.json()
+        const errorMessage = errorData.error || `Failed to ${isEditMode ? "update" : "create"} article`
+        setError(errorMessage)
       }
     } catch (error) {
       // エラーハンドリング
-      console.error("Error:", error)
-      alert(`An error occurred while ${isEditMode ? "updating" : "creating"} the article.`)
+      const errorMessage = handleClientError(error, `An error occurred while ${isEditMode ? "updating" : "creating"} the article`)
+      setError(errorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -151,11 +162,24 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
               </label>
               <MarkdownEditor initialMarkdown={content} onChange={setContent} />
             </div>
+            
+            {/* エラーメッセージ表示 */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-600 text-white rounded-lg">
+                {error}
+              </div>
+            )}
+            
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              disabled={isSubmitting}
+              className={`w-full py-3 rounded-lg focus:outline-none focus:ring-2 font-medium ${
+                isSubmitting 
+                  ? "bg-gray-600 cursor-not-allowed" 
+                  : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+              } text-white`}
             >
-              {buttonText}
+              {isSubmitting ? "Processing..." : buttonText}
             </button>
           </form>
         </div>

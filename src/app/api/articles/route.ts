@@ -1,6 +1,8 @@
 import logger from "@/logging/logging";
+import { AppError, createApiErrorResponse, ErrorType, handleDatabaseError } from "@/utils/errorHandler";
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
+
 const prisma = new PrismaClient()
 
 /*
@@ -18,15 +20,16 @@ export async function GET(req: Request): Promise<NextResponse> {
             if (article) {
                 return NextResponse.json(article);
             } else {
-                return NextResponse.json({ error: "Article not found" }, { status: 404 });
+                throw new AppError(
+                    'Article not found',
+                    ErrorType.NOT_FOUND,
+                    404
+                );
             }
         }
     } catch (error) {
-        logger.error(error);
-        return NextResponse.json(
-            { error: "Failed to fetch articles", detail: (error instanceof Error ? error.message : String(error)) },
-            { status: 500 }
-        );
+        const errorResponse = createApiErrorResponse(error, 'Failed to fetch articles');
+        return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
 
@@ -36,18 +39,19 @@ export async function POST(req: Request): Promise<NextResponse> {
         const data = await req.json()
 
         if (!data.title || !data.content || !data.author_id) {
-            return NextResponse.json(
-                { error: "Missing required fields: title, content, and author_id are required" },
-                { status: 400 }
-            )
+            throw new AppError(
+                'Title, content, and author ID are required',
+                ErrorType.VALIDATION,
+                400
+            );
         }
 
         const newPost = await createArticle(data)
-        logger.info(newPost)
-        return NextResponse.json(newPost)
+        logger.info('Article created successfully', { postId: newPost.post_id });
+        return NextResponse.json(newPost, { status: 201 })
     } catch (error) {
-        logger.error(error)
-        return NextResponse.json({ error: "Failed to create article" }, { status: 500 })
+        const errorResponse = createApiErrorResponse(error, 'Failed to create article');
+        return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
 
@@ -57,18 +61,19 @@ export async function PUT(req: Request): Promise<NextResponse> {
         const data = await req.json()
 
         if (!data.post_id || !data.title || !data.content) {
-            return NextResponse.json(
-                { error: "Missing required fields: post_id, title, and content are required" },
-                { status: 400 }
-            )
+            throw new AppError(
+                'Post ID, title, and content are required',
+                ErrorType.VALIDATION,
+                400
+            );
         }
 
         const updatedPost = await updateArticle(data)
-        logger.info(updatedPost)
+        logger.info('Article updated successfully', { postId: updatedPost.post_id });
         return NextResponse.json(updatedPost)
     } catch (error) {
-        logger.error(error)
-        return NextResponse.json({ error: "Failed to update article" }, { status: 500 })
+        const errorResponse = createApiErrorResponse(error, 'Failed to update article');
+        return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
 
@@ -78,18 +83,19 @@ export async function DELETE(req: Request): Promise<NextResponse> {
         const data = await req.json()
 
         if (!data.post_id) {
-            return NextResponse.json(
-                { error: "Missing required field: post_id is required" },
-                { status: 400 }
-            )
+            throw new AppError(
+                'Post ID is required',
+                ErrorType.VALIDATION,
+                400
+            );
         }
 
         const deletedPost = await deleteArticle(data.post_id)
-        logger.info(deletedPost)
+        logger.info('Article deleted successfully', { postId: data.post_id });
         return NextResponse.json(deletedPost)
     } catch (error) {
-        logger.error(error)
-        return NextResponse.json({ error: "Failed to delete article" }, { status: 500 })
+        const errorResponse = createApiErrorResponse(error, 'Failed to delete article');
+        return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
 
@@ -141,13 +147,7 @@ async function createArticle(data: any) {
             },
         })
     } catch (error: any) {
-        // author_idが存在しない場合のエラー
-        if (error.code === 'P2003' && error.meta?.field_name?.includes('author_id')) {
-            logger.error('Error creating article: Author ID does not exist', { error })
-        } else {
-            logger.error('Error creating article', { error })
-        }
-        throw error
+        throw handleDatabaseError(error);
     }
 }
 
@@ -166,8 +166,7 @@ async function updateArticle(data: any) {
             },
         })
     } catch (error) {
-        logger.error('Error updating article', { error });
-        throw error;
+        throw handleDatabaseError(error);
     }
 }
 
@@ -182,7 +181,6 @@ async function deleteArticle(post_id: number) {
             },
         })
     } catch (error) {
-        logger.error('Error deleting article', { error });
-        throw error;
+        throw handleDatabaseError(error);
     }
 }

@@ -25,7 +25,7 @@
 3. Start the application:
 
    ```bash
-   docker compose up
+   docker compose up -d
    ```
 
 4. Access
@@ -67,12 +67,46 @@ This project requires environment variables to be set up. Follow these steps to 
 Follow these steps to set up the database. This process is required when starting the application for the first time or after changing the Prisma schema.
 
 ```bash
-# Generate Prisma migration files
+# Prismaのマイグレーションファイルを生成（初期スキーマ定義時などに使用）
 npx prisma migrate dev --name init
 
-# Apply migrations
+# 既存のマイグレーションを本番環境に適応（ビルドしないなら不要
 npx prisma migrate deploy
 
-# Regenerate Prisma Client
+# Prisma Client最新化
 npx prisma generate
 ```
+
+## Testing
+
+This project includes comprehensive test coverage for error handling functionality using Jest.
+
+### Running Tests
+
+```bash
+# Navigate to src directory
+cd src
+
+# Run all tests once
+npm test
+
+# Run tests in watch mode (automatically re-run when files change)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Alternative: Use the test runner script
+chmod +x run-tests.sh
+./run-tests.sh --coverage
+```
+
+### Test Files
+
+- `__tests__/errorHandler.test.ts` - Comprehensive error handler test suite
+
+### Coverage Reports
+
+When running tests with coverage, reports are generated in:
+- `coverage/lcov-report/index.html` - HTML coverage report
+- `coverage/lcov.info` - LCOV format for CI/CD integration

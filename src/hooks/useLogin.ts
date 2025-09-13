@@ -1,3 +1,4 @@
+import { handleClientError } from "@/utils/errorHandler"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -36,11 +37,12 @@ export const useLogin = () => {
         router.push('/dashboard')
       } else {
         const errorData = await response.json()
-        setError(errorData.error || "ログインに失敗しました。メールアドレスとパスワードを確認してください。")
+        const errorMessage = errorData.error || "Login failed. Please check your email and password."
+        setError(errorMessage)
       }
     } catch (err) {
-      setError("ログインに失敗しました。メールアドレスとパスワードを確認してください。")
-      console.error("ログインエラー:", err)
+      const errorMessage = handleClientError(err, "Login failed. Please check your network connection.")
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
