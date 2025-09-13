@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const user = await getCurrentUser()
     
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(user, { status: 200 })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Get current user error:', error)
     return NextResponse.json(
       { error: 'ユーザー情報の取得中にエラーが発生しました' },

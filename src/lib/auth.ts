@@ -59,7 +59,8 @@ export async function authenticateUser(email: string, password: string): Promise
     }
 
     // Return user without password
-    const { password: _, ...userWithoutPassword } = user
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...userWithoutPassword } = user
     return userWithoutPassword
   } catch (error) {
     console.error('Error authenticating user:', error)

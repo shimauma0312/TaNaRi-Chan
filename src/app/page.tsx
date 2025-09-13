@@ -33,7 +33,7 @@ export default function Home() {
                 Log in to start
               </Link>
               <p className="mt-6 text-white/70">
-                Don't have an account? You can <Link href="/register" className="text-white hover:text-white/90 underline">sign up here</Link> to get started.
+                Don&apos;t have an account? You can <Link href="/register" className="text-white hover:text-white/90 underline">sign up here</Link> to get started.
               </p>
             </div>
           </div>

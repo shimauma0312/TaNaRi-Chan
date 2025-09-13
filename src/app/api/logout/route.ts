@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { clearAuthCookie } from '@/lib/auth'
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     // Clear authentication cookie
     clearAuthCookie()
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       { message: 'ログアウトしました' },
       { status: 200 }
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error('Logout error:', error)
     return NextResponse.json(
       { error: 'ログアウト処理中にエラーが発生しました' },

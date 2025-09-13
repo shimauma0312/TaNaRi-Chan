@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
       { error: 'ログイン処理中にエラーが発生しました' },
