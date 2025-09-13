@@ -11,14 +11,14 @@
  */
 
 import {
-    AppError,
-    createApiErrorResponse,
-    ErrorType,
-    handleApiError,
-    handleAuthError,
-    handleClientError,
-    handleDatabaseError,
-    handleNetworkError,
+  AppError,
+  createApiErrorResponse,
+  ErrorType,
+  handleApiError,
+  handleAuthError,
+  handleClientError,
+  handleDatabaseError,
+  handleNetworkError,
 } from '../utils/errorHandler';
 
 // Mock logger to avoid actual file operations during tests
@@ -226,21 +226,21 @@ describe('handleDatabaseError Function', () => {
   });
 
   test('should handle unknown database error', () => {
-    const prismaError = { code: 'P9999', message: 'Unknown database error' };
+    const prismaError = { code: 'P9999', message: 'Unknown database error', name: 'PrismaError' } as any;
     const result = handleDatabaseError(prismaError);
     
     expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Database error occurred');
+    expect(result.message).toBe('Database error occurred: Unknown database error');
     expect(result.type).toBe(ErrorType.DATABASE_ERROR);
     expect(result.statusCode).toBe(500);
   });
 
   test('should handle database error without code', () => {
-    const databaseError = { message: 'Connection timeout' };
+    const databaseError = { message: 'Connection timeout', name: 'PrismaError' } as any;
     const result = handleDatabaseError(databaseError);
     
     expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Database error occurred');
+    expect(result.message).toBe('Database error occurred: Connection timeout');
     expect(result.type).toBe(ErrorType.DATABASE_ERROR);
     expect(result.statusCode).toBe(500);
   });
@@ -298,21 +298,21 @@ describe('handleAuthError Function', () => {
   });
 
   test('should handle unknown authentication error', () => {
-    const firebaseError = { code: 'auth/unknown-error' };
+    const firebaseError = { code: 'auth/unknown-error', message: undefined, name: 'AuthError' } as any;
     const result = handleAuthError(firebaseError);
     
     expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Authentication error occurred');
+    expect(result.message).toBe('Authentication error occurred: undefined');
     expect(result.type).toBe(ErrorType.AUTHENTICATION);
     expect(result.statusCode).toBe(401);
   });
 
   test('should handle auth error without code', () => {
-    const authError = { message: 'Auth service unavailable' };
+    const authError = { message: 'Auth service unavailable', name: 'AuthError' } as any;
     const result = handleAuthError(authError);
     
     expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Authentication error occurred');
+    expect(result.message).toBe('Authentication error occurred: Auth service unavailable');
     expect(result.type).toBe(ErrorType.AUTHENTICATION);
     expect(result.statusCode).toBe(401);
   });
@@ -340,21 +340,21 @@ describe('handleNetworkError Function', () => {
   });
 
   test('should handle generic network error', () => {
-    const genericError = { name: 'Error', message: 'Connection timeout' };
+    const genericError = { name: 'Error', message: 'Connection timeout' } as any;
     const result = handleNetworkError(genericError);
     
     expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Communication error occurred');
+    expect(result.message).toBe('Communication error occurred: Connection timeout');
     expect(result.type).toBe(ErrorType.NETWORK_ERROR);
     expect(result.statusCode).toBe(503);
   });
 
   test('should handle network error without message', () => {
-    const errorWithoutMessage = { code: 'ECONNREFUSED' };
+    const errorWithoutMessage = { name: 'Error', message: undefined } as any;
     const result = handleNetworkError(errorWithoutMessage);
     
     expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Communication error occurred');
+    expect(result.message).toBe('Communication error occurred: undefined');
     expect(result.type).toBe(ErrorType.NETWORK_ERROR);
     expect(result.statusCode).toBe(503);
   });
