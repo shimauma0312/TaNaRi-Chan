@@ -9,30 +9,36 @@ const SideMenu = () => {
   return (
     <div className="w-1/5 p-4">
       <nav className="space-y-4">
-        <Link
-          href="/dashboard/todoList"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          My Todo List
-        </Link>
-        <Link
-          href="/dashboard/otherTodos"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          Other&apos;s Todo List
-        </Link>
-        <Link
-          href="/dashboard/articles"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          My Articles
-        </Link>
-        <Link
-          href="/dashboard/myPage"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          My Page
-        </Link>
+        <div className="space-y-4">
+          <Link
+            href="/dashboard/todoList"
+            className="block text-lg text-indigo-400 hover:text-indigo-300 no-underline"
+            style={{ listStyle: 'none', textDecoration: 'none' }}
+          >
+            My Todo List
+          </Link>
+          <Link
+            href="/dashboard/otherTodos"
+            className="block text-lg text-indigo-400 hover:text-indigo-300 no-underline"
+            style={{ listStyle: 'none', textDecoration: 'none' }}
+          >
+            Other&apos;s Todo List
+          </Link>
+          <Link
+            href="/dashboard/articles"
+            className="block text-lg text-indigo-400 hover:text-indigo-300 no-underline"
+            style={{ listStyle: 'none', textDecoration: 'none' }}
+          >
+            My Articles
+          </Link>
+          <Link
+            href="/dashboard/myPage"
+            className="block text-lg text-indigo-400 hover:text-indigo-300 no-underline"
+            style={{ listStyle: 'none', textDecoration: 'none' }}
+          >
+            My Page
+          </Link>
+        </div>
         {/* <Link
           href="/dashboard/calendar"
           className="block text-lg text-indigo-400 hover:text-indigo-300"
