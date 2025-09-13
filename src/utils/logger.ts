@@ -24,9 +24,43 @@ interface LogContext {
 }
 
 /**
+ * ロガーインターフェース
+ * winston,ClientLogger の共通メソッド
+ */
+interface ILogger {
+  /**
+   * 情報レベルログ出力
+   * @param message ログメッセージ
+   * @param context 追加コンテキスト情報
+   */
+  info(message: string, context?: LogContext): void;
+
+  /**
+   * エラーレベルログ出力
+   * @param message エラーメッセージ
+   * @param context エラー詳細情報
+   */
+  error(message: string, context?: LogContext): void;
+
+  /**
+   * 警告レベルログ出力
+   * @param message 警告メッセージ
+   * @param context 警告関連情報
+   */
+  warn(message: string, context?: LogContext): void;
+
+  /**
+   * デバッグレベルログ出力
+   * @param message デバッグメッセージ
+   * @param context デバッグ情報
+   */
+  debug(message: string, context?: LogContext): void;
+}
+
+/**
  * クライアントサイドで使うコンソールベースロガー
  * 
- * - ブラウザ環境向けの Console API ラッパー
+ * - ブラウザ向け Console API ラッパー
  * 
  * @example
  * const logger = new ClientLogger();
@@ -35,7 +69,7 @@ interface LogContext {
  * logger.warn('警告ログ');
  * logger.debug('デバッグログ');
  */
-class ClientLogger {
+class ClientLogger implements ILogger {
   /**
    * 情報レベルログ出力
    * @param message ログメッセージ
@@ -90,12 +124,10 @@ class ClientLogger {
  * - クライアントサイド: console ベース
  * 
  * 型定義
- * - any 型を使用（winston と ClientLogger の統一のため）
- * - 実際の使用時は適切なログメソッドが利用可能
  * 
- * @type {any}
+ * @type {ILogger}
  */
-let logger: any;
+let logger: ILogger;
 
 /**
  * 環境別ロガーインスタンス初期化処理
@@ -136,3 +168,5 @@ if (typeof window === 'undefined') {
  * @default logger
  */
 export default logger;
+
+export type { ILogger, LogContext };
