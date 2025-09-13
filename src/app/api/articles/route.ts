@@ -117,7 +117,7 @@ async function getArticles() {
  * 指定された記事を取得する
  */
 async function getArticle(postId: string | null) {
-    logger.info(postId);
+    logger.info(postId ?? 'null');
     if (postId !== null) {
         return await prisma.post.findUnique({
             where: {
@@ -166,7 +166,7 @@ async function updateArticle(data: any) {
             },
         })
     } catch (error) {
-        throw handleDatabaseError(error);
+        throw handleDatabaseError(error as any);
     }
 }
 
@@ -181,6 +181,6 @@ async function deleteArticle(post_id: number) {
             },
         })
     } catch (error) {
-        throw handleDatabaseError(error);
+        throw handleDatabaseError(error as any);
     }
 }
