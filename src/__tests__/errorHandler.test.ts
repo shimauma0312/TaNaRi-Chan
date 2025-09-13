@@ -196,7 +196,7 @@ describe('handleClientError Function', () => {
 
 describe('handleDatabaseError Function', () => {
   test('should handle P2002 (unique constraint violation)', () => {
-    const prismaError = { code: 'P2002', message: 'Unique constraint failed' };
+    const prismaError = { code: 'P2002', message: 'Unique constraint failed', name: 'PrismaError' };
     const result = handleDatabaseError(prismaError);
     
     expect(result).toBeInstanceOf(AppError);
@@ -206,7 +206,7 @@ describe('handleDatabaseError Function', () => {
   });
 
   test('should handle P2003 (foreign key constraint violation)', () => {
-    const prismaError = { code: 'P2003', message: 'Foreign key constraint failed' };
+    const prismaError = { code: 'P2003', message: 'Foreign key constraint failed', name: 'PrismaError' };
     const result = handleDatabaseError(prismaError);
     
     expect(result).toBeInstanceOf(AppError);
@@ -216,7 +216,7 @@ describe('handleDatabaseError Function', () => {
   });
 
   test('should handle P2025 (record not found)', () => {
-    const prismaError = { code: 'P2025', message: 'Record not found' };
+    const prismaError = { code: 'P2025', message: 'Record not found', name: 'PrismaError' };
     const result = handleDatabaseError(prismaError);
     
     expect(result).toBeInstanceOf(AppError);
@@ -248,7 +248,7 @@ describe('handleDatabaseError Function', () => {
 
 describe('handleAuthError Function', () => {
   test('should handle auth/user-not-found', () => {
-    const firebaseError = { code: 'auth/user-not-found' };
+    const firebaseError = { code: 'auth/user-not-found', name: 'FirebaseError', message: 'User not found' };
     const result = handleAuthError(firebaseError);
     
     expect(result).toBeInstanceOf(AppError);
@@ -258,7 +258,7 @@ describe('handleAuthError Function', () => {
   });
 
   test('should handle auth/wrong-password', () => {
-    const firebaseError = { code: 'auth/wrong-password' };
+    const firebaseError = { code: 'auth/wrong-password', name: 'FirebaseError', message: 'Wrong password' };
     const result = handleAuthError(firebaseError);
     
     expect(result).toBeInstanceOf(AppError);
@@ -268,7 +268,7 @@ describe('handleAuthError Function', () => {
   });
 
   test('should handle auth/email-already-in-use', () => {
-    const firebaseError = { code: 'auth/email-already-in-use' };
+    const firebaseError = { code: 'auth/email-already-in-use', name: 'FirebaseError', message: 'Email already in use' };
     const result = handleAuthError(firebaseError);
     
     expect(result).toBeInstanceOf(AppError);
@@ -278,7 +278,7 @@ describe('handleAuthError Function', () => {
   });
 
   test('should handle auth/weak-password', () => {
-    const firebaseError = { code: 'auth/weak-password' };
+    const firebaseError = { code: 'auth/weak-password', name: 'FirebaseError', message: 'Weak password' };
     const result = handleAuthError(firebaseError);
     
     expect(result).toBeInstanceOf(AppError);
@@ -288,7 +288,7 @@ describe('handleAuthError Function', () => {
   });
 
   test('should handle auth/invalid-email', () => {
-    const firebaseError = { code: 'auth/invalid-email' };
+    const firebaseError = { code: 'auth/invalid-email', name: 'FirebaseError', message: 'Invalid email' };
     const result = handleAuthError(firebaseError);
     
     expect(result).toBeInstanceOf(AppError);
@@ -379,7 +379,7 @@ describe('ErrorType Enum', () => {
 
 describe('Integration Tests', () => {
   test('should work together: database error -> API response', () => {
-    const prismaError = { code: 'P2002', message: 'Unique constraint failed' };
+    const prismaError = { code: 'P2002', message: 'Unique constraint failed', name: 'PrismaError' };
     const appError = handleDatabaseError(prismaError);
     const apiResponse = createApiErrorResponse(appError);
     
@@ -390,7 +390,7 @@ describe('Integration Tests', () => {
   });
 
   test('should work together: auth error -> client handling', () => {
-    const firebaseError = { code: 'auth/invalid-email' };
+    const firebaseError = { code: 'auth/invalid-email', name: 'FirebaseError', message: 'Invalid email' };
     const appError = handleAuthError(firebaseError);
     const clientMessage = handleClientError(appError, 'Auth failed');
     

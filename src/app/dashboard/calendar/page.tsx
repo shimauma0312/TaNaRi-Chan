@@ -41,7 +41,7 @@ const CalendarPage = () => {
     }
 
     fetchData()
-  }, [user.user?.id])
+  }, [user.user?.id, user.user])
 
   if (!user || loading) {
     return <MinLoader />

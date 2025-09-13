@@ -5,7 +5,7 @@ import MinLoader from "@/components/MinLoader"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 
 async function fetchArticleData(postId: number) {
   try {
@@ -73,7 +73,7 @@ function EditArticleContent({ postId }: { postId: number | null }) {
   );
 }
 
-const EditArticlePage = () => {
+const EditArticlePageInner = () => {
   const { user, loading } = useAuth();
   const [postId, setPostId] = useState<number | null>(null);
   const searchParams = useSearchParams();
@@ -90,6 +90,14 @@ const EditArticlePage = () => {
   }
 
   return <EditArticleContent postId={postId} />;
+}
+
+const EditArticlePage = () => {
+  return (
+    <Suspense fallback={<MinLoader />}>
+      <EditArticlePageInner />
+    </Suspense>
+  );
 }
 
 export default EditArticlePage;

@@ -1,10 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(req: NextRequest) {
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+
+export async function GET(_req: NextRequest) {
   try {
     const user = await getCurrentUser()
-    
+
     if (!user) {
       return NextResponse.json(
         { error: 'ユーザーが認証されていません' },
@@ -13,7 +16,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(user, { status: 200 })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Get current user error:', error)
     return NextResponse.json(
       { error: 'ユーザー情報の取得中にエラーが発生しました' },

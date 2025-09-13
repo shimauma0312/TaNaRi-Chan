@@ -125,7 +125,7 @@ export const handleApiError = (error: unknown, fallbackMessage: string): string 
     return error.message;
   }
 
-  logger.error('Unknown Error', { error, fallbackMessage });
+  logger.error('Unknown Error', { error: String(error), fallbackMessage });
   return fallbackMessage;
 };
 
@@ -168,7 +168,7 @@ export const createApiErrorResponse = (
     };
   }
 
-  logger.error('Unknown API Error', { error });
+  logger.error('Unknown API Error', { error: String(error) });
 
   return {
     error: fallbackMessage,
@@ -212,7 +212,7 @@ export const handleDatabaseError = (error: PrismaError): AppError => {
   logger.error('Database Error', {
     code: error.code,
     message: error.message,
-    meta: error.meta,
+    meta: JSON.stringify(error.meta),
     clientVersion: error.clientVersion,
   });
 

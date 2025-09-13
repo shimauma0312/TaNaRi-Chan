@@ -1,18 +1,44 @@
-name: ブランチ制限
+name: ブランチ制限とPR検証
 
 on:
   pull_request:
     branches:
       - main
+      - develop  # develop ブランチへのPRも監視
 
 jobs:
   check_base_branch:
     runs-on: ubuntu-latest
     steps:
-      - name: developブランチ以外からのPRを拒否
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+      
+      - name: ブランチ制限チェック
         run: |
-          if [[ "${{ github.event.pull_request.head.ref }}" != "develop" ]]; then
-            echo "エラー: mainブランチへのPRはdevelopブランチからのみ許可されています。"
-            echo "まずdevelopブランチにPR出してね。"
-            exit 1
+          TARGET_BRANCH="${{ github.event.pull_request.base.ref }}"
+          SOURCE_BRANCH="${{ github.event.pull_request.head.ref }}"
+          
+          echo "🔍 ブランチ制限チェック実行中..."
+          echo "  - ソース: $SOURCE_BRANCH"
+          echo "  - ターゲット: $TARGET_BRANCH"
+          
+          if [[ "$TARGET_BRANCH" == "main" ]]; then
+            if [[ "$SOURCE_BRANCH" != "develop" ]]; then
+              echo "❌ エラー: mainブランチへのPRはdevelopブランチからのみ許可されています。"
+              echo "📝 まずdevelopブランチにPRを作成してください。"
+              echo "🔄 ワークフロー: feature → develop → main"
+              exit 1
+            else
+              echo "✅ 正常: developブランチからのPRです。"
+            fi
+          elif [[ "$TARGET_BRANCH" == "develop" ]]; then
+            echo "✅ 正常: developブランチへのPRです。"
+            echo "🌿 Feature ブランチからのPRを受け付けています。"
           fi
+      
+      - name: PR情報を表示
+        run: |
+          echo "📋 PR情報:"
+          echo "  - ブランチ: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}"
+          echo "  - タイトル: ${{ github.event.pull_request.title }}"
+          echo "  - 作成者: ${{ github.event.pull_request.user.login }}"

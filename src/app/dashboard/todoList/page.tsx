@@ -11,10 +11,19 @@ const getTodoList = async (id: string) => {
   return data
 }
 
+interface Todo {
+  todo_id: string
+  title: string
+  description?: string
+  todo_deadline: string
+  is_completed: boolean
+  createdAt?: string
+}
+
 const ToDoListPage = () => {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const [todoList, setTodoList] = useState<any[]>([]) // ToDoリストデータの状態を追加
+  const [todoList, setTodoList] = useState<Todo[]>([]) // ToDoリストデータの状態を追加
 
   useEffect(() => {
     if (user) {
