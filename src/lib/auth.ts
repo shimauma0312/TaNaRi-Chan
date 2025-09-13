@@ -71,8 +71,8 @@ export async function authenticateUser(email: string, password: string): Promise
 /**
  * Set authentication cookie
  */
-export function setAuthCookie(userId: string): void {
-  const cookieStore = cookies()
+export async function setAuthCookie(userId: string): Promise<void> {
+  const cookieStore = await cookies()
   cookieStore.set('auth-user-id', userId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -85,8 +85,8 @@ export function setAuthCookie(userId: string): void {
 /**
  * Clear authentication cookie
  */
-export function clearAuthCookie(): void {
-  const cookieStore = cookies()
+export async function clearAuthCookie(): Promise<void> {
+  const cookieStore = await cookies()
   cookieStore.set('auth-user-id', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -101,7 +101,7 @@ export function clearAuthCookie(): void {
  */
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const userId = cookieStore.get('auth-user-id')?.value
 
     if (!userId) {

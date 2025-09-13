@@ -1,10 +1,12 @@
 import { getTodo } from "@/service/todoService"
 import { NextRequest, NextResponse } from "next/server"
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ user_id: string }> },
 ): Promise<NextResponse> {
-  const todos = await getTodo(params.id)
+  const { user_id } = await params
+  const todos = await getTodo(user_id)
   return NextResponse.json(todos)
 }
 
