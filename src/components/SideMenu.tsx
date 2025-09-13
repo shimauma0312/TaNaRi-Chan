@@ -19,7 +19,7 @@ const SideMenu = () => {
           href="/dashboard/otherTodos"
           className="block text-lg text-indigo-400 hover:text-indigo-300"
         >
-          Other's Todo List
+          Other&apos;s Todo List
         </Link>
         <Link
           href="/dashboard/articles"

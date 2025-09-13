@@ -1,7 +1,7 @@
-import { NextRequest } from 'next/server'
-import { cookies } from 'next/headers'
-import bcrypt from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
+import { cookies } from 'next/headers'
+import { NextRequest } from 'next/server'
 
 const prisma = new PrismaClient()
 
@@ -59,7 +59,8 @@ export async function authenticateUser(email: string, password: string): Promise
     }
 
     // Return user without password
-    const { password: _, ...userWithoutPassword } = user
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...userWithoutPassword } = user
     return userWithoutPassword
   } catch (error) {
     console.error('Error authenticating user:', error)

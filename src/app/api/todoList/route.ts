@@ -1,5 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
+import { NextResponse } from "next/server"
+
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
 
 const prisma = new PrismaClient()
 export async function GET(): Promise<NextResponse> {

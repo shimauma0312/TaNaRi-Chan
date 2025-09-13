@@ -83,7 +83,7 @@ const DashboardPage = () => {
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="text-xl">Welcome, {user.user_email}</p>
             <p className="text-lg">
-              Today's Date: {new Date().toLocaleDateString()}
+              Today&apos;s Date: {new Date().toLocaleDateString()}
             </p>
           </div>
           

@@ -117,7 +117,7 @@ async function getArticles() {
  * 指定された記事を取得する
  */
 async function getArticle(postId: string | null) {
-    logger.info(postId);
+    logger.info(postId ?? 'null');
     if (postId !== null) {
         return await prisma.post.findUnique({
             where: {
@@ -137,7 +137,7 @@ async function getArticle(postId: string | null) {
 /**
  * 記事を作成する
  */
-async function createArticle(data: any) {
+async function createArticle(data: { title: string; content: string; author_id: string }) {
     try {
         return await prisma.post.create({
             data: {
@@ -146,15 +146,16 @@ async function createArticle(data: any) {
                 author_id: data.author_id,
             },
         })
-    } catch (error: any) {
-        throw handleDatabaseError(error);
+    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        throw handleDatabaseError(error as any);
     }
 }
 
 /**
  * 記事を更新する
  */
-async function updateArticle(data: any) {
+async function updateArticle(data: { post_id: number; title: string; content: string }) {
     try {
         return await prisma.post.update({
             where: {
@@ -166,7 +167,8 @@ async function updateArticle(data: any) {
             },
         })
     } catch (error) {
-        throw handleDatabaseError(error);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        throw handleDatabaseError(error as any);
     }
 }
 
@@ -181,6 +183,7 @@ async function deleteArticle(post_id: number) {
             },
         })
     } catch (error) {
-        throw handleDatabaseError(error);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        throw handleDatabaseError(error as any);
     }
 }

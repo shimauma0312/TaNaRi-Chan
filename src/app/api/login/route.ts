@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser, setAuthCookie } from '@/lib/auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 interface LoginRequestBody {
   email: string
@@ -9,7 +9,7 @@ interface LoginRequestBody {
 export async function POST(req: NextRequest) {
   try {
     const body: LoginRequestBody = await req.json()
-    
+
     if (!body.email || !body.password) {
       return NextResponse.json(
         { error: 'メールアドレスとパスワードは必須です' },
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await authenticateUser(body.email, body.password)
-    
+
     if (!user) {
       return NextResponse.json(
         { error: 'メールアドレスまたはパスワードが正しくありません' },
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     setAuthCookie(user.id)
 
     return NextResponse.json(
-      { 
+      {
         message: 'ログインに成功しました',
         user: {
           id: user.id,
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
       { error: 'ログイン処理中にエラーが発生しました' },
