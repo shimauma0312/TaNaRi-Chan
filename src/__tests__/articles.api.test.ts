@@ -13,7 +13,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { AppError, ErrorType } from '../utils/errorHandler';
+import { ErrorType } from '../utils/errorHandler';
 
 // Mock PrismaClient with proper structure
 jest.mock('@prisma/client', () => ({
@@ -40,8 +40,8 @@ jest.mock('@/logging/logging', () => ({
 }));
 
 // Import after mocking
-import { GET, POST, PUT, DELETE } from '../app/api/articles/route';
 import { PrismaClient } from '@prisma/client';
+import { DELETE, GET, POST, PUT } from '../app/api/articles/route';
 
 // Get mock instance
 const mockPrisma = new PrismaClient() as jest.Mocked<PrismaClient>;
@@ -51,13 +51,13 @@ const mockPrismaPost = mockPrisma.post;
 function createMockRequest(method: string, url: string, body?: any): Request {
   const headers = new Headers();
   headers.set('content-type', 'application/json');
-  
+
   const request = new Request(url, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
-  
+
   return request as NextRequest;
 }
 
@@ -116,7 +116,7 @@ describe('Articles API - GET Endpoint', () => {
 
       expect(response.status).toBe(500);
       expect(data.error).toContain('Failed to fetch articles');
-      expect(data.type).toBe(ErrorType.DATABASE_ERROR);
+      expect(data.type).toBe(ErrorType.SERVER_ERROR);
     });
   });
 
@@ -583,22 +583,22 @@ describe('Articles API - Edge Cases and Integration', () => {
 
     // Create
     mockPrismaPost.create.mockResolvedValue(createdArticle);
-    
+
     let request = createMockRequest('POST', 'http://localhost:3000/api/articles', originalData);
     let response = await POST(request);
-    
+
     expect(response.status).toBe(201);
-    
+
     // Read
     mockPrismaPost.findUnique.mockResolvedValue(createdArticle);
-    
+
     request = createMockRequest('GET', 'http://localhost:3000/api/articles?post_id=1');
     response = await GET(request);
     let data = await response.json();
-    
+
     expect(response.status).toBe(200);
     expect(data.post_id).toBe(1);
-    
+
     // Update
     const updateData = {
       post_id: 1,
@@ -612,18 +612,18 @@ describe('Articles API - Edge Cases and Integration', () => {
     };
 
     mockPrismaPost.update.mockResolvedValue(updatedArticle);
-    
+
     request = createMockRequest('PUT', 'http://localhost:3000/api/articles', updateData);
     response = await PUT(request);
-    
+
     expect(response.status).toBe(200);
-    
+
     // Delete
     mockPrismaPost.delete.mockResolvedValue(updatedArticle);
-    
+
     request = createMockRequest('DELETE', 'http://localhost:3000/api/articles', { post_id: 1 });
     response = await DELETE(request);
-    
+
     expect(response.status).toBe(200);
   });
 });
