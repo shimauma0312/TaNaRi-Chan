@@ -2,7 +2,7 @@
  * エラーハンドリングユーティリティ
  */
 
-import logger from '@/utils/logger';
+import logger from '@/logging/logging';
 
 // エラーの種類を定義
 export enum ErrorType {
@@ -33,16 +33,6 @@ export interface PrismaError extends Error {
   /** クライアントバージョン */
   clientVersion?: string;
   /** その他プロパティ */
-  [key: string]: any;
-}
-
-/**
- * 認証エラーの型定義
- */
-export interface AuthError extends Error {
-  /** 認証エラーコード */
-  code: string;
-  /** その他のプロパティ */
   [key: string]: any;
 }
 
@@ -130,6 +120,21 @@ export const handleApiError = (error: unknown, fallbackMessage: string): string 
 };
 
 /**
+ * Prismaエラーかどうかを判定する
+ * @param error - 判定対象のエラー
+ * @returns Prismaエラーかどうか
+ */
+const isPrismaError = (error: unknown): error is PrismaError => {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'code' in error &&
+    typeof (error as any).code === 'string' &&
+    (error as any).code.startsWith('P')
+  );
+};
+
+/**
  * APIレスポンス用のエラー処理
  * @param error - 発生したエラー
  * @param fallbackMessage - デフォルトメッセージ
@@ -150,6 +155,17 @@ export const createApiErrorResponse = (
       error: error.message,
       type: error.type,
       statusCode: error.statusCode,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // Prismaエラーの場合、handleDatabaseErrorを使用
+  if (isPrismaError(error)) {
+    const dbError = handleDatabaseError(error);
+    return {
+      error: dbError.message,
+      type: dbError.type,
+      statusCode: dbError.statusCode,
       timestamp: new Date().toISOString(),
     };
   }
@@ -272,57 +288,6 @@ export const handleDatabaseError = (error: PrismaError): AppError => {
         `Database error occurred: ${error.message}`,
         ErrorType.DATABASE_ERROR,
         500
-      );
-  }
-};
-
-/**
- * 認証エラー専用のハンドラー
- * @param error - 認証エラー
- * @returns AppError インスタンス
- */
-export const handleAuthError = (error: AuthError): AppError => {
-  logger.error('Authentication Error', {
-    code: error.code,
-    message: error.message,
-  });
-
-  switch (error.code) {
-    case 'auth/user-not-found':
-      return new AppError(
-        'User not found',
-        ErrorType.AUTHENTICATION,
-        401
-      );
-    case 'auth/wrong-password':
-      return new AppError(
-        'Invalid password',
-        ErrorType.AUTHENTICATION,
-        401
-      );
-    case 'auth/email-already-in-use':
-      return new AppError(
-        'Email address is already in use',
-        ErrorType.VALIDATION,
-        400
-      );
-    case 'auth/weak-password':
-      return new AppError(
-        'Password is too weak. Please use at least 6 characters',
-        ErrorType.VALIDATION,
-        400
-      );
-    case 'auth/invalid-email':
-      return new AppError(
-        'Invalid email address format',
-        ErrorType.VALIDATION,
-        400
-      );
-    default:
-      return new AppError(
-        `Authentication error occurred: ${error.message}`,
-        ErrorType.AUTHENTICATION,
-        401
       );
   }
 };

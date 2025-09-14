@@ -15,7 +15,6 @@ import {
   createApiErrorResponse,
   ErrorType,
   handleApiError,
-  handleAuthError,
   handleClientError,
   handleDatabaseError,
   handleNetworkError,
@@ -246,78 +245,6 @@ describe('handleDatabaseError Function', () => {
   });
 });
 
-describe('handleAuthError Function', () => {
-  test('should handle auth/user-not-found', () => {
-    const firebaseError = { code: 'auth/user-not-found', name: 'FirebaseError', message: 'User not found' };
-    const result = handleAuthError(firebaseError);
-    
-    expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('User not found');
-    expect(result.type).toBe(ErrorType.AUTHENTICATION);
-    expect(result.statusCode).toBe(401);
-  });
-
-  test('should handle auth/wrong-password', () => {
-    const firebaseError = { code: 'auth/wrong-password', name: 'FirebaseError', message: 'Wrong password' };
-    const result = handleAuthError(firebaseError);
-    
-    expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Invalid password');
-    expect(result.type).toBe(ErrorType.AUTHENTICATION);
-    expect(result.statusCode).toBe(401);
-  });
-
-  test('should handle auth/email-already-in-use', () => {
-    const firebaseError = { code: 'auth/email-already-in-use', name: 'FirebaseError', message: 'Email already in use' };
-    const result = handleAuthError(firebaseError);
-    
-    expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Email address is already in use');
-    expect(result.type).toBe(ErrorType.VALIDATION);
-    expect(result.statusCode).toBe(400);
-  });
-
-  test('should handle auth/weak-password', () => {
-    const firebaseError = { code: 'auth/weak-password', name: 'FirebaseError', message: 'Weak password' };
-    const result = handleAuthError(firebaseError);
-    
-    expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Password is too weak. Please use at least 6 characters');
-    expect(result.type).toBe(ErrorType.VALIDATION);
-    expect(result.statusCode).toBe(400);
-  });
-
-  test('should handle auth/invalid-email', () => {
-    const firebaseError = { code: 'auth/invalid-email', name: 'FirebaseError', message: 'Invalid email' };
-    const result = handleAuthError(firebaseError);
-    
-    expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Invalid email address format');
-    expect(result.type).toBe(ErrorType.VALIDATION);
-    expect(result.statusCode).toBe(400);
-  });
-
-  test('should handle unknown authentication error', () => {
-    const firebaseError = { code: 'auth/unknown-error', message: undefined, name: 'AuthError' } as any;
-    const result = handleAuthError(firebaseError);
-    
-    expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Authentication error occurred: undefined');
-    expect(result.type).toBe(ErrorType.AUTHENTICATION);
-    expect(result.statusCode).toBe(401);
-  });
-
-  test('should handle auth error without code', () => {
-    const authError = { message: 'Auth service unavailable', name: 'AuthError' } as any;
-    const result = handleAuthError(authError);
-    
-    expect(result).toBeInstanceOf(AppError);
-    expect(result.message).toBe('Authentication error occurred: Auth service unavailable');
-    expect(result.type).toBe(ErrorType.AUTHENTICATION);
-    expect(result.statusCode).toBe(401);
-  });
-});
-
 describe('handleNetworkError Function', () => {
   test('should handle NetworkError by name', () => {
     const networkError = { name: 'NetworkError', message: 'Network is unreachable' };
@@ -387,14 +314,6 @@ describe('Integration Tests', () => {
     expect(apiResponse.type).toBe(ErrorType.VALIDATION);
     expect(apiResponse.statusCode).toBe(400);
     expect(apiResponse.timestamp).toBeDefined();
-  });
-
-  test('should work together: auth error -> client handling', () => {
-    const firebaseError = { code: 'auth/invalid-email', name: 'FirebaseError', message: 'Invalid email' };
-    const appError = handleAuthError(firebaseError);
-    const clientMessage = handleClientError(appError, 'Auth failed');
-    
-    expect(clientMessage).toBe('Invalid email address format');
   });
 
   test('should work together: network error -> API error handling', () => {
