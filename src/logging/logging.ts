@@ -19,7 +19,7 @@ interface ILogger {
 const isServer = typeof window === 'undefined';
 
 /**
- * クライアントサイド用の簡単なロガー
+ * クライアントサイドロガー
  */
 class ClientLogger implements ILogger {
     info(message: string, context?: LogContext): void {
