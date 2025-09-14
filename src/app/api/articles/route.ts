@@ -33,9 +33,14 @@ export async function GET(req: Request): Promise<NextResponse> {
             return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
         }
 
-        // Prismaエラーの場合、handleDatabaseErrorを使用してDATABASE_ERRORを返す
+
         const dbError = handleDatabaseError(error as any);
-        const errorResponse = createApiErrorResponse(dbError, 'Failed to fetch articles');
+        const errorResponse = {
+            error: 'Failed to fetch articles',
+            type: dbError.type,
+            statusCode: dbError.statusCode,
+            timestamp: new Date().toISOString(),
+        };
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -62,9 +67,14 @@ export async function POST(req: Request): Promise<NextResponse> {
             return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
         }
 
-        // Prismaエラーの場合、handleDatabaseErrorを使用してDATABASE_ERRORを返す
+
         const dbError = handleDatabaseError(error as any);
-        const errorResponse = createApiErrorResponse(dbError, 'Failed to create article');
+        const errorResponse = {
+            error: 'Failed to create article',
+            type: dbError.type,
+            statusCode: dbError.statusCode,
+            timestamp: new Date().toISOString(),
+        };
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -91,9 +101,14 @@ export async function PUT(req: Request): Promise<NextResponse> {
             return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
         }
 
-        // Prismaエラーの場合、handleDatabaseErrorを使用してDATABASE_ERRORを返す
+
         const dbError = handleDatabaseError(error as any);
-        const errorResponse = createApiErrorResponse(dbError, 'Failed to update article');
+        const errorResponse = {
+            error: 'Failed to update article',
+            type: dbError.type,
+            statusCode: dbError.statusCode,
+            timestamp: new Date().toISOString(),
+        };
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -120,9 +135,14 @@ export async function DELETE(req: Request): Promise<NextResponse> {
             return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
         }
 
-        // Prismaエラーの場合、handleDatabaseErrorを使用してDATABASE_ERRORを返す
+
         const dbError = handleDatabaseError(error as any);
-        const errorResponse = createApiErrorResponse(dbError, 'Failed to delete article');
+        const errorResponse = {
+            error: 'Failed to delete article',
+            type: dbError.type,
+            statusCode: dbError.statusCode,
+            timestamp: new Date().toISOString(),
+        };
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
