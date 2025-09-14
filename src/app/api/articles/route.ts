@@ -51,7 +51,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
 
-        if (!data.title || !data.content || !data.author_id) {
+        if (!data.title || !data.content || !data.author_id || 
+            !data.title.trim() || !data.content.trim() || !data.author_id.trim()) {
             throw new AppError(
                 'Title, content, and author ID are required',
                 ErrorType.VALIDATION,
@@ -85,7 +86,8 @@ export async function PUT(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
 
-        if (!data.post_id || !data.title || !data.content) {
+        if (!data.post_id || !data.title || !data.content ||
+            !data.title.trim() || !data.content.trim()) {
             throw new AppError(
                 'Post ID, title, and content are required',
                 ErrorType.VALIDATION,

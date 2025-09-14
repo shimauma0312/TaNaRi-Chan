@@ -344,7 +344,7 @@ describe('Articles API - PUT Endpoint', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual(updatedArticle);
+    expect(data).toEqual(convertDatesForJson(updatedArticle));
     expect(mockPrismaPost.update).toHaveBeenCalledWith({
       where: { post_id: updateData.post_id },
       data: {
@@ -447,7 +447,7 @@ describe('Articles API - DELETE Endpoint', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual(deletedArticle);
+    expect(data).toEqual(convertDatesForJson(deletedArticle));
     expect(mockPrismaPost.delete).toHaveBeenCalledWith({
       where: { post_id: deleteData.post_id },
     });
@@ -559,7 +559,7 @@ describe('Articles API - Edge Cases and Integration', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual(mockArticle);
+    expect(data).toEqual(convertDatesForJson(mockArticle));
     expect(mockPrismaPost.findUnique).toHaveBeenCalledWith({
       where: { post_id: 1 },
       select: {
