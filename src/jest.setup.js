@@ -14,8 +14,8 @@ global.console = {
     // Suppress console.log in tests
     log: jest.fn(),
     // Keep error and warn for debugging
-    error: jest.fn(),
-    warn: jest.fn(),
+    error: console.error, // Use real console.error for debugging
+    warn: console.warn,   // Use real console.warn for debugging
 }
 
 // Mock Next.js environment

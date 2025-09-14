@@ -16,17 +16,22 @@ import { NextRequest } from 'next/server';
 import { ErrorType } from '../utils/errorHandler';
 
 // Mock PrismaClient with proper structure
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    post: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-  })),
-}));
+jest.mock('@prisma/client', () => {
+  const mockPrismaPost = {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  };
+  
+  return {
+    PrismaClient: jest.fn().mockImplementation(() => ({
+      post: mockPrismaPost,
+    })),
+    __mockPrismaPost: mockPrismaPost, // Export for accessing in tests
+  };
+});
 
 // Mock logger - need to match the correct import path
 jest.mock('@/logging/logging', () => ({
@@ -43,9 +48,8 @@ jest.mock('@/logging/logging', () => ({
 import { PrismaClient } from '@prisma/client';
 import { DELETE, GET, POST, PUT } from '../app/api/articles/route';
 
-// Get mock instance
-const mockPrisma = new PrismaClient() as jest.Mocked<PrismaClient>;
-const mockPrismaPost = mockPrisma.post;
+// Access the mock
+const mockPrismaPost = (require('@prisma/client') as any).__mockPrismaPost;
 
 // Helper function to create a mock Request using built-in Request
 function createMockRequest(method: string, url: string, body?: any): Request {
@@ -59,6 +63,24 @@ function createMockRequest(method: string, url: string, body?: any): Request {
   });
 
   return request as NextRequest;
+}
+
+// Helper function to convert Date objects to ISO strings for JSON comparison
+function convertDatesForJson(obj: any): any {
+  if (obj && typeof obj === 'object') {
+    if (obj instanceof Date) {
+      return obj.toISOString();
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(convertDatesForJson);
+    }
+    const converted: any = {};
+    for (const key in obj) {
+      converted[key] = convertDatesForJson(obj[key]);
+    }
+    return converted;
+  }
+  return obj;
 }
 
 describe('Articles API - GET Endpoint', () => {
@@ -89,8 +111,15 @@ describe('Articles API - GET Endpoint', () => {
       const response = await GET(request);
       const data = await response.json();
 
+      // Debug: Log response details
+      if (response.status !== 200) {
+        console.error('Unexpected response status:', response.status);
+        console.error('Response data:', data);
+      }
+
       expect(response.status).toBe(200);
-      expect(data).toEqual(mockArticles);
+      // Convert Date objects to strings for comparison since JSON serialization converts dates to strings
+      expect(data).toEqual(convertDatesForJson(mockArticles));
       expect(mockPrismaPost.findMany).toHaveBeenCalledWith({
         select: {
           post_id: true,
@@ -115,7 +144,7 @@ describe('Articles API - GET Endpoint', () => {
       const data = await response.json();
 
       expect(response.status).toBe(500);
-      expect(data.error).toContain('Failed to fetch articles');
+      expect(data.error).toBe('The table does not exist in the current database');
       expect(data.type).toBe(ErrorType.DATABASE_ERROR);
     });
   });
@@ -136,7 +165,8 @@ describe('Articles API - GET Endpoint', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual(mockArticle);
+      // Convert Date object to string for comparison
+      expect(data).toEqual(convertDatesForJson(mockArticle));
       expect(mockPrismaPost.findUnique).toHaveBeenCalledWith({
         where: { post_id: 1 },
         select: {
@@ -196,7 +226,8 @@ describe('Articles API - POST Endpoint', () => {
     const data = await response.json();
 
     expect(response.status).toBe(201);
-    expect(data).toEqual(createdArticle);
+    // Convert Date object to string for comparison
+    expect(data).toEqual(convertDatesForJson(createdArticle));
     expect(mockPrismaPost.create).toHaveBeenCalledWith({
       data: newArticleData,
     });

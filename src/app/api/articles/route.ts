@@ -3,6 +3,9 @@ import { AppError, createApiErrorResponse, ErrorType, handleDatabaseError } from
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+// Create a single Prisma instance for reuse
+const prisma = new PrismaClient();
+
 /*
 * 記事一覧を取得する。
 */
@@ -149,7 +152,6 @@ export async function DELETE(req: Request): Promise<NextResponse> {
  * 記事リストを取得する
  */
 async function getArticles() {
-    const prisma = new PrismaClient();
     try {
         return await prisma.post.findMany({
             select: {
@@ -169,7 +171,6 @@ async function getArticles() {
  * 指定された記事を取得する
  */
 async function getArticle(postId: string | null) {
-    const prisma = new PrismaClient();
     logger.info(postId ?? 'null');
     if (postId !== null) {
         try {
@@ -196,7 +197,6 @@ async function getArticle(postId: string | null) {
  * 記事を作成する
  */
 async function createArticle(data: { title: string; content: string; author_id: string }) {
-    const prisma = new PrismaClient();
     try {
         return await prisma.post.create({
             data: {
@@ -215,7 +215,6 @@ async function createArticle(data: { title: string; content: string; author_id: 
  * 記事を更新する
  */
 async function updateArticle(data: { post_id: number; title: string; content: string }) {
-    const prisma = new PrismaClient();
     try {
         return await prisma.post.update({
             where: {
@@ -236,7 +235,6 @@ async function updateArticle(data: { post_id: number; title: string; content: st
  * 記事を削除する
  */
 async function deleteArticle(post_id: number) {
-    const prisma = new PrismaClient();
     try {
         return await prisma.post.delete({
             where: {

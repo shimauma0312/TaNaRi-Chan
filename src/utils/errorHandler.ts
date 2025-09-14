@@ -2,7 +2,7 @@
  * エラーハンドリングユーティリティ
  */
 
-import logger from '@/utils/logger';
+import logger from '@/logging/logging';
 
 // エラーの種類を定義
 export enum ErrorType {
