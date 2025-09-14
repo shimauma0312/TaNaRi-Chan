@@ -1,5 +1,3 @@
-import winston from 'winston';
-
 interface LogContext {
     [key: string]: any;
 }
@@ -40,52 +38,79 @@ class ClientLogger implements ILogger {
 }
 
 /**
- * Winston ロガーのラッパークラス
+ * サーバーサイドロガー（遅延ロード）
  */
-class WinstonLoggerAdapter implements ILogger {
-    private winston: winston.Logger;
+class ServerLogger implements ILogger {
+    private serverLoggerInstance: any = null;
+    private initPromise: Promise<any> | null = null;
+    private fallbackLogger = new ClientLogger();
 
-    constructor(winstonInstance: winston.Logger) {
-        this.winston = winstonInstance;
+    private async initServerLogger() {
+        if (!this.initPromise) {
+            this.initPromise = (async () => {
+                try {
+                    // 厳密にサーバーサイドでのみロード
+                    if (typeof window !== 'undefined') {
+                        throw new Error('Server logger should not be loaded on client side');
+                    }
+                    
+                    const { default: ServerWinstonLogger } = await import('./serverLogger');
+                    this.serverLoggerInstance = new ServerWinstonLogger();
+                    return this.serverLoggerInstance;
+                } catch (error) {
+                    console.warn('Winston logger not available, using console fallback:', error);
+                    this.serverLoggerInstance = this.fallbackLogger;
+                    return this.serverLoggerInstance;
+                }
+            })();
+        }
+        await this.initPromise;
+        return this.serverLoggerInstance || this.fallbackLogger;
     }
 
     info(message: string, context?: LogContext): void {
-        this.winston.info(message, context);
+        if (this.serverLoggerInstance) {
+            this.serverLoggerInstance.info(message, context);
+        } else {
+            this.initServerLogger().then(logger => logger.info(message, context)).catch(() => {
+                this.fallbackLogger.info(message, context);
+            });
+        }
     }
 
     error(message: string, context?: LogContext): void {
-        this.winston.error(message, context);
+        if (this.serverLoggerInstance) {
+            this.serverLoggerInstance.error(message, context);
+        } else {
+            this.initServerLogger().then(logger => logger.error(message, context)).catch(() => {
+                this.fallbackLogger.error(message, context);
+            });
+        }
     }
 
     warn(message: string, context?: LogContext): void {
-        this.winston.warn(message, context);
+        if (this.serverLoggerInstance) {
+            this.serverLoggerInstance.warn(message, context);
+        } else {
+            this.initServerLogger().then(logger => logger.warn(message, context)).catch(() => {
+                this.fallbackLogger.warn(message, context);
+            });
+        }
     }
 
     debug(message: string, context?: LogContext): void {
-        this.winston.debug(message, context);
+        if (this.serverLoggerInstance) {
+            this.serverLoggerInstance.debug(message, context);
+        } else {
+            this.initServerLogger().then(logger => logger.debug(message, context)).catch(() => {
+                this.fallbackLogger.debug(message, context);
+            });
+        }
     }
 }
 
 // ロガーインスタンスを作成
-let logger: ILogger;
-
-if (isServer) {
-    // サーバーサイドではWinstonを使用
-    const winstonLogger = winston.createLogger({
-        level: 'info',
-        format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.json()
-        ),
-        transports: [
-            new winston.transports.Console(),
-        ],
-    });
-    logger = new WinstonLoggerAdapter(winstonLogger);
-} else {
-    // クライアントサイドでは console を使用
-    logger = new ClientLogger();
-}
+const logger: ILogger = isServer ? new ServerLogger() : new ClientLogger();
 
 // Export the logger instance for use in other parts of the application
 export default logger;
