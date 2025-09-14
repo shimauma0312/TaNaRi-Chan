@@ -28,7 +28,14 @@ export async function GET(req: Request): Promise<NextResponse> {
             }
         }
     } catch (error) {
-        const errorResponse = createApiErrorResponse(error, 'Failed to fetch articles');
+        if (error instanceof AppError) {
+            const errorResponse = createApiErrorResponse(error, 'Failed to fetch articles');
+            return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+        }
+
+        // Prismaエラーの場合、handleDatabaseErrorを使用してDATABASE_ERRORを返す
+        const dbError = handleDatabaseError(error as any);
+        const errorResponse = createApiErrorResponse(dbError, 'Failed to fetch articles');
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -50,7 +57,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         logger.info('Article created successfully', { postId: newPost.post_id });
         return NextResponse.json(newPost, { status: 201 })
     } catch (error) {
-        const errorResponse = createApiErrorResponse(error, 'Failed to create article');
+        if (error instanceof AppError) {
+            const errorResponse = createApiErrorResponse(error, 'Failed to create article');
+            return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+        }
+
+        // Prismaエラーの場合、handleDatabaseErrorを使用してDATABASE_ERRORを返す
+        const dbError = handleDatabaseError(error as any);
+        const errorResponse = createApiErrorResponse(dbError, 'Failed to create article');
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -72,7 +86,14 @@ export async function PUT(req: Request): Promise<NextResponse> {
         logger.info('Article updated successfully', { postId: updatedPost.post_id });
         return NextResponse.json(updatedPost)
     } catch (error) {
-        const errorResponse = createApiErrorResponse(error, 'Failed to update article');
+        if (error instanceof AppError) {
+            const errorResponse = createApiErrorResponse(error, 'Failed to update article');
+            return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+        }
+
+        // Prismaエラーの場合、handleDatabaseErrorを使用してDATABASE_ERRORを返す
+        const dbError = handleDatabaseError(error as any);
+        const errorResponse = createApiErrorResponse(dbError, 'Failed to update article');
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -94,7 +115,14 @@ export async function DELETE(req: Request): Promise<NextResponse> {
         logger.info('Article deleted successfully', { postId: data.post_id });
         return NextResponse.json(deletedPost)
     } catch (error) {
-        const errorResponse = createApiErrorResponse(error, 'Failed to delete article');
+        if (error instanceof AppError) {
+            const errorResponse = createApiErrorResponse(error, 'Failed to delete article');
+            return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+        }
+
+        // Prismaエラーの場合、handleDatabaseErrorを使用してDATABASE_ERRORを返す
+        const dbError = handleDatabaseError(error as any);
+        const errorResponse = createApiErrorResponse(dbError, 'Failed to delete article');
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
