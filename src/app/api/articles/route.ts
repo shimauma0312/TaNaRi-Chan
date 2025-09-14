@@ -103,14 +103,19 @@ export async function DELETE(req: Request): Promise<NextResponse> {
  * 記事リストを取得する
  */
 async function getArticles() {
-    return await prisma.post.findMany({
-        select: {
-            post_id: true,
-            title: true,
-            content: true,
-            createdAt: true,
-        }
-    })
+    try {
+        return await prisma.post.findMany({
+            select: {
+                post_id: true,
+                title: true,
+                content: true,
+                createdAt: true,
+            }
+        })
+    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        throw handleDatabaseError(error as any);
+    }
 }
 
 /**
@@ -119,17 +124,22 @@ async function getArticles() {
 async function getArticle(postId: string | null) {
     logger.info(postId ?? 'null');
     if (postId !== null) {
-        return await prisma.post.findUnique({
-            where: {
-                post_id: Number(postId)
-            },
-            select: {
-                post_id: true,
-                title: true,
-                content: true,
-                createdAt: true,
-            }
-        })
+        try {
+            return await prisma.post.findUnique({
+                where: {
+                    post_id: Number(postId)
+                },
+                select: {
+                    post_id: true,
+                    title: true,
+                    content: true,
+                    createdAt: true,
+                }
+            })
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            throw handleDatabaseError(error as any);
+        }
     }
     return null; // postIdがnullの場合はnullを返す
 }
