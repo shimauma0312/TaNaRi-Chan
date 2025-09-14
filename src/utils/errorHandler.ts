@@ -120,6 +120,21 @@ export const handleApiError = (error: unknown, fallbackMessage: string): string 
 };
 
 /**
+ * Prismaエラーかどうかを判定する
+ * @param error - 判定対象のエラー
+ * @returns Prismaエラーかどうか
+ */
+const isPrismaError = (error: unknown): error is PrismaError => {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'code' in error &&
+    typeof (error as any).code === 'string' &&
+    (error as any).code.startsWith('P')
+  );
+};
+
+/**
  * APIレスポンス用のエラー処理
  * @param error - 発生したエラー
  * @param fallbackMessage - デフォルトメッセージ
@@ -140,6 +155,17 @@ export const createApiErrorResponse = (
       error: error.message,
       type: error.type,
       statusCode: error.statusCode,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // Prismaエラーの場合、handleDatabaseErrorを使用
+  if (isPrismaError(error)) {
+    const dbError = handleDatabaseError(error);
+    return {
+      error: dbError.message,
+      type: dbError.type,
+      statusCode: dbError.statusCode,
       timestamp: new Date().toISOString(),
     };
   }
