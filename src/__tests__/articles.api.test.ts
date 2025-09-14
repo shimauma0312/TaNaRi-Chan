@@ -116,7 +116,7 @@ describe('Articles API - GET Endpoint', () => {
 
       expect(response.status).toBe(500);
       expect(data.error).toContain('Failed to fetch articles');
-      expect(data.type).toBe(ErrorType.SERVER_ERROR);
+      expect(data.type).toBe(ErrorType.DATABASE_ERROR);
     });
   });
 
