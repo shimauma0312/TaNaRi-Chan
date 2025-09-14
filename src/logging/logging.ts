@@ -1,9 +1,7 @@
-import fs from 'fs';
-import path from 'path';
 import winston from 'winston';
 
 interface LogContext {
-  [key: string]: any;
+    [key: string]: any;
 }
 
 /**
@@ -11,39 +9,35 @@ interface LogContext {
  * winston,ClientLogger共通メソッド
  */
 interface ILogger {
-  info(message: string, context?: LogContext): void;
-  error(message: string, context?: LogContext): void;
-  warn(message: string, context?: LogContext): void;
-  debug(message: string, context?: LogContext): void;
+    info(message: string, context?: LogContext): void;
+    error(message: string, context?: LogContext): void;
+    warn(message: string, context?: LogContext): void;
+    debug(message: string, context?: LogContext): void;
 }
 
-// Define the directory for log files
-const logDir = 'logs';
+// サーバーサイドかどうかをチェック
+const isServer = typeof window === 'undefined';
 
-// Create the log directory if it does not exist
-if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir);
+/**
+ * クライアントサイド用の簡単なロガー
+ */
+class ClientLogger implements ILogger {
+    info(message: string, context?: LogContext): void {
+        console.info(message, context);
+    }
+
+    error(message: string, context?: LogContext): void {
+        console.error(message, context);
+    }
+
+    warn(message: string, context?: LogContext): void {
+        console.warn(message, context);
+    }
+
+    debug(message: string, context?: LogContext): void {
+        console.debug(message, context);
+    }
 }
-
-// Create a logger instance using Winston
-const winstonLogger = winston.createLogger({
-    // Set the logging level to 'info'
-    level: 'info',
-    // Combine timestamp and JSON format for log messages
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-    ),
-    // Define the transports for the logger
-    transports: [
-        // Output logs to the console
-        new winston.transports.Console(),
-        // Output logs to a file named 'combined.log'
-        new winston.transports.File({ filename: path.join(logDir, 'combined.log') }),
-        // Output error logs to a file named 'error.log'
-        new winston.transports.File({ filename: path.join(logDir, 'error.log'), level: 'error' })
-    ],
-});
 
 /**
  * Winston ロガーのラッパークラス
@@ -72,8 +66,26 @@ class WinstonLoggerAdapter implements ILogger {
     }
 }
 
-// Create the adapter instance
-const logger: ILogger = new WinstonLoggerAdapter(winstonLogger);
+// ロガーインスタンスを作成
+let logger: ILogger;
+
+if (isServer) {
+    // サーバーサイドではWinstonを使用
+    const winstonLogger = winston.createLogger({
+        level: 'info',
+        format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.json()
+        ),
+        transports: [
+            new winston.transports.Console(),
+        ],
+    });
+    logger = new WinstonLoggerAdapter(winstonLogger);
+} else {
+    // クライアントサイドでは console を使用
+    logger = new ClientLogger();
+}
 
 // Export the logger instance for use in other parts of the application
 export default logger;
