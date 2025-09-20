@@ -1,12 +1,12 @@
-import { getCurrentUser } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
+import * as userService from '@/service/userService'
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
 
 export async function GET(_req: NextRequest) {
   try {
-    const user = await getCurrentUser()
+    const user = await userService.getCurrentUser()
 
     if (!user) {
       return NextResponse.json(

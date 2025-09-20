@@ -1,5 +1,5 @@
-import { authenticateUser, setAuthCookie } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
+import * as userService from '@/service/userService'
 
 interface LoginRequestBody {
   email: string
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const user = await authenticateUser(body.email, body.password)
+    const user = await userService.authenticateUser(body.email, body.password)
 
     if (!user) {
       return NextResponse.json(
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Set authentication cookie
-    setAuthCookie(user.id)
+    userService.setAuthCookie(user.id)
 
     return NextResponse.json(
       {
