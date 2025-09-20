@@ -1,3 +1,5 @@
+"use client"
+
 // components/Loader.tsx
 import React, { useEffect } from "react"
 import loader from "../styles/loader.module.css"

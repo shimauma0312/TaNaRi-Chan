@@ -1,3 +1,4 @@
+"use client"
 
 import "easymde/dist/easymde.min.css"
 import "github-markdown-css/github-markdown.css"

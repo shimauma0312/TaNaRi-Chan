@@ -1,5 +1,5 @@
-import { clearAuthCookie } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
+import * as userService from '@/service/userService'
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(_req: NextRequest) {
   try {
     // Clear authentication cookie
-    clearAuthCookie()
+    userService.clearAuthCookie()
 
     return NextResponse.json(
       { message: 'ログアウトしました' },
