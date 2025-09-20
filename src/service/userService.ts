@@ -208,19 +208,14 @@ export function clearAuthCookie(): void {
  * @returns 認証済みユーザーまたはnull
  */
 export async function getCurrentUser(): Promise<AuthUser | null> {
-  try {
-    const cookieStore = cookies();
-    const userId = cookieStore.get('auth-user-id')?.value;
+  const cookieStore = cookies();
+  const userId = cookieStore.get('auth-user-id')?.value;
 
-    if (!userId) {
-      return null;
-    }
-
-    return await findUserById(userId);
-  } catch (error) {
-    console.error('Error getting current user:', error);
+  if (!userId) {
     return null;
   }
+
+  return await findUserById(userId);
 }
 
 /**
