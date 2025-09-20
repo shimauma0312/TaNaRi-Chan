@@ -48,14 +48,21 @@ This project requires environment variables to be set up. Follow these steps to 
 2. Open the .env file and set the database URL and other necessary environment variables. For example:
 
    ```bash
-   DATABASE_URL="postgresql://postgres:example_password@db:/app_db" 👈 no touch
+   DATABASE_URL="postgresql://postgres:example_password@db:/app_db"
    # Add other environment variables as needed for your application
    ```
 
    Note: You do not need to modify the DATABASE_URL value.
 
 
+
 ## Prisma Migration Instructions
+
+> All instructions and commands below must be executed *inside* the Docker container. 
+>
+> ```bash
+> docker compose exec app bash
+> ```
 
 Follow these steps to set up the database. This process is required when starting the application for the first time or after changing the Prisma schema.
 
@@ -93,13 +100,3 @@ npm run test:coverage
 chmod +x run-tests.sh
 ./run-tests.sh --coverage
 ```
-
-### Test Files
-
-- `__tests__/errorHandler.test.ts` - Comprehensive error handler test suite
-
-### Coverage Reports
-
-When running tests with coverage, reports are generated in:
-- `coverage/lcov-report/index.html` - HTML coverage report
-- `coverage/lcov.info` - LCOV format for CI/CD integration
