@@ -1,4 +1,6 @@
-// componets/MinLoader.tsx
+"use client"
+
+// components/MinLoader.tsx
 import React from "react"
 
 const MinLoader: React.FC = () => {
