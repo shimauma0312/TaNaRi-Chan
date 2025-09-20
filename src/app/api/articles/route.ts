@@ -32,7 +32,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         }
 
         const errorResponse = createApiErrorResponse(
-            error as AppError,
+            error,
             'Failed to fetch articles'
         );
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
