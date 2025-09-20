@@ -1,9 +1,6 @@
-import { generateUserId, hashPassword } from "@/lib/auth"
 import { AppError, createApiErrorResponse, ErrorType } from "@/utils/errorHandler"
-import { PrismaClient } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
-
-const prisma = new PrismaClient()
+import * as userService from "@/service/userService"
 
 interface UserRequestBody {
   email: string
@@ -24,33 +21,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { user_email: body.email },
-    })
-
-    if (existingUser) {
-      throw new AppError(
-        'Email address is already registered',
-        ErrorType.VALIDATION,
-        400
-      );
-    }
-
-    // Generate user ID and hash password
-    const userId = generateUserId()
-    const hashedPassword = await hashPassword(body.password)
-
-    // Save user to database
-    await prisma.user.create({
-      data: {
-        id: userId,
-        user_name: body.userName,
-        user_email: body.email,
-        password: hashedPassword,
-        icon_number: 1, // デフォルトのアイコン番号
-      },
-    })
+    // サービス層を使用してユーザーを作成
+    await userService.createUser({
+      email: body.email,
+      password: body.password,
+      userName: body.userName
+    });
 
     return NextResponse.json(
       { message: "User registered successfully" },
