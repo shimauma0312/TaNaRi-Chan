@@ -1,3 +1,5 @@
+"use client"
+
 // componets/MinLoader.tsx
 import React from "react"
 
