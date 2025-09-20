@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import logger from "@/logging/logging";
-import { handleDatabaseError } from "@/utils/errorHandler";
+import { handleDatabaseError, AppError, ErrorType } from "@/utils/errorHandler";
 
 // Prismaクライアントのシングルトンインスタンス
 const prisma = new PrismaClient();
@@ -56,10 +56,20 @@ export async function getArticles() {
 export async function getArticle(postId: string | null) {
   logger.info(postId ?? 'null');
   if (postId !== null) {
+    // postIdが有効な数値かバリデーション
+    const numericPostId = parseInt(postId, 10);
+    if (isNaN(numericPostId) || numericPostId <= 0) {
+      throw new AppError(
+        'Article not found',
+        ErrorType.NOT_FOUND,
+        404
+      );
+    }
+    
     try {
       return await prisma.post.findUnique({
         where: {
-          post_id: Number(postId)
+          post_id: numericPostId
         },
         select: {
           post_id: true,
