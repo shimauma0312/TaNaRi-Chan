@@ -369,19 +369,19 @@ describe('Articles API Functions', () => {
 
   describe('Validation Logic Tests', () => {
     test('should identify missing title', () => {
-      const data = { content: 'content', author_id: 'user123' };
+      const data: Partial<{ title: string; content: string; author_id: string }> = { content: 'content', author_id: 'user123' };
       const isValid = !(!data.title || !data.content || !data.author_id);
       expect(isValid).toBe(false);
     });
 
     test('should identify missing content', () => {
-      const data = { title: 'title', author_id: 'user123' };
+      const data: Partial<{ title: string; content: string; author_id: string }> = { title: 'title', author_id: 'user123' };
       const isValid = !(!data.title || !data.content || !data.author_id);
       expect(isValid).toBe(false);
     });
 
     test('should identify missing author_id', () => {
-      const data = { title: 'title', content: 'content' };
+      const data: Partial<{ title: string; content: string; author_id: string }> = { title: 'title', content: 'content' };
       const isValid = !(!data.title || !data.content || !data.author_id);
       expect(isValid).toBe(false);
     });
@@ -411,7 +411,7 @@ describe('Articles API Functions', () => {
     });
 
     test('should identify missing post_id in PUT request', () => {
-      const data = { title: 'Updated Title', content: 'Updated Content' };
+      const data: Partial<{ post_id: number; title: string; content: string }> = { title: 'Updated Title', content: 'Updated Content' };
       const isValid = !(!data.post_id || !data.title || !data.content);
       expect(isValid).toBe(false);
     });
@@ -423,7 +423,7 @@ describe('Articles API Functions', () => {
     });
 
     test('should identify missing post_id in DELETE request', () => {
-      const data = {};
+      const data: { post_id?: number } = {};
       const isValid = !!data.post_id;
       expect(isValid).toBe(false);
     });

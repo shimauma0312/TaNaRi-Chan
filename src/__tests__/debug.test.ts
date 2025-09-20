@@ -64,7 +64,7 @@ describe('Simple Debug Test', () => {
       },
     ];
 
-    mockPrismaPost.findMany.mockResolvedValue(mockArticles);
+    (mockPrismaPost.findMany as jest.Mock).mockResolvedValue(mockArticles);
 
     const request = createMockRequest('GET', 'http://localhost:3000/api/articles');
     
@@ -75,7 +75,7 @@ describe('Simple Debug Test', () => {
     const data = await response.json();
     console.log('Response data:', data);
 
-    console.log('mockPrismaPost.findMany calls:', mockPrismaPost.findMany.mock.calls);
+    console.log('mockPrismaPost.findMany calls:', (mockPrismaPost.findMany as jest.Mock).mock.calls);
   });
 
   test('should debug POST request', async () => {
@@ -91,7 +91,7 @@ describe('Simple Debug Test', () => {
       createdAt: new Date('2024-01-03'),
     };
 
-    mockPrismaPost.create.mockResolvedValue(createdArticle);
+    (mockPrismaPost.create as jest.Mock).mockResolvedValue(createdArticle);
 
     const request = createMockRequest('POST', 'http://localhost:3000/api/articles', newArticleData);
     
