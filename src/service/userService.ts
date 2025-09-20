@@ -55,18 +55,9 @@ export function generateUserId(): string {
  * @returns ユーザーオブジェクトまたはnull
  */
 export async function findUserByEmail(email: string) {
-  try {
-    return await prisma.user.findUnique({
-      where: { user_email: email },
-    });
-  } catch (error) {
-    console.error('Error finding user by email:', error);
-    throw new AppError(
-      'Failed to find user',
-      ErrorType.DATABASE_ERROR,
-      500
-    );
-  }
+  return prisma.user.findUnique({
+    where: { user_email: email },
+  });
 }
 
 /**
@@ -75,24 +66,15 @@ export async function findUserByEmail(email: string) {
  * @returns ユーザーオブジェクトまたはnull
  */
 export async function findUserById(userId: string) {
-  try {
-    return await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        user_name: true,
-        user_email: true,
-        icon_number: true,
-      },
-    });
-  } catch (error) {
-    console.error('Error finding user by ID:', error);
-    throw new AppError(
-      'Failed to find user',
-      ErrorType.DATABASE_ERROR,
-      500
-    );
-  }
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      user_name: true,
+      user_email: true,
+      icon_number: true,
+    },
+  });
 }
 
 /**
