@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 import { AppError, ErrorType } from '@/utils/errorHandler';
+import { generateUserId } from '@/lib/auth';
 
 // Prismaクライアントのシングルトンインスタンス
 const prisma = new PrismaClient();
@@ -39,14 +40,6 @@ export async function hashPassword(password: string): Promise<string> {
  */
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   return bcrypt.compare(password, hashedPassword);
-}
-
-/**
- * ランダムなユーザーIDを生成する
- * @returns 生成されたユーザーID
- */
-export function generateUserId(): string {
-  return 'user_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
 
 /**
