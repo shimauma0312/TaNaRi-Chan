@@ -84,7 +84,23 @@ export async function PUT(req: Request): Promise<NextResponse> {
             );
         }
 
-        const updatedPost = await articleService.updateArticle(data);
+        // post_idのバリデーション
+        const postId = parseInt(data.post_id, 10);
+        if (isNaN(postId) || postId <= 0) {
+            throw new AppError(
+                'Invalid post ID',
+                ErrorType.VALIDATION,
+                400
+            );
+        }
+
+        const updateData = {
+            post_id: postId,
+            title: data.title,
+            content: data.content
+        };
+
+        const updatedPost = await articleService.updateArticle(updateData);
         logger.info('Article updated successfully', { postId: updatedPost.post_id });
         return NextResponse.json(updatedPost);
     } catch (error) {
@@ -114,8 +130,18 @@ export async function DELETE(req: Request): Promise<NextResponse> {
             );
         }
 
-        const deletedPost = await articleService.deleteArticle(data.post_id);
-        logger.info('Article deleted successfully', { postId: data.post_id });
+        // post_idのバリデーション
+        const postId = parseInt(data.post_id, 10);
+        if (isNaN(postId) || postId <= 0) {
+            throw new AppError(
+                'Invalid post ID',
+                ErrorType.VALIDATION,
+                400
+            );
+        }
+
+        const deletedPost = await articleService.deleteArticle(postId);
+        logger.info('Article deleted successfully', { postId: postId });
         return NextResponse.json(deletedPost);
     } catch (error) {
         if (error instanceof AppError) {
