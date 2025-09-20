@@ -2,7 +2,7 @@
   "name": "Next.js Development Container",
   "dockerComposeFile": ["../docker-compose.yml"],
   "service": "app",
-  "workspaceFolder": "/app",
+  "workspaceFolder": "/",
   "customizations": {
     "vscode": {
       "extensions": [

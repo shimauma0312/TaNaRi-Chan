@@ -3,7 +3,8 @@ import { AppError, createApiErrorResponse, ErrorType, handleDatabaseError } from
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-const prisma = new PrismaClient()
+// Create a single Prisma instance for reuse
+const prisma = new PrismaClient();
 
 /*
 * 記事一覧を取得する。
@@ -28,7 +29,19 @@ export async function GET(req: Request): Promise<NextResponse> {
             }
         }
     } catch (error) {
-        const errorResponse = createApiErrorResponse(error, 'Failed to fetch articles');
+        if (error instanceof AppError) {
+            const errorResponse = createApiErrorResponse(error, 'Failed to fetch articles');
+            return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+        }
+
+
+        const dbError = handleDatabaseError(error as any);
+        const errorResponse = {
+            error: 'Failed to fetch articles',
+            type: dbError.type,
+            statusCode: dbError.statusCode,
+            timestamp: new Date().toISOString(),
+        };
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -38,7 +51,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
 
-        if (!data.title || !data.content || !data.author_id) {
+        if (!data.title || !data.content || !data.author_id || 
+            !data.title.trim() || !data.content.trim() || !data.author_id.trim()) {
             throw new AppError(
                 'Title, content, and author ID are required',
                 ErrorType.VALIDATION,
@@ -50,7 +64,19 @@ export async function POST(req: Request): Promise<NextResponse> {
         logger.info('Article created successfully', { postId: newPost.post_id });
         return NextResponse.json(newPost, { status: 201 })
     } catch (error) {
-        const errorResponse = createApiErrorResponse(error, 'Failed to create article');
+        if (error instanceof AppError) {
+            const errorResponse = createApiErrorResponse(error, 'Failed to create article');
+            return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+        }
+
+
+        const dbError = handleDatabaseError(error as any);
+        const errorResponse = {
+            error: 'Failed to create article',
+            type: dbError.type,
+            statusCode: dbError.statusCode,
+            timestamp: new Date().toISOString(),
+        };
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -60,7 +86,8 @@ export async function PUT(req: Request): Promise<NextResponse> {
     try {
         const data = await req.json()
 
-        if (!data.post_id || !data.title || !data.content) {
+        if (!data.post_id || !data.title || !data.content ||
+            !data.title.trim() || !data.content.trim()) {
             throw new AppError(
                 'Post ID, title, and content are required',
                 ErrorType.VALIDATION,
@@ -72,7 +99,19 @@ export async function PUT(req: Request): Promise<NextResponse> {
         logger.info('Article updated successfully', { postId: updatedPost.post_id });
         return NextResponse.json(updatedPost)
     } catch (error) {
-        const errorResponse = createApiErrorResponse(error, 'Failed to update article');
+        if (error instanceof AppError) {
+            const errorResponse = createApiErrorResponse(error, 'Failed to update article');
+            return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+        }
+
+
+        const dbError = handleDatabaseError(error as any);
+        const errorResponse = {
+            error: 'Failed to update article',
+            type: dbError.type,
+            statusCode: dbError.statusCode,
+            timestamp: new Date().toISOString(),
+        };
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -94,7 +133,19 @@ export async function DELETE(req: Request): Promise<NextResponse> {
         logger.info('Article deleted successfully', { postId: data.post_id });
         return NextResponse.json(deletedPost)
     } catch (error) {
-        const errorResponse = createApiErrorResponse(error, 'Failed to delete article');
+        if (error instanceof AppError) {
+            const errorResponse = createApiErrorResponse(error, 'Failed to delete article');
+            return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+        }
+
+
+        const dbError = handleDatabaseError(error as any);
+        const errorResponse = {
+            error: 'Failed to delete article',
+            type: dbError.type,
+            statusCode: dbError.statusCode,
+            timestamp: new Date().toISOString(),
+        };
         return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
     }
 }
@@ -103,14 +154,19 @@ export async function DELETE(req: Request): Promise<NextResponse> {
  * 記事リストを取得する
  */
 async function getArticles() {
-    return await prisma.post.findMany({
-        select: {
-            post_id: true,
-            title: true,
-            content: true,
-            createdAt: true,
-        }
-    })
+    try {
+        return await prisma.post.findMany({
+            select: {
+                post_id: true,
+                title: true,
+                content: true,
+                createdAt: true,
+            }
+        })
+    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        throw handleDatabaseError(error as any);
+    }
 }
 
 /**
@@ -119,17 +175,22 @@ async function getArticles() {
 async function getArticle(postId: string | null) {
     logger.info(postId ?? 'null');
     if (postId !== null) {
-        return await prisma.post.findUnique({
-            where: {
-                post_id: Number(postId)
-            },
-            select: {
-                post_id: true,
-                title: true,
-                content: true,
-                createdAt: true,
-            }
-        })
+        try {
+            return await prisma.post.findUnique({
+                where: {
+                    post_id: Number(postId)
+                },
+                select: {
+                    post_id: true,
+                    title: true,
+                    content: true,
+                    createdAt: true,
+                }
+            })
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            throw handleDatabaseError(error as any);
+        }
     }
     return null; // postIdがnullの場合はnullを返す
 }

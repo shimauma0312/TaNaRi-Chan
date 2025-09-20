@@ -17,10 +17,9 @@
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.2",
     "easymde": "^2.18.0",
-    "firebase": "^10.13.2",
     "github-markdown-css": "^5.8.1",
     "lru-cache": "^11.0.1",
-    "next": "14.2.15",
+    "next": "^14.2.32",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.2",
@@ -52,6 +51,11 @@
     "prisma": "^6.13.0",
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.4.1",
-    "typescript": "^5.6.3"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3",
+    "whatwg-fetch": "^3.6.20"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
