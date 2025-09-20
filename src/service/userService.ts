@@ -145,37 +145,33 @@ export async function createUser(userData: CreateUserData) {
  * @param email メールアドレス
  * @param password パスワード
  * @returns 認証されたユーザー情報またはnull
+ * @throws データベースエラーやその他のシステムエラーは上位に伝播
  */
 export async function authenticateUser(email: string, password: string): Promise<AuthUser | null> {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { user_email: email },
-      select: {
-        id: true,
-        user_name: true,
-        user_email: true,
-        icon_number: true,
-        password: true,
-      },
-    });
+  const user = await prisma.user.findUnique({
+    where: { user_email: email },
+    select: {
+      id: true,
+      user_name: true,
+      user_email: true,
+      icon_number: true,
+      password: true,
+    },
+  });
 
-    if (!user) {
-      return null;
-    }
-
-    const isPasswordValid = await verifyPassword(password, user.password);
-    if (!isPasswordValid) {
-      return null;
-    }
-
-    // Return user without password
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
-  } catch (error) {
-    console.error('Error authenticating user:', error);
+  if (!user) {
     return null;
   }
+
+  const isPasswordValid = await verifyPassword(password, user.password);
+  if (!isPasswordValid) {
+    return null;
+  }
+
+  // パスワードを除外してユーザー情報を返却
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: _password, ...userWithoutPassword } = user;
+  return userWithoutPassword;
 }
 
 /**
