@@ -8,24 +8,26 @@ services:
       - ./src:/app
     ports:
       - "3000:3000"
-      - "5555:5555" # Prisma Studioのポートをホストに公開
+      - "5555:5555"
     environment:
       - WATCHPACK_POLLING=true
       - DATABASE_URL=postgresql://postgres:example_password@db:5432/app_db
       - NODE_OPTIONS=--max-old-space-size=4096
-    command: sh -c "npm install && npx prisma migrate reset --force && npx prisma migrate dev --name init && npx prisma generate && npx prisma db seed && npm run dev"
+    command: sh -c "sudo chown -R node:node /app && npm install && npx prisma migrate reset --force && npx prisma migrate dev --name init && npx prisma generate && npx prisma db seed && npm run dev"
     deploy:
       resources:
         limits:
-          memory: 6G
+          memory: 4G
+          cpus: '2.0'
         reservations:
-          memory: 2G
+          memory: 1G
+          cpus: '0.5'
     depends_on:
       - db
 
   db:
     container_name: db
-    image: postgres:13
+    image: postgres:13-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example_password
@@ -34,6 +36,14 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
 
 volumes:
   pgdata:
