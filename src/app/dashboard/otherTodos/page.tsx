@@ -96,7 +96,7 @@ export default function OtherTodosPage() {
           <div className="mb-6 p-4 bg-blue-900/30 border border-blue-500 rounded-lg">
             <p className="text-blue-300">
               📋 View public todos shared by other users.
-              Get inspired by everyone's goals and activities!
+              Get inspired by everyone&apos;s goals and activities!
             </p>
           </div>
 
@@ -218,7 +218,7 @@ export default function OtherTodosPage() {
             <div className="text-sm text-gray-400">
               💡 <strong>Tip:</strong> 
               Public todos can be viewed by other users.
-              If you want to keep them private, create todos with "Private" setting.
+              If you want to keep them private, create todos with &quot;Private&quot; setting.
             </div>
           </div>
         </div>
