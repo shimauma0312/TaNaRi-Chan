@@ -5,7 +5,7 @@ import SideMenu from "@/components/SideMenu";
 import useAuth from "@/hooks/useAuth";
 import { Todo } from "@/types/todo";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function EditTodoPage() {
   const router = useRouter();
@@ -26,8 +26,10 @@ export default function EditTodoPage() {
   /**
    * ToDoを取得する
    */
-  const fetchTodo = async (id: string) => {
-    const response = await fetch(`/api/todoList/${user?.id}`, {
+  const fetchTodo = useCallback(async (id: string): Promise<Todo | null> => {
+    if (!user?.id) return null;
+    
+    const response = await fetch(`/api/todoList/${user.id}`, {
       method: 'GET',
     });
     
@@ -43,7 +45,7 @@ export default function EditTodoPage() {
     }
     
     return todo;
-  };
+  }, [user?.id]);
 
   /**
    * ToDo更新APIを呼び出す
@@ -82,8 +84,11 @@ export default function EditTodoPage() {
         setError(null);
         
         const todo = await fetchTodo(todoId);
+        if (!todo) {
+          throw new Error('ToDoが見つかりません');
+        }
         setTitle(todo.title);
-        setDescription(todo.description);
+        setDescription(todo.description || '');
         setDueDate(new Date(todo.todo_deadline).toISOString().split('T')[0]);
         setVisibility(todo.is_public ? 'public' : 'private');
         setIsCompleted(todo.is_completed);
@@ -96,7 +101,7 @@ export default function EditTodoPage() {
     };
 
     initializeTodo();
-  }, [user, todoId]);
+  }, [user, todoId, fetchTodo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
