@@ -1,0 +1,68 @@
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.next
+.env*.local
+.env.development
+.env.test
+
+# テスト関連
+__tests__
+*.test.*
+*.spec.*
+coverage/
+jest.config.*
+jest.setup.js
+
+# ドキュメント
+README.md
+docs/
+*.md
+
+# バージョン管理
+.git
+.gitignore
+
+# IDE・エディタ
+.vscode/
+*.swp
+*.swo
+.idea/
+
+# OS固有ファイル
+.DS_Store
+Thumbs.db
+
+# ログファイル
+logs
+*.log
+
+# 一時ファイル
+tmp/
+temp/
+
+# ビルド成果物
+.next/cache
+build/
+dist/
+out/
+
+# キャッシュ
+.cache
+.parcel-cache
+.eslintcache
+
+# 環境ファイル
+.env
+.env.test
+.env.local
+.env.production
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker関連（ビルドコンテキストに不要）
+Dockerfile*
+docker-compose*
+.dockerignore
