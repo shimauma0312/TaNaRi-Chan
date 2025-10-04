@@ -4,7 +4,7 @@ import SideMenu from "@/components/SideMenu";
 import useAuth from "@/hooks/useAuth";
 import { Todo } from "@/types/todo";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * Get user's Todo list
@@ -51,7 +51,7 @@ const ToDoListPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Function to fetch Todo list
-  const fetchTodoList = async () => {
+  const fetchTodoList = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -65,13 +65,13 @@ const ToDoListPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
       fetchTodoList();
     }
-  }, [user]);
+  }, [user, fetchTodoList]);
 
   // Toggle completion status
   const handleToggleCompletion = async (todoId: number) => {
