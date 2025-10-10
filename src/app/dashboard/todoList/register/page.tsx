@@ -37,7 +37,7 @@ export default function RegisterForm() {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'ToDoの作成に失敗しました');
+      throw new Error(errorData.error || 'Failed to create ToDo');
     }
 
     return response.json();
@@ -51,13 +51,13 @@ export default function RegisterForm() {
     try {
       // バリデーション
       if (!title.trim()) {
-        throw new Error('タイトルは必須です');
+        throw new Error('Title is required');
       }
       if (!description.trim()) {
-        throw new Error('説明は必須です');
+        throw new Error('Description is required');
       }
       if (!dueDate) {
-        throw new Error('期限は必須です');
+        throw new Error('Due date is required');
       }
 
       // 期限が過去でないかチェック
@@ -65,7 +65,7 @@ export default function RegisterForm() {
       const now = new Date();
       now.setHours(0, 0, 0, 0); // 時刻を00:00:00にリセット
       if (deadline < now) {
-        throw new Error('期限は今日以降に設定してください');
+        throw new Error('Due date must be today or later');
       }
 
       const todoData = {
@@ -81,7 +81,7 @@ export default function RegisterForm() {
       router.push('/dashboard/todoList');
     } catch (error) {
       console.error('ToDo作成エラー:', error);
-      setError(error instanceof Error ? error.message : 'ToDoの作成に失敗しました');
+      setError(error instanceof Error ? error.message : 'Failed to create ToDo');
     } finally {
       setIsSubmitting(false);
     }
@@ -102,12 +102,12 @@ export default function RegisterForm() {
             className="self-start mb-4 px-4 py-2 bg-red-500 text-lg text-white py-1 px-3 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             disabled={isSubmitting}
           >
-            My Todo Listへ戻る
+            Back to My Todo List
           </button>
 
           {/* フォーム */}
           <div className="w-full max-w-lg p-6 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-[var(--background)] text-[var(--foreground)]">
-            <h2 className="text-2xl font-bold mb-4">新しいToDoを登録</h2>
+            <h2 className="text-2xl font-bold mb-4">Register New ToDo</h2>
             
             {/* エラーメッセージ */}
             {error && (
@@ -118,7 +118,7 @@ export default function RegisterForm() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block font-medium">ToDoタイトル</label>
+                <label className="block font-medium">ToDo Title</label>
                 <input
                   type="text"
                   value={title}
@@ -126,12 +126,12 @@ export default function RegisterForm() {
                   className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
                   required
                   disabled={isSubmitting}
-                  placeholder="例: プロジェクトの資料作成"
+                  placeholder="e.g. Create project documentation"
                 />
               </div>
 
               <div>
-                <label className="block font-medium">説明文</label>
+                <label className="block font-medium">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -139,12 +139,12 @@ export default function RegisterForm() {
                   rows={3}
                   required
                   disabled={isSubmitting}
-                  placeholder="詳細な説明を入力してください"
+                  placeholder="Enter detailed description"
                 />
               </div>
 
               <div>
-                <label className="block font-medium">期限</label>
+                <label className="block font-medium">Due Date</label>
                 <input
                   type="date"
                   value={dueDate}
@@ -157,15 +157,15 @@ export default function RegisterForm() {
               </div>
 
               <div>
-                <label className="block font-medium">公開範囲</label>
+                <label className="block font-medium">Visibility</label>
                 <select
                   value={visibility}
                   onChange={(e) => setVisibility(e.target.value)}
                   className="w-full p-2 border rounded-lg bg-black text-white border-gray-400 focus:ring-2 focus:ring-blue-400"
                   disabled={isSubmitting}
                 >
-                  <option value="private">自分のみ</option>
-                  <option value="public">全体公開</option>
+                  <option value="private">Private</option>
+                  <option value="public">Public</option>
                 </select>
               </div>
 
@@ -174,7 +174,7 @@ export default function RegisterForm() {
                 className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition disabled:bg-gray-500 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? '登録中...' : '登録'}
+                {isSubmitting ? 'Registering...' : 'Register'}
               </button>
             </form>
           </div>
