@@ -5,13 +5,22 @@ import SideMenu from "@/components/SideMenu";
 import useAuth from "@/hooks/useAuth";
 import { Todo } from "@/types/todo";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
-export default function EditTodoPage() {
+function EditTodoPageSearchParams({ setTodoId }: { setTodoId: (id: string | null) => void }) {
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    const id = searchParams.get('id');
+    setTodoId(id);
+  }, [searchParams, setTodoId]);
+  
+  return null;
+}
+
+function EditTodoPageContent({ todoId }: { todoId: string | null }) {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const searchParams = useSearchParams();
-  const todoId = searchParams.get('id');
 
   // フォームの状態管理
   const [title, setTitle] = useState("");
@@ -283,5 +292,16 @@ export default function EditTodoPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EditTodoPage() {
+  const [todoId, setTodoId] = useState<string | null>(null);
+  
+  return (
+    <Suspense fallback={<MinLoader />}>
+      <EditTodoPageSearchParams setTodoId={setTodoId} />
+      <EditTodoPageContent todoId={todoId} />
+    </Suspense>
   );
 }
