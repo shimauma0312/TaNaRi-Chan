@@ -13,15 +13,16 @@ services:
       - WATCHPACK_POLLING=true
       - DATABASE_URL=postgresql://postgres:example_password@db:5432/app_db
       - NODE_OPTIONS=--max-old-space-size=4096
-    command: sh -c "sudo chown -R node:node /app && npm install && npx prisma migrate reset --force && npx prisma migrate dev --name init && npx prisma generate && npx prisma db seed && npm run dev"
+      - PRISMA_RESET=${PRISMA_RESET:-false}
+    command: sh -c "sudo chown -R node:node /app && npm install && if [ \"$PRISMA_RESET\" = \"true\" ]; then npx prisma migrate reset --force && npx prisma generate && npx prisma db seed; else npx prisma migrate deploy && npx prisma generate && npx prisma db seed; fi && npm run dev"
     deploy:
       resources:
         limits:
           memory: 4G
-          cpus: '2.0'
+          cpus: "2.0"
         reservations:
           memory: 1G
-          cpus: '0.5'
+          cpus: "0.5"
     depends_on:
       - db
 
@@ -40,10 +41,10 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
         reservations:
           memory: 256M
-          cpus: '0.1'
+          cpus: "0.1"
 
 volumes:
   pgdata:
