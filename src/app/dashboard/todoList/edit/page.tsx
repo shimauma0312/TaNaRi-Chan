@@ -43,14 +43,14 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
     });
     
     if (!response.ok) {
-      throw new Error('ToDoの取得に失敗しました');
+      throw new Error('Failed to fetch ToDo');
     }
     
     const todos: Todo[] = await response.json();
     const todo = todos.find(t => t.todo_id === parseInt(id));
     
     if (!todo) {
-      throw new Error('指定されたToDoが見つかりません');
+      throw new Error('ToDo not found');
     }
     
     return todo;
@@ -77,7 +77,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'ToDoの更新に失敗しました');
+      throw new Error(errorData.error || 'Failed to update ToDo');
     }
 
     return response.json();
@@ -94,7 +94,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
         
         const todo = await fetchTodo(todoId);
         if (!todo) {
-          throw new Error('ToDoが見つかりません');
+          throw new Error('ToDo not found');
         }
         setTitle(todo.title);
         setDescription(todo.description || '');
@@ -103,7 +103,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
         setIsCompleted(todo.is_completed);
       } catch (error) {
         console.error('ToDo取得エラー:', error);
-        setError(error instanceof Error ? error.message : 'ToDoの取得に失敗しました');
+        setError(error instanceof Error ? error.message : 'Failed to fetch ToDo');
       } finally {
         setIsLoading(false);
       }
@@ -123,13 +123,13 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
     try {
       // バリデーション
       if (!title.trim()) {
-        throw new Error('タイトルは必須です');
+        throw new Error('Title is required');
       }
       if (!description.trim()) {
-        throw new Error('説明は必須です');
+        throw new Error('Description is required');
       }
       if (!dueDate) {
-        throw new Error('期限は必須です');
+        throw new Error('Due date is required');
       }
 
       const todoData = {
@@ -147,7 +147,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
       router.push('/dashboard/todoList');
     } catch (error) {
       console.error('ToDo更新エラー:', error);
-      setError(error instanceof Error ? error.message : 'ToDoの更新に失敗しました');
+      setError(error instanceof Error ? error.message : 'Failed to update ToDo');
     } finally {
       setIsSubmitting(false);
     }
@@ -163,12 +163,12 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
         <SideMenu />
         <div className="w-4/5 p-4">
           <div className="text-center">
-            <div className="text-red-400 text-lg mb-4">ToDoIDが指定されていません</div>
+            <div className="text-red-400 text-lg mb-4">ToDo ID is not specified</div>
             <button
               onClick={() => router.push("/dashboard/todoList")}
               className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
             >
-              ToDoリストに戻る
+              Back to ToDo List
             </button>
           </div>
         </div>
@@ -191,12 +191,12 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
             className="self-start mb-4 px-4 py-2 bg-red-500 text-lg text-white py-1 px-3 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             disabled={isSubmitting}
           >
-            My Todo Listへ戻る
+            Back to My Todo List
           </button>
 
           {/* フォーム */}
           <div className="w-full max-w-lg p-6 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-[var(--background)] text-[var(--foreground)]">
-            <h2 className="text-2xl font-bold mb-4">ToDoを編集</h2>
+            <h2 className="text-2xl font-bold mb-4">Edit ToDo</h2>
             
             {/* エラーメッセージ */}
             {error && (
@@ -207,7 +207,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block font-medium">ToDoタイトル</label>
+                <label className="block font-medium">ToDo Title</label>
                 <input
                   type="text"
                   value={title}
@@ -215,12 +215,12 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
                   className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
                   required
                   disabled={isSubmitting}
-                  placeholder="例: プロジェクトの資料作成"
+                  placeholder="e.g. Create project documentation"
                 />
               </div>
 
               <div>
-                <label className="block font-medium">説明文</label>
+                <label className="block font-medium">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -228,12 +228,12 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
                   rows={3}
                   required
                   disabled={isSubmitting}
-                  placeholder="詳細な説明を入力してください"
+                  placeholder="Enter detailed description"
                 />
               </div>
 
               <div>
-                <label className="block font-medium">期限</label>
+                <label className="block font-medium">Due Date</label>
                 <input
                   type="date"
                   value={dueDate}
@@ -245,15 +245,15 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
               </div>
 
               <div>
-                <label className="block font-medium">公開範囲</label>
+                <label className="block font-medium">Visibility</label>
                 <select
                   value={visibility}
                   onChange={(e) => setVisibility(e.target.value)}
                   className="w-full p-2 border rounded-lg bg-black text-white border-gray-400 focus:ring-2 focus:ring-blue-400"
                   disabled={isSubmitting}
                 >
-                  <option value="private">自分のみ</option>
-                  <option value="public">全体公開</option>
+                  <option value="private">Private</option>
+                  <option value="public">Public</option>
                 </select>
               </div>
 
@@ -266,7 +266,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
                     className="w-4 h-4 text-green-500 rounded border-gray-400 focus:ring-green-500"
                     disabled={isSubmitting}
                   />
-                  <span className="font-medium">完了済み</span>
+                  <span className="font-medium">Completed</span>
                 </label>
               </div>
 
@@ -276,7 +276,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
                   className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition disabled:bg-gray-500 disabled:cursor-not-allowed"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? '更新中...' : '更新'}
+                  {isSubmitting ? 'Updating...' : 'Update'}
                 </button>
                 <button
                   type="button"
@@ -284,7 +284,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
                   className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition"
                   disabled={isSubmitting}
                 >
-                  キャンセル
+                  Cancel
                 </button>
               </div>
             </form>
