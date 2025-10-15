@@ -68,41 +68,22 @@ jobs:
       - name: Setup Prisma - Step 1: Generate Client
         run: |
           echo "Step 1: Generating Prisma client..."
-          docker compose exec -T app sh -c "
-            echo 'Generating Prisma client...' &&
-            npx prisma generate &&
-            echo 'Prisma client generated successfully!'
-          "
+          docker compose exec -T app sh -c 'echo "Generating Prisma client..." && npx prisma generate && echo "Prisma client generated successfully!"'
 
       - name: Setup Prisma - Step 2: Database Connection Test
         run: |
           echo "Step 2: Testing database connection..."
-          # データベース接続テスト
-          docker compose exec -T app sh -c "
-            echo 'Testing database connection...' &&
-            npx prisma db execute --stdin <<< 'SELECT 1;' &&
-            echo 'Database connection confirmed!'
-          "
+          docker compose exec -T app sh -c 'echo "Testing database connection..." && npx prisma db execute --stdin <<< "SELECT 1;" && echo "Database connection confirmed!"'
 
       - name: Setup Prisma - Step 3: Apply Migrations
         run: |
           echo "Step 3: Applying database migrations..."
-          # マイグレーション
-          docker compose exec -T app sh -c "
-            echo 'Applying migrations...' &&
-            npx prisma migrate deploy &&
-            echo 'Migrations applied successfully!'
-          "
+          docker compose exec -T app sh -c 'echo "Applying migrations..." && npx prisma migrate deploy && echo "Migrations applied successfully!"'
 
       - name: Setup Prisma - Step 4: Seed Database
         run: |
           echo "Step 4: Seeding database with initial data..."
-          # シード挿入
-          docker compose exec -T app sh -c "
-            echo 'Seeding database...' &&
-            npx prisma db seed &&
-            echo 'Database seeding completed successfully!'
-          "
+          docker compose exec -T app sh -c 'echo "Seeding database..." && npx prisma db seed && echo "Database seeding completed successfully!"'
 
       - name: Verify Prisma Studio can start
         run: |
