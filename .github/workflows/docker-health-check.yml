@@ -65,34 +65,39 @@ jobs:
             timeout 30 bash -c 'until curl -f http://localhost:3000 2>/dev/null; do sleep 2; echo \"Waiting for app...\"; done' || echo 'App startup check completed'
           "
 
-      - name: Setup Prisma and verify database connection
+      - name: Setup Prisma - Step 1: Generate Client
         run: |
-          echo "Setting up Prisma..."
-          # Prismaセットアップ
+          echo "Step 1: Generating Prisma client..."
           docker compose exec -T app sh -c "
             echo 'Generating Prisma client...' &&
             npx prisma generate &&
-            echo 'Checking database connection...' &&
-            npx prisma db push --force-reset &&
-            echo 'Database setup completed successfully!'
+            echo 'Prisma client generated successfully!'
           "
 
-      - name: Reset and setup database for CI
+      - name: Setup Prisma - Step 2: Database Connection Test
         run: |
-          echo "Resetting database for CI environment..."
+          echo "Step 2: Testing database connection..."
+          # データベース接続テスト
           docker compose exec -T app sh -c "
-            echo 'Resetting database...' &&
-            npx prisma migrate reset --force &&
-            echo 'Database reset completed!' &&
+            echo 'Testing database connection...' &&
+            npx prisma db execute --stdin <<< 'SELECT 1;' &&
+            echo 'Database connection confirmed!'
+          "
+
+      - name: Setup Prisma - Step 3: Apply Migrations
+        run: |
+          echo "Step 3: Applying database migrations..."
+          # マイグレーション
+          docker compose exec -T app sh -c "
             echo 'Applying migrations...' &&
             npx prisma migrate deploy &&
             echo 'Migrations applied successfully!'
           "
 
-      - name: Seed database
+      - name: Setup Prisma - Step 4: Seed Database
         run: |
-          echo "Seeding database..."
-          # 開発用データ挿入
+          echo "Step 4: Seeding database with initial data..."
+          # シード挿入
           docker compose exec -T app sh -c "
             echo 'Seeding database...' &&
             npx prisma db seed &&
@@ -112,7 +117,7 @@ jobs:
             echo 'Checking if Prisma Studio is accessible...' &&
             # Studio UIへのアクセスチェック
             curl -f http://localhost:5555 || echo 'Prisma Studio check completed' &&
-            # バックグラウンドプロセス終了
+            # おわり
             kill \$STUDIO_PID 2>/dev/null || true &&
             echo 'Prisma Studio verification completed!'
           "
