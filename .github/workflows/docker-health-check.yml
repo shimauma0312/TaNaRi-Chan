@@ -55,15 +55,7 @@ jobs:
       - name: Check app container health
         run: |
           echo "Checking app container health..."
-          # Node環境とアプリチェック
-          docker compose exec -T app sh -c "
-            echo 'Node version:' && node --version &&
-            echo 'NPM version:' && npm --version &&
-            echo 'Checking package installation...' &&
-            ls -la node_modules/ | head -5 &&
-            echo 'Checking if Next.js dev server is starting...' &&
-            timeout 30 bash -c 'until curl -f http://localhost:3000 2>/dev/null; do sleep 2; echo \"Waiting for app...\"; done' || echo 'App startup check completed'
-          "
+          docker compose exec -T app sh -c 'echo "Node version:" && node --version && echo "NPM version:" && npm --version && echo "Checking package installation..." && ls -la node_modules/ | head -5 && echo "Checking if Next.js dev server is starting..." && timeout 30 bash -c "until curl -f http://localhost:3000 2>/dev/null; do sleep 2; echo \"Waiting for app...\"; done" || echo "App startup check completed"'
 
       - name: Setup Prisma - Step 1: Generate Client
         run: |
@@ -88,20 +80,7 @@ jobs:
       - name: Verify Prisma Studio can start
         run: |
           echo "Verifying Prisma Studio..."
-          # Prisma Studio正常チェック
-          docker compose exec -T app sh -c "
-            echo 'Starting Prisma Studio in background...' &&
-            # バックグラウンドでPrisma Studioを30秒間起動
-            timeout 30 npx prisma studio --port 5555 --hostname 0.0.0.0 &
-            STUDIO_PID=\$! &&
-            sleep 10 &&
-            echo 'Checking if Prisma Studio is accessible...' &&
-            # Studio UIへのアクセスチェック
-            curl -f http://localhost:5555 || echo 'Prisma Studio check completed' &&
-            # おわり
-            kill \$STUDIO_PID 2>/dev/null || true &&
-            echo 'Prisma Studio verification completed!'
-          "
+          docker compose exec -T app sh -c 'echo "Starting Prisma Studio in background..." && timeout 30 npx prisma studio --port 5555 --hostname 0.0.0.0 & STUDIO_PID=$! && sleep 10 && echo "Checking if Prisma Studio is accessible..." && curl -f http://localhost:5555 || echo "Prisma Studio check completed" && kill $STUDIO_PID 2>/dev/null || true && echo "Prisma Studio verification completed!"'
 
       - name: Run basic application tests
         run: |
