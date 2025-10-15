@@ -35,32 +35,27 @@ jobs:
       - name: Start Docker containers
         run: |
           echo "Starting Docker containers..."
-          # バックグラウンドでコンテナを起動
           docker compose up -d
 
       - name: Wait for containers to be ready
         run: |
           echo "Waiting for containers to start..."
-          # データベースコンテナの起動を待機（最大120秒）
           echo "Waiting for database container..."
           timeout 120 bash -c 'until docker compose exec -T db pg_isready -U postgres; do sleep 2; done'
 
-          # アプリケーションコンテナの起動を待機（最大180秒）
           echo "Waiting for app container..."
           timeout 180 bash -c 'until docker compose exec -T app sh -c "echo ok" 2>/dev/null; do sleep 3; done'
 
-          # npm install の完了を待機（最大300秒）
           echo "Waiting for npm install to complete..."
           timeout 300 bash -c 'until docker compose exec -T app sh -c "test -d node_modules" 2>/dev/null; do sleep 5; done'
 
-          # コンテナの状態を表示
           echo "Container status:"
           docker compose ps
 
       - name: Check app container health
         run: |
           echo "Checking app container health..."
-          # appコンテナ内でNode環境とアプリケーションの基本チェック
+          # Node環境とアプリチェック
           docker compose exec -T app sh -c "
             echo 'Node version:' && node --version &&
             echo 'NPM version:' && npm --version &&
@@ -73,7 +68,7 @@ jobs:
       - name: Setup Prisma and verify database connection
         run: |
           echo "Setting up Prisma..."
-          # appコンテナ内でPrismaセットアップを実行
+          # Prismaセットアップ
           docker compose exec -T app sh -c "
             echo 'Generating Prisma client...' &&
             npx prisma generate &&
@@ -82,20 +77,22 @@ jobs:
             echo 'Database setup completed successfully!'
           "
 
-      - name: Run database migrations
+      - name: Reset and setup database for CI
         run: |
-          echo "Running database migrations..."
-          # マイグレーションファイルでデータベーススキーマを更新する
+          echo "Resetting database for CI environment..."
           docker compose exec -T app sh -c "
-            echo 'Running migrations...' &&
-            npx prisma migrate dev --name ci-test --skip-generate &&
-            echo 'Migrations completed successfully!'
+            echo 'Resetting database...' &&
+            npx prisma migrate reset --force &&
+            echo 'Database reset completed!' &&
+            echo 'Applying migrations...' &&
+            npx prisma migrate deploy &&
+            echo 'Migrations applied successfully!'
           "
 
       - name: Seed database
         run: |
           echo "Seeding database..."
-          # 開発用データをデータベースに挿入
+          # 開発用データ挿入
           docker compose exec -T app sh -c "
             echo 'Seeding database...' &&
             npx prisma db seed &&
@@ -105,7 +102,7 @@ jobs:
       - name: Verify Prisma Studio can start
         run: |
           echo "Verifying Prisma Studio..."
-          # Prisma Studioが正常に起動できることを確認
+          # Prisma Studio正常チェック
           docker compose exec -T app sh -c "
             echo 'Starting Prisma Studio in background...' &&
             # バックグラウンドでPrisma Studioを30秒間起動
@@ -113,9 +110,9 @@ jobs:
             STUDIO_PID=\$! &&
             sleep 10 &&
             echo 'Checking if Prisma Studio is accessible...' &&
-            # Studio UIへのアクセス可能性をチェック
+            # Studio UIへのアクセスチェック
             curl -f http://localhost:5555 || echo 'Prisma Studio check completed' &&
-            # バックグラウンドプロセスを終了
+            # バックグラウンドプロセス終了
             kill \$STUDIO_PID 2>/dev/null || true &&
             echo 'Prisma Studio verification completed!'
           "
@@ -123,14 +120,13 @@ jobs:
       - name: Run basic application tests
         run: |
           echo "Running basic application tests..."
-          # Next.jsアプリケーションのビルドと環境変数の確認
           docker compose exec -T app sh -c "
             echo 'Checking if Next.js app can start...' &&
-            # プロダクションビルドを実行（60秒タイムアウト）
+            # ビルド実行
             timeout 60 npm run build &&
             echo 'Build completed successfully!' &&
             echo 'Checking environment variables...' &&
-            # 重要な環境変数の存在確認
+            # 環境変数存在確認
             env | grep -E '^(DATABASE_URL|NODE_ENV)' || echo 'Environment check completed'
           "
 
@@ -138,20 +134,16 @@ jobs:
         if: always()
         run: |
           echo "=== App Container Logs ==="
-          # アプリケーションコンテナのログを表示
           docker compose logs app || true
           echo "=== DB Container Logs ==="
-          # データベースコンテナのログを表示
           docker compose logs db || true
 
       - name: Show container status
         if: always()
         run: |
           echo "=== Container Status ==="
-          # 現在のコンテナ状態を表示
           docker compose ps || true
           echo "=== Docker Images ==="
-          # 利用可能なDockerイメージ一覧を表示
           docker images || true
 
       # リソースのクリーンアップ
