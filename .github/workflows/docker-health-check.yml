@@ -55,12 +55,12 @@ jobs:
       - name: Check app container health
         run: |
           echo "Checking app container health..."
-          docker compose exec -T app sh -c 'echo "Node version:" && node --version && echo "NPM version:" && npm --version && echo "Checking package installation..." && ls -la node_modules/ | head -5 && echo "Checking if Next.js dev server is starting..." && timeout 30 bash -c "until curl -f http://localhost:3000 2>/dev/null; do sleep 2; echo \"Waiting for app...\"; done" || echo "App startup check completed"'
+          docker compose exec -T app sh -c "echo 'Node version:' && node --version && echo 'NPM version:' && npm --version && echo 'Checking package installation...' && ls -la node_modules/ | head -5 && echo 'Checking if Next.js dev server is starting...' && timeout 30 bash -c \"until curl -f http://localhost:3000 2>/dev/null; do sleep 2; echo 'Waiting for app...'; done\" || echo 'App startup check completed'"
 
       - name: Setup Prisma - Step 1: Generate Client
         run: |
           echo "Step 1: Generating Prisma client..."
-          docker compose exec -T app sh -c 'echo "Generating Prisma client..." && npx prisma generate && echo "Prisma client generated successfully!"'
+          docker compose exec -T app sh -c "echo 'Generating Prisma client...' && npx prisma generate && echo 'Prisma client generated successfully!'"
 
       - name: Setup Prisma - Step 2: Database Connection Test
         run: |
