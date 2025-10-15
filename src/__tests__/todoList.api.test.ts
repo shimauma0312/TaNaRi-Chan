@@ -36,6 +36,7 @@ describe('/api/todoList', () => {
           id: 'user1',
           is_completed: false,
           is_public: true,
+          user: { id: 'user1', user_name: 'テストユーザー' },
         },
       ];
       mockTodoService.getPublicTodos.mockResolvedValue(mockTodos);
