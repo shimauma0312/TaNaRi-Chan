@@ -1,11 +1,15 @@
-FROM node:lts-slim
+FROM node:lts-alpine
+
+RUN apk add --no-cache libc6-compat openssl sudo
+
+RUN apk add --no-cache bash
 
 WORKDIR /app
 
-# OpenSSLをインストール
-RUN apt update -y && apt install -y openssl
+RUN echo 'node ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
-# アプリケーションのソースコードをコピー
-COPY ./src ./
+USER node
+
+COPY --chown=node:node ./src ./
 
 CMD ["npm", "run", "dev"]

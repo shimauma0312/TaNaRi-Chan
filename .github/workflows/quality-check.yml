@@ -6,7 +6,7 @@ on:    # Node.js をセットアップ
       with:
         node-version: '20'
         cache: 'npm'
-        cache-dependency-path: 'src/package*.json':
+        cache-dependency-path: 'src/package*.json'
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
