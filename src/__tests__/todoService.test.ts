@@ -95,7 +95,16 @@ describe("TodoService", () => {
       expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith({
         where: { is_public: true },
         orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: {
+              id: true,
+              user_name: true,
+            },
+          },
+        },
       })
+
       expect(result).toEqual(mockPublicTodos)
     })
   })
@@ -191,7 +200,7 @@ describe("TodoService", () => {
       const todoData = {
         title: "New Todo",
         description: "New Description",
-        todo_deadline: new Date("2025-01-01"),
+        todo_deadline: new Date("2026-01-01"),
         is_public: true,
       }
       const mockCreatedTodo: Todo = {
