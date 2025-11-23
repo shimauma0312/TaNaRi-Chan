@@ -5,7 +5,6 @@ import { PrismaClient, Todo } from '@prisma/client';
  * ToDoに関するビジネスロジックとデータアクセスを統合
  */
 export class TodoService {
-  //prismaを依存性注入方式に変更
   private prisma: PrismaClient
   constructor(prismaClient?: PrismaClient) {
     this.prisma = prismaClient || new PrismaClient()
