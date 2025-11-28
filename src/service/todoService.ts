@@ -30,9 +30,7 @@ export class TodoService {
    * 公開されているToDoリストを取得する（ユーザー情報付き）
    * @returns 公開ToDoリストの配列（ユーザー情報含む）
    */
-  async getPublicTodos(): Promise<
-    (Todo & { user: { id: string; user_name: string } })[]
-  > {
+  async getPublicTodos(): Promise<(Todo & { user: { id: string; user_name: string } })[]> {
     return await this.prisma.todo.findMany({
       where: {
         is_public: true,
@@ -57,10 +55,7 @@ export class TodoService {
    * @param requestUserId リクエストユーザーID（権限チェック用）
    * @returns ToDo オブジェクトまたはnull
    */
-  async getTodoById(
-    todoId: number,
-    requestUserId?: string,
-  ): Promise<Todo | null> {
+  async getTodoById(todoId: number, requestUserId?: string): Promise<Todo | null> {
     const todo = await this.prisma.todo.findUnique({
       where: {
         todo_id: todoId,
@@ -68,7 +63,7 @@ export class TodoService {
     });
 
     if (!todo) {
-      return null
+      return null;
     }
 
     // 公開設定または所有者の場合のみ返す
@@ -88,19 +83,19 @@ export class TodoService {
   async createTodo(
     userId: string,
     todoData: {
-      title: string
-      description: string
-      todo_deadline: Date
-      is_public?: boolean
+      title: string;
+      description: string;
+      todo_deadline: Date;
+      is_public?: boolean;
     }
   ): Promise<Todo> {
     // バリデーション
     if (!todoData.title.trim()) {
-      throw new Error('タイトルは必須です')
+      throw new Error('タイトルは必須です');
     }
 
     if (todoData.todo_deadline < new Date()) {
-      throw new Error('期限は現在時刻より後に設定してください')
+      throw new Error('期限は現在時刻より後に設定してください');
     }
 
     return await this.prisma.todo.create({
@@ -207,7 +202,7 @@ export class TodoService {
         where: {
           todo_id: todoId,
         },
-      })
+      });
       return true;
     } catch (error) {
       return false;
@@ -240,7 +235,7 @@ export class TodoService {
         data: {
           is_completed: !existingTodo.is_completed,
         },
-      })
+      });
     } catch (error) {
       return null;
     }
