@@ -196,7 +196,7 @@ describe('TodoService', () => {
   describe('createTodo', () => {
     it('新しいToDoを作成できること', async () => {
       // Arrange
-      const userId = 'test-user-id'
+      const userId = 'test-user-id';
       const todoData = {
         title: 'New Todo',
         description: 'New Description',
