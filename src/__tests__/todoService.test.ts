@@ -73,14 +73,20 @@ describe('TodoService', () => {
   describe('getPublicTodos', () => {
     it('公開されているToDoリストを取得できること', async () => {
       // Arrange
+
+      //翌日以降の日付を動的に取得
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
       const mockPublicTodos: Todo[] = [
         {
           todo_id: 1,
           title: 'Public Todo 1',
           description: 'Public Description 1',
-          todo_deadline: new Date('2025-01-01'),
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          todo_deadline:tomorrow,
+          createdAt: currentDate,
+          updatedAt: currentDate,
           id: 'user1',
           is_completed: false,
           is_public: true,
@@ -113,13 +119,16 @@ describe('TodoService', () => {
     it('公開ToDoを取得できること', async () => {
       // Arrange
       const todoId = 1;
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate); 
+      tomorrow.setDate(tomorrow.getDate() + 1); //過去の日付を避けるため
       const mockTodo: Todo = {
         todo_id: todoId,
         title: 'Public Todo',
         description: 'Public Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: 'owner-id',
         is_completed: false,
         is_public: true,
@@ -137,13 +146,16 @@ describe('TodoService', () => {
       // Arrange
       const todoId = 1
       const userId = 'owner-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockTodo: Todo = {
         todo_id: todoId,
         title: 'Private Todo',
         description: 'Private Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
@@ -160,13 +172,16 @@ describe('TodoService', () => {
     it('他人のプライベートToDoは取得できないこと', async () => {
       // Arrange
       const todoId = 1;
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockTodo: Todo = {
         todo_id: todoId,
         title: 'Private Todo',
         description: 'Private Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: 'owner-id',
         is_completed: false,
         is_public: false,
@@ -197,10 +212,13 @@ describe('TodoService', () => {
     it('新しいToDoを作成できること', async () => {
       // Arrange
       const userId = 'test-user-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const todoData = {
         title: 'New Todo',
         description: 'New Description',
-        todo_deadline: new Date('2026-01-01'),
+        todo_deadline: tomorrow,
         is_public: true,
       };
       const mockCreatedTodo: Todo = {
@@ -211,8 +229,8 @@ describe('TodoService', () => {
         is_public: todoData.is_public,
         id: userId,
         is_completed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: currentDate,
+        updatedAt: currentDate,
       };
       mockPrismaClient.todo.create.mockResolvedValue(mockCreatedTodo);
 
@@ -235,10 +253,13 @@ describe('TodoService', () => {
     it('タイトルが空の場合エラーを投げること', async () => {
       // Arrange
       const userId = 'test-user-id'
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const todoData = {
         title: '   ',
         description: 'Description',
-        todo_deadline: new Date('2025-01-01'),
+        todo_deadline: tomorrow,
       };
 
       // Act & Assert
@@ -265,6 +286,9 @@ describe('TodoService', () => {
       // Arrange
       const todoId = 1;
       const userId = 'test-user-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const updateData = {
         title: 'Updated Todo',
         is_completed: true,
@@ -273,9 +297,9 @@ describe('TodoService', () => {
         todo_id: todoId,
         title: 'Original Todo',
         description: 'Original Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
@@ -324,13 +348,16 @@ describe('TodoService', () => {
       const todoId = 1;
       const userId = 'test-user-id';
       const updateData = { title: '   ' };
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockExistingTodo: Todo = {
         todo_id: todoId,
         title: 'Original Todo',
         description: 'Original Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
@@ -348,13 +375,16 @@ describe('TodoService', () => {
       // Arrange
       const todoId = 1;
       const userId = 'test-user-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockExistingTodo: Todo = {
         todo_id: todoId,
         title: 'Test Todo',
         description: 'Test Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
@@ -394,13 +424,16 @@ describe('TodoService', () => {
       // Arrange
       const todoId = 1;
       const userId = 'test-user-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockExistingTodo: Todo = {
         todo_id: todoId,
         title: 'Test Todo',
         description: 'Test Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
