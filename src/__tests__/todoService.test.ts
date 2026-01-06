@@ -17,148 +17,19 @@ const mockPrismaClient = {
   },
 };
 
-// PrismaClientのモックを設定
 (PrismaClient as jest.Mock).mockImplementation(() => mockPrismaClient);
-
-// Prismaのimportもモック
-jest.mock('../service/todoService', () => {
-  const actualModule = jest.requireActual('../service/todoService');
-  return {
-    ...actualModule,
-    TodoService: class MockedTodoService {
-      async getUserTodos(userId: string) {
-        return mockPrismaClient.todo.findMany({
-          where: { id: userId },
-          orderBy: { createdAt: 'desc' },
-        });
-      }
-
-      async getPublicTodos() {
-        return mockPrismaClient.todo.findMany({
-          where: { is_public: true },
-          orderBy: { createdAt: 'desc' },
-        });
-      }
-
-      async getTodoById(todoId: number, requestUserId?: string) {
-        const todo = await mockPrismaClient.todo.findUnique({
-          where: { todo_id: todoId },
-        });
-
-        if (!todo) return null;
-        if (todo.is_public || todo.id === requestUserId) {
-          return todo;
-        }
-        return null;
-      }
-
-      async createTodo(userId: string, todoData: any) {
-        // バリデーション
-        if (!todoData.title.trim()) {
-          throw new Error('タイトルは必須です');
-        }
-
-        // テスト用の日付チェックを緩和
-        const deadline = new Date(todoData.todo_deadline);
-        const testDate = new Date('2025-01-01'); // 固定日付を使用
-        if (deadline < testDate) {
-          throw new Error('期限は現在時刻より後に設定してください');
-        }
-
-        return mockPrismaClient.todo.create({
-          data: {
-            title: todoData.title.trim(),
-            description: todoData.description.trim(),
-            todo_deadline: todoData.todo_deadline,
-            is_public: todoData.is_public || false,
-            id: userId,
-          },
-        });
-      }
-
-      async updateTodo(todoId: number, userId: string, updateData: any) {
-        const existingTodo = await mockPrismaClient.todo.findFirst({
-          where: { todo_id: todoId, id: userId },
-        });
-
-        if (!existingTodo) return null;
-
-        // バリデーション
-        if (updateData.title !== undefined && !updateData.title.trim()) {
-          throw new Error('タイトルは必須です');
-        }
-
-        if (updateData.todo_deadline && updateData.todo_deadline < new Date('2025-01-01')) {
-          throw new Error('期限は現在時刻より後に設定してください');
-        }
-
-        const sanitizedData: any = {};
-        if (updateData.title !== undefined) {
-          sanitizedData.title = updateData.title.trim();
-        }
-        if (updateData.description !== undefined) {
-          sanitizedData.description = updateData.description.trim();
-        }
-        if (updateData.todo_deadline !== undefined) {
-          sanitizedData.todo_deadline = updateData.todo_deadline;
-        }
-        if (updateData.is_completed !== undefined) {
-          sanitizedData.is_completed = updateData.is_completed;
-        }
-        if (updateData.is_public !== undefined) {
-          sanitizedData.is_public = updateData.is_public;
-        }
-
-        return mockPrismaClient.todo.update({
-          where: { todo_id: todoId },
-          data: sanitizedData,
-        });
-      }
-
-      async deleteTodo(todoId: number, userId: string) {
-        const existingTodo = await mockPrismaClient.todo.findFirst({
-          where: { todo_id: todoId, id: userId },
-        });
-
-        if (!existingTodo) return false;
-
-        try {
-          await mockPrismaClient.todo.delete({
-            where: { todo_id: todoId },
-          });
-          return true;
-        } catch (error) {
-          return false;
-        }
-      }
-
-      async toggleTodoCompletion(todoId: number, userId: string) {
-        const existingTodo = await mockPrismaClient.todo.findFirst({
-          where: { todo_id: todoId, id: userId },
-        });
-
-        if (!existingTodo) return null;
-
-        return mockPrismaClient.todo.update({
-          where: { todo_id: todoId },
-          data: { is_completed: !existingTodo.is_completed },
-        });
-      }
-    },
-  };
-});
 
 describe('TodoService', () => {
   let service: TodoService;
 
   beforeEach(() => {
-    service = new TodoService();
+    service = new TodoService(mockPrismaClient as any)
     jest.clearAllMocks();
   });
 
   describe('getUserTodos', () => {
     it('指定されたユーザーIDのToDoリストを取得できること', async () => {
-            // Arrange
+      // Arrange
       const userId = 'test-user-id';
       const testDate = new Date('2025-01-01T00:00:00.000Z');
       const mockTodos: Todo[] = [
@@ -202,14 +73,20 @@ describe('TodoService', () => {
   describe('getPublicTodos', () => {
     it('公開されているToDoリストを取得できること', async () => {
       // Arrange
+
+      //翌日以降の日付を動的に取得
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
       const mockPublicTodos: Todo[] = [
         {
           todo_id: 1,
           title: 'Public Todo 1',
           description: 'Public Description 1',
-          todo_deadline: new Date('2025-01-01'),
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          todo_deadline:tomorrow,
+          createdAt: currentDate,
+          updatedAt: currentDate,
           id: 'user1',
           is_completed: false,
           is_public: true,
@@ -224,22 +101,34 @@ describe('TodoService', () => {
       expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith({
         where: { is_public: true },
         orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              user_name: true,
+            },
+          },
+        },
       });
+
       expect(result).toEqual(mockPublicTodos);
-    });
-  });
+    })
+  })
 
   describe('getTodoById', () => {
     it('公開ToDoを取得できること', async () => {
       // Arrange
       const todoId = 1;
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate); 
+      tomorrow.setDate(tomorrow.getDate() + 1); //過去の日付を避けるため
       const mockTodo: Todo = {
         todo_id: todoId,
         title: 'Public Todo',
         description: 'Public Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: 'owner-id',
         is_completed: false,
         is_public: true,
@@ -255,15 +144,18 @@ describe('TodoService', () => {
 
     it('所有者のプライベートToDoを取得できること', async () => {
       // Arrange
-      const todoId = 1;
+      const todoId = 1
       const userId = 'owner-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockTodo: Todo = {
         todo_id: todoId,
         title: 'Private Todo',
         description: 'Private Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
@@ -280,13 +172,16 @@ describe('TodoService', () => {
     it('他人のプライベートToDoは取得できないこと', async () => {
       // Arrange
       const todoId = 1;
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockTodo: Todo = {
         todo_id: todoId,
         title: 'Private Todo',
         description: 'Private Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: 'owner-id',
         is_completed: false,
         is_public: false,
@@ -298,11 +193,11 @@ describe('TodoService', () => {
 
       // Assert
       expect(result).toBeNull();
-    });
+    })
 
     it('存在しないToDoの場合nullを返すこと', async () => {
       // Arrange
-      const todoId = 999;
+      const todoId = 999
       mockPrismaClient.todo.findUnique.mockResolvedValue(null);
 
       // Act
@@ -317,10 +212,13 @@ describe('TodoService', () => {
     it('新しいToDoを作成できること', async () => {
       // Arrange
       const userId = 'test-user-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const todoData = {
         title: 'New Todo',
         description: 'New Description',
-        todo_deadline: new Date('2025-01-01'),
+        todo_deadline: tomorrow,
         is_public: true,
       };
       const mockCreatedTodo: Todo = {
@@ -331,8 +229,8 @@ describe('TodoService', () => {
         is_public: todoData.is_public,
         id: userId,
         is_completed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: currentDate,
+        updatedAt: currentDate,
       };
       mockPrismaClient.todo.create.mockResolvedValue(mockCreatedTodo);
 
@@ -354,11 +252,14 @@ describe('TodoService', () => {
 
     it('タイトルが空の場合エラーを投げること', async () => {
       // Arrange
-      const userId = 'test-user-id';
+      const userId = 'test-user-id'
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const todoData = {
         title: '   ',
         description: 'Description',
-        todo_deadline: new Date('2025-01-01'),
+        todo_deadline: tomorrow,
       };
 
       // Act & Assert
@@ -385,6 +286,9 @@ describe('TodoService', () => {
       // Arrange
       const todoId = 1;
       const userId = 'test-user-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const updateData = {
         title: 'Updated Todo',
         is_completed: true,
@@ -393,9 +297,9 @@ describe('TodoService', () => {
         todo_id: todoId,
         title: 'Original Todo',
         description: 'Original Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
@@ -427,8 +331,8 @@ describe('TodoService', () => {
 
     it('権限がない場合nullを返すこと', async () => {
       // Arrange
-      const todoId = 1;
-      const userId = 'test-user-id';
+      const todoId = 1
+      const userId = 'test-user-id'
       const updateData = { title: 'Updated Todo' };
       mockPrismaClient.todo.findFirst.mockResolvedValue(null);
 
@@ -437,20 +341,23 @@ describe('TodoService', () => {
 
       // Assert
       expect(result).toBeNull();
-    });
+    })
 
     it('空のタイトルの場合エラーを投げること', async () => {
       // Arrange
       const todoId = 1;
       const userId = 'test-user-id';
       const updateData = { title: '   ' };
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockExistingTodo: Todo = {
         todo_id: todoId,
         title: 'Original Todo',
         description: 'Original Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
@@ -458,7 +365,8 @@ describe('TodoService', () => {
       mockPrismaClient.todo.findFirst.mockResolvedValue(mockExistingTodo);
 
       // Act & Assert
-      await expect(service.updateTodo(todoId, userId, updateData)).rejects.toThrow('タイトルは必須です');
+      await expect(
+        service.updateTodo(todoId, userId, updateData)).rejects.toThrow('タイトルは必須です');
     });
   });
 
@@ -467,13 +375,16 @@ describe('TodoService', () => {
       // Arrange
       const todoId = 1;
       const userId = 'test-user-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockExistingTodo: Todo = {
         todo_id: todoId,
         title: 'Test Todo',
         description: 'Test Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
@@ -482,7 +393,7 @@ describe('TodoService', () => {
       mockPrismaClient.todo.delete.mockResolvedValue({});
 
       // Act
-      const result = await service.deleteTodo(todoId, userId);
+      const result = await service.deleteTodo(todoId, userId)
 
       // Assert
       expect(mockPrismaClient.todo.findFirst).toHaveBeenCalledWith({
@@ -513,13 +424,16 @@ describe('TodoService', () => {
       // Arrange
       const todoId = 1;
       const userId = 'test-user-id';
+      const currentDate = new Date();
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const mockExistingTodo: Todo = {
         todo_id: todoId,
         title: 'Test Todo',
         description: 'Test Description',
-        todo_deadline: new Date('2025-01-01'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        todo_deadline: tomorrow,
+        createdAt: currentDate,
+        updatedAt: currentDate,
         id: userId,
         is_completed: false,
         is_public: false,
@@ -527,7 +441,7 @@ describe('TodoService', () => {
       const mockUpdatedTodo: Todo = {
         ...mockExistingTodo,
         is_completed: true,
-      };
+      }
       mockPrismaClient.todo.findFirst.mockResolvedValue(mockExistingTodo);
       mockPrismaClient.todo.update.mockResolvedValue(mockUpdatedTodo);
 
@@ -539,7 +453,7 @@ describe('TodoService', () => {
         where: { todo_id: todoId },
         data: { is_completed: true },
       });
-      expect(result).toEqual(mockUpdatedTodo);
+      expect(result).toEqual(mockUpdatedTodo)
     });
 
     it('権限がない場合nullを返すこと', async () => {
