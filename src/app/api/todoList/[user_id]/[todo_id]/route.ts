@@ -117,9 +117,7 @@ export async function DELETE(
       );
     }
 
-    const url = new URL(request.url);
-    const { todo_id } =params;
-
+    const { todo_id } = params;
     if (!todo_id) {
       return NextResponse.json(
         { error: 'ToDoIDは必須です' },
