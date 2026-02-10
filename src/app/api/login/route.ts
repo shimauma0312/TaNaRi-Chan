@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Set authentication cookie
-    userService.setAuthCookie(user.id)
+    await userService.setAuthCookie(user.id)
 
     return NextResponse.json(
       {

@@ -7,9 +7,9 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     user_id: string;
-  };
+  }>;
 }
 
 /**
@@ -24,7 +24,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const requestUserId = getUserIdFromRequest(request);
-    const targetUserId = params.user_id;
+    const { user_id: targetUserId } = await params;
 
     // 自分のToDoリストの場合
     if (requestUserId === targetUserId) {

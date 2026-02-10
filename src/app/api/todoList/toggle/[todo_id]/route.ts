@@ -7,9 +7,9 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     todo_id: string;
-  };
+  }>;
 }
 
 /**
@@ -31,7 +31,8 @@ export async function PATCH(
       );
     }
 
-    const todoId = parseInt(params.todo_id);
+    const { todo_id } = await params;
+    const todoId = parseInt(todo_id);
     if (isNaN(todoId)) {
       return NextResponse.json(
         { error: '無効なToDoIDです' },
