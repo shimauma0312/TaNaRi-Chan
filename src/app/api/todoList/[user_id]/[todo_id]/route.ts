@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 interface RouteParams {
   params: {
     user_id: string;
+    todo_id: string;
   };
 }
 
@@ -53,7 +54,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params: _params }: RouteParams
+  { params }: RouteParams
 ): Promise<NextResponse> {
   try {
     const requestUserId = getUserIdFromRequest(request);
@@ -64,15 +65,9 @@ export async function PUT(
       );
     }
 
+    const { todo_id } = params;
     const body = await request.json();
-    const { todo_id, title, description, todo_deadline, is_completed, is_public } = body;
-
-    if (!todo_id) {
-      return NextResponse.json(
-        { error: 'ToDoIDは必須です' },
-        { status: 400 }
-      );
-    }
+    const { title, description, todo_deadline, is_completed, is_public } = body;
 
     const updatedTodo = await todoService.updateTodo(
       parseInt(todo_id),
@@ -111,7 +106,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params: _params }: RouteParams
+  { params }: RouteParams
 ): Promise<NextResponse> {
   try {
     const requestUserId = getUserIdFromRequest(request);
@@ -122,17 +117,15 @@ export async function DELETE(
       );
     }
 
-    const url = new URL(request.url);
-    const todoId = url.searchParams.get('todo_id');
-
-    if (!todoId) {
+    const { todo_id } = params;
+    if (!todo_id) {
       return NextResponse.json(
         { error: 'ToDoIDは必須です' },
         { status: 400 }
       );
     }
 
-    const deleted = await todoService.deleteTodo(parseInt(todoId), requestUserId);
+    const deleted = await todoService.deleteTodo(parseInt(todo_id), requestUserId);
 
     if (!deleted) {
       return NextResponse.json(
