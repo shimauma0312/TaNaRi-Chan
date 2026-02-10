@@ -48,7 +48,7 @@ describe('/api/login', () => {
       };
 
       mockUserService.authenticateUser.mockResolvedValue(mockUser);
-      mockUserService.setAuthCookie.mockImplementation(() => {});
+      mockUserService.setAuthCookie.mockResolvedValue(undefined);
 
       const request = createMockRequest(requestBody);
 

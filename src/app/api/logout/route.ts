@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(_req: NextRequest) {
   try {
     // Clear authentication cookie
-    userService.clearAuthCookie()
+    await userService.clearAuthCookie()
 
     return NextResponse.json(
       { message: 'ログアウトしました' },
