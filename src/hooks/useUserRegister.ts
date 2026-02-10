@@ -1,5 +1,5 @@
 import { RegisterSchema } from "@/schemas/validation"
-import { handleClientError } from "@/utils/errorHandler"
+import { handleClientError } from "@/utils/errorHandler.client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 

@@ -2,7 +2,7 @@
 
 import MarkdownEditor from "@/components/markdown/markdownEditor"
 import useAuth from "@/hooks/useAuth"
-import { AppError, ErrorType, handleClientError } from "@/utils/errorHandler"
+import { AppError, ErrorType, handleClientError } from "@/utils/errorHandler.client"
 import React, { useEffect, useState } from "react"
 
 /**

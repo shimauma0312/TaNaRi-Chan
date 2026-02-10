@@ -1,19 +1,22 @@
-import { PrismaClient, Todo } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { PrismaClient, Todo } from '@prisma/client';
 
 /**
  * ToDoサービスクラス
  * ToDoに関するビジネスロジックとデータアクセスを統合
  */
 export class TodoService {
+  private prisma: PrismaClient
+  constructor(prismaClient?: PrismaClient) {
+    this.prisma = prismaClient || new PrismaClient()
+  };
+
   /**
    * ユーザーのToDoリストを取得する
    * @param userId ユーザーID
    * @returns ToDoリストの配列
    */
   async getUserTodos(userId: string): Promise<Todo[]> {
-    return await prisma.todo.findMany({
+    return await this.prisma.todo.findMany({
       where: {
         id: userId,
       },
@@ -28,7 +31,7 @@ export class TodoService {
    * @returns 公開ToDoリストの配列（ユーザー情報含む）
    */
   async getPublicTodos(): Promise<(Todo & { user: { id: string; user_name: string } })[]> {
-    return await prisma.todo.findMany({
+    return await this.prisma.todo.findMany({
       where: {
         is_public: true,
       },
@@ -53,7 +56,7 @@ export class TodoService {
    * @returns ToDo オブジェクトまたはnull
    */
   async getTodoById(todoId: number, requestUserId?: string): Promise<Todo | null> {
-    const todo = await prisma.todo.findUnique({
+    const todo = await this.prisma.todo.findUnique({
       where: {
         todo_id: todoId,
       },
@@ -95,7 +98,7 @@ export class TodoService {
       throw new Error('期限は現在時刻より後に設定してください');
     }
 
-    return await prisma.todo.create({
+    return await this.prisma.todo.create({
       data: {
         title: todoData.title.trim(),
         description: todoData.description.trim(),
@@ -125,7 +128,7 @@ export class TodoService {
     }
   ): Promise<Todo | null> {
     // 権限チェック：所有者のみ更新可能
-    const existingTodo = await prisma.todo.findFirst({
+    const existingTodo = await this.prisma.todo.findFirst({
       where: {
         todo_id: todoId,
         id: userId,
@@ -164,7 +167,7 @@ export class TodoService {
     }
 
     try {
-      return await prisma.todo.update({
+      return await this.prisma.todo.update({
         where: {
           todo_id: todoId,
         },
@@ -183,7 +186,7 @@ export class TodoService {
    */
   async deleteTodo(todoId: number, userId: string): Promise<boolean> {
     // 権限チェック：所有者のみ削除可能
-    const existingTodo = await prisma.todo.findFirst({
+    const existingTodo = await this.prisma.todo.findFirst({
       where: {
         todo_id: todoId,
         id: userId,
@@ -195,7 +198,7 @@ export class TodoService {
     }
 
     try {
-      await prisma.todo.delete({
+      await this.prisma.todo.delete({
         where: {
           todo_id: todoId,
         },
@@ -213,7 +216,7 @@ export class TodoService {
    * @returns 更新されたToDoオブジェクトまたはnull
    */
   async toggleTodoCompletion(todoId: number, userId: string): Promise<Todo | null> {
-    const existingTodo = await prisma.todo.findFirst({
+    const existingTodo = await this.prisma.todo.findFirst({
       where: {
         todo_id: todoId,
         id: userId,
@@ -225,7 +228,7 @@ export class TodoService {
     }
 
     try {
-      return await prisma.todo.update({
+      return await this.prisma.todo.update({
         where: {
           todo_id: todoId,
         },

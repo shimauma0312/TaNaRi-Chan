@@ -153,8 +153,8 @@ export async function authenticateUser(email: string, password: string): Promise
  * 認証用Cookieを設定する
  * @param userId ユーザーID
  */
-export function setAuthCookie(userId: string): void {
-  const cookieStore = cookies();
+export async function setAuthCookie(userId: string): Promise<void> {
+  const cookieStore = await cookies();
   cookieStore.set('auth-user-id', userId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -167,8 +167,8 @@ export function setAuthCookie(userId: string): void {
 /**
  * 認証用Cookieをクリアする
  */
-export function clearAuthCookie(): void {
-  const cookieStore = cookies();
+export async function clearAuthCookie(): Promise<void> {
+  const cookieStore = await cookies();
   cookieStore.set('auth-user-id', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -183,7 +183,7 @@ export function clearAuthCookie(): void {
  * @returns 認証済みユーザーまたはnull
  */
 export async function getCurrentUser(): Promise<AuthUser | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const userId = cookieStore.get('auth-user-id')?.value;
 
   if (!userId) {
