@@ -43,12 +43,14 @@ export class AppError extends Error {
     this.statusCode = statusCode;
     this.isOperational = isOperational;
 
-    Error.captureStackTrace(this, this.constructor);
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, this.constructor);
+    }
   }
 }
 
 /**
- * フロントエンド用のエラー処理フック
+ * フロントエンド用のエラー処理ユーティリティ関数
  * @param error - 発生したエラー
  * @param fallbackMessage - デフォルトメッセージ
  * @returns ユーザー向けエラーメッセージ
