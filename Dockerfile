@@ -1,8 +1,10 @@
-FROM node:lts-alpine
+FROM node:24-alpine
 
 RUN apk add --no-cache libc6-compat openssl sudo
 
 RUN apk add --no-cache bash
+
+RUN npm install -g npm@latest
 
 WORKDIR /app
 
