@@ -28,6 +28,12 @@ const SideMenu = () => {
           My Articles
         </Link>
         <Link
+          href="/dashboard/messages"
+          className="block text-lg text-indigo-400 hover:text-indigo-300"
+        >
+          Messages
+        </Link>
+        <Link
           href="/dashboard/myPage"
           className="block text-lg text-indigo-400 hover:text-indigo-300"
         >
