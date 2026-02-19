@@ -1,6 +1,6 @@
 FROM node:24-alpine
 
-RUN apk add --no-cache libc6-compat openssl sudo
+RUN apk add --no-cache libc6-compat openssl sudo libstdc++
 
 RUN apk add --no-cache bash
 
