@@ -70,3 +70,31 @@ model TodoComment {
   author     User    @relation(fields: [author_id], references: [id])
   todo       Todo   @relation(fields: [todo_id], references: [todo_id])
 }
+
+/// アプリケーションのログ保持
+model Log {
+  id        Int       @id @default(autoincrement())
+  level     LogLevel
+  message   String
+  context   Json?
+  source    LogSource @default(SERVER)
+  userId    String?
+  path      String?
+  createdAt DateTime  @default(now())
+
+  @@index([level])
+  @@index([createdAt])
+  @@index([source])
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+  DEBUG
+}
+
+enum LogSource {
+  SERVER
+  CLIENT
+}
