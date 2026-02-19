@@ -1,7 +1,5 @@
 /**
  * メッセージ送信ユースケース
- *
- * Application層のユースケース。ドメインロジックを組み合わせてビジネスユースケースを実現する。
  */
 
 import { MessageEntity, MessageWithUsers, CreateMessageData } from '@/domain/message/Message';
@@ -25,8 +23,6 @@ export interface SendMessageInput {
 
 /**
  * メッセージ送信ユースケースクラス
- *
- * バリデーションを実施し、メッセージをリポジトリ経由で永続化する。
  */
 export class SendMessageUseCase {
   /**

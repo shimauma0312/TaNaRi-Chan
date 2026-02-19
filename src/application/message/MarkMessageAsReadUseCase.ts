@@ -1,12 +1,7 @@
 /**
  * メッセージ既読化ユースケース
  *
- * 指定メッセージを既読状態に更新する。受信者のみが操作可能。
- *
- * Application層のオーケストレーション（Sandwich構造）:
- *   1. Infrastructure層からメッセージを取得
- *   2. Domain層のビジネスルールで権限を検証
- *   3. 問題なければInfrastructure層に永続化を委譲
+ * 受信者のみが操作可能。
  */
 
 import { Message, MessageEntity } from '@/domain/message/Message';
@@ -25,9 +20,6 @@ export class MarkMessageAsReadUseCase {
   /**
    * メッセージを既読にする
    *
-   * 受信者のみが既読操作を行える。対象メッセージが存在しない場合、
-   * または操作者が受信者でない場合はエラーを返す。
-   *
    * @param messageId - 既読にするメッセージのID
    * @param userId    - 操作者ユーザーID（受信者のみ許可）
    * @returns 更新後のメッセージ
@@ -36,7 +28,6 @@ export class MarkMessageAsReadUseCase {
    * @throws {AppError} データベースエラーの場合（DATABASE_ERROR, 500）
    */
   async execute(messageId: number, userId: string): Promise<Message> {
-    // Step 1: Infrastructure層からデータ取得
     const message = await this.messageRepository.findById(messageId);
     if (!message) {
       throw new AppError(
@@ -46,7 +37,6 @@ export class MarkMessageAsReadUseCase {
       );
     }
 
-    // Step 2: Domain層のビジネスルールで権限を検証（純粋関数への委譲）
     if (!MessageEntity.canMarkAsRead(message, userId)) {
       throw new AppError(
         'このメッセージを既読にする権限がありません',
@@ -55,7 +45,6 @@ export class MarkMessageAsReadUseCase {
       );
     }
 
-    // Step 3: Infrastructure層に永続化を委譲
     try {
       return await this.messageRepository.markAsRead(messageId, userId);
     } catch (error) {

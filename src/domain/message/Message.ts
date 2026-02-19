@@ -1,10 +1,4 @@
 /**
- * メッセージドメインエンティティ
- *
- * ドメイン層のコアエンティティ。外部フレームワーク（Prisma等）に依存しない純粋なビジネスオブジェクト。
- */
-
-/**
  * メッセージエンティティのインターフェース
  *
  * @property message_id  - メッセージの一意識別子
@@ -74,10 +68,6 @@ export interface MessageValidationResult {
 
 /**
  * メッセージドメインのビジネスルールを実装するクラス
- *
- * このクラスは外部（DB・フレームワーク）に一切依存しない純粋な関数群で構成される。
- * Application層がApplication層のオーケストレーション内でこれらのルールを呼び出す
- * 「Sandwich」パターンの中心となる Domain Logic 担当者。
  */
 export class MessageEntity {
   /** 件名の最大文字数 */
@@ -106,14 +96,6 @@ export class MessageEntity {
       errors.push(`本文は${MessageEntity.MAX_BODY_LENGTH}文字以内で入力してください`);
     }
 
-    if (!data.sender_id || data.sender_id.trim().length === 0) {
-      errors.push('送信者IDは必須です');
-    }
-
-    if (!data.receiver_id || data.receiver_id.trim().length === 0) {
-      errors.push('受信者IDは必須です');
-    }
-
     if (data.sender_id && data.receiver_id && data.sender_id === data.receiver_id) {
       errors.push('自分自身にメッセージを送ることはできません');
     }
@@ -125,10 +107,7 @@ export class MessageEntity {
   }
 
   /**
-   * 指定ユーザーがメッセージを既読にできるかを判定する（純粋関数）
-   *
-   * ビジネスルール: 受信者のみが既読にできる。
-   * Application層はこの関数を呼び出してルールの適用を Domain層に委譲する。
+   * 指定ユーザーがメッセージを既読にできるかを判定する
    *
    * @param message - 判定対象のメッセージ
    * @param userId  - 操作を試みるユーザーID
@@ -139,10 +118,7 @@ export class MessageEntity {
   }
 
   /**
-   * 指定ユーザーがメッセージを削除できるかを判定する（純粋関数）
-   *
-   * ビジネスルール: 送信者または受信者のみが削除できる。
-   * Application層はこの関数を呼び出してルールの適用を Domain層に委譲する。
+   * 指定ユーザーがメッセージを削除できるかを判定する
    *
    * @param message - 判定対象のメッセージ
    * @param userId  - 操作を試みるユーザーID

@@ -1,10 +1,3 @@
-/**
- * PrismaによるメッセージリポジトリのInfrastructure層実装
- *
- * `IMessageRepository`インターフェースをPrisma ORMで実装する。
- * データベースアクセスの詳細をここに隔離し、ドメイン層・アプリケーション層を保護する。
- */
-
 import { PrismaClient } from '@prisma/client';
 import { CreateMessageData, Message, MessageWithUsers } from '@/domain/message/Message';
 import { IMessageRepository } from '@/domain/message/MessageRepository';

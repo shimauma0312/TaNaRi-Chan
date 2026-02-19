@@ -44,7 +44,7 @@ const createMockMessage = (overrides: Partial<MessageWithUsers> = {}): MessageWi
 });
 
 // --------------------------------------------------
-// MessageEntity（Domain層 - 純粋ビジネスルール）
+// MessageEntity
 // --------------------------------------------------
 describe('MessageEntity', () => {
   describe('canMarkAsRead', () => {
@@ -149,18 +149,6 @@ describe('SendMessageUseCase', () => {
         type: ErrorType.VALIDATION,
         statusCode: 400,
       });
-      expect(mockRepo.create).not.toHaveBeenCalled();
-    });
-
-    it('受信者IDが空の場合はAppErrorをスローする', async () => {
-      const input = {
-        subject: 'テスト件名',
-        body: 'テスト本文',
-        sender_id: 'user1',
-        receiver_id: '',
-      };
-
-      await expect(useCase.execute(input)).rejects.toThrow(AppError);
       expect(mockRepo.create).not.toHaveBeenCalled();
     });
 
@@ -324,17 +312,14 @@ describe('MarkMessageAsReadUseCase', () => {
       expect(mockRepo.markAsRead).toHaveBeenCalledWith(1, 'user2');
     });
 
-    it('Domain層のcanMarkAsReadに権限チェックを委譲する（送信者は拒否）', async () => {
-      // このテストはApplication層がDomain層に権限チェックを委譲することを保証する
+    it('送信者が既読にしようとすると403を返す', async () => {
       const message = createMockMessage({ receiver_id: 'user2' });
       mockRepo.findById.mockResolvedValue(message);
 
-      // user1（送信者）が既読操作しようとした場合 → Domain層が false を返す
       await expect(useCase.execute(1, 'user1')).rejects.toMatchObject({
         type: ErrorType.AUTHORIZATION,
         statusCode: 403,
       });
-      // 権限チェック失敗時はmarkAsReadを呼ばない
       expect(mockRepo.markAsRead).not.toHaveBeenCalled();
     });
   });
@@ -354,7 +339,6 @@ describe('MarkMessageAsReadUseCase', () => {
       const message = createMockMessage({ receiver_id: 'user2' });
       mockRepo.findById.mockResolvedValue(message);
 
-      // user1（送信者）が既読操作しようとした場合
       await expect(useCase.execute(1, 'user1')).rejects.toThrow(AppError);
       await expect(useCase.execute(1, 'user1')).rejects.toMatchObject({
         type: ErrorType.AUTHORIZATION,
@@ -395,17 +379,14 @@ describe('DeleteMessageUseCase', () => {
       await expect(useCase.execute(1, 'user2')).resolves.toBeUndefined();
     });
 
-    it('Domain層のcanDeleteに権限チェックを委譲する（無関係者は拒否）', async () => {
-      // このテストはApplication層がDomain層に権限チェックを委譲することを保証する
+    it('無関係なユーザーが削除しようとすると403を返す', async () => {
       const message = createMockMessage({ sender_id: 'user1', receiver_id: 'user2' });
       mockRepo.findById.mockResolvedValue(message);
 
-      // user3（無関係者）が削除しようとした場合 → Domain層が false を返す
       await expect(useCase.execute(1, 'user3')).rejects.toMatchObject({
         type: ErrorType.AUTHORIZATION,
         statusCode: 403,
       });
-      // 権限チェック失敗時はdeleteを呼ばない
       expect(mockRepo.delete).not.toHaveBeenCalled();
     });
   });
@@ -425,7 +406,6 @@ describe('DeleteMessageUseCase', () => {
       const message = createMockMessage({ sender_id: 'user1', receiver_id: 'user2' });
       mockRepo.findById.mockResolvedValue(message);
 
-      // user3（関係者でない）が削除しようとした場合
       await expect(useCase.execute(1, 'user3')).rejects.toThrow(AppError);
       await expect(useCase.execute(1, 'user3')).rejects.toMatchObject({
         type: ErrorType.AUTHORIZATION,

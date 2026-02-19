@@ -1,16 +1,7 @@
-/**
- * メッセージリポジトリインターフェース
- *
- * ドメイン層で定義する依存性逆転の原則（DIP）に基づくインターフェース。
- * インフラ層の実装（Prisma等）はこのインターフェースを実装する。
- */
-
 import { CreateMessageData, Message, MessageWithUsers } from './Message';
 
 /**
  * メッセージリポジトリのインターフェース
- *
- * データアクセスの抽象化を提供し、ドメイン層をインフラ層から独立させる。
  */
 export interface IMessageRepository {
   /**
