@@ -74,6 +74,10 @@ export interface MessageValidationResult {
 
 /**
  * メッセージドメインのビジネスルールを実装するクラス
+ *
+ * このクラスは外部（DB・フレームワーク）に一切依存しない純粋な関数群で構成される。
+ * Application層がApplication層のオーケストレーション内でこれらのルールを呼び出す
+ * 「Sandwich」パターンの中心となる Domain Logic 担当者。
  */
 export class MessageEntity {
   /** 件名の最大文字数 */
@@ -118,5 +122,33 @@ export class MessageEntity {
       isValid: errors.length === 0,
       errors,
     };
+  }
+
+  /**
+   * 指定ユーザーがメッセージを既読にできるかを判定する（純粋関数）
+   *
+   * ビジネスルール: 受信者のみが既読にできる。
+   * Application層はこの関数を呼び出してルールの適用を Domain層に委譲する。
+   *
+   * @param message - 判定対象のメッセージ
+   * @param userId  - 操作を試みるユーザーID
+   * @returns 受信者であれば `true`、そうでなければ `false`
+   */
+  static canMarkAsRead(message: Pick<Message, 'receiver_id'>, userId: string): boolean {
+    return message.receiver_id === userId;
+  }
+
+  /**
+   * 指定ユーザーがメッセージを削除できるかを判定する（純粋関数）
+   *
+   * ビジネスルール: 送信者または受信者のみが削除できる。
+   * Application層はこの関数を呼び出してルールの適用を Domain層に委譲する。
+   *
+   * @param message - 判定対象のメッセージ
+   * @param userId  - 操作を試みるユーザーID
+   * @returns 送信者または受信者であれば `true`、そうでなければ `false`
+   */
+  static canDelete(message: Pick<Message, 'sender_id' | 'receiver_id'>, userId: string): boolean {
+    return message.sender_id === userId || message.receiver_id === userId;
   }
 }

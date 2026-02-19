@@ -2,6 +2,7 @@
  * メッセージユースケースのユニットテスト
  *
  * テスト対象:
+ * - MessageEntity（ドメイン層ビジネスルール）
  * - SendMessageUseCase
  * - GetInboxMessagesUseCase
  * - GetSentMessagesUseCase
@@ -15,7 +16,7 @@ import { GetSentMessagesUseCase } from '@/application/message/GetSentMessagesUse
 import { MarkMessageAsReadUseCase } from '@/application/message/MarkMessageAsReadUseCase';
 import { DeleteMessageUseCase } from '@/application/message/DeleteMessageUseCase';
 import { IMessageRepository } from '@/domain/message/MessageRepository';
-import { MessageWithUsers } from '@/domain/message/Message';
+import { MessageEntity, MessageWithUsers } from '@/domain/message/Message';
 import { AppError, ErrorType } from '@/utils/errorHandler';
 
 // モックリポジトリの作成
@@ -40,6 +41,39 @@ const createMockMessage = (overrides: Partial<MessageWithUsers> = {}): MessageWi
   sender: { id: 'user1', user_name: '送信者' },
   receiver: { id: 'user2', user_name: '受信者' },
   ...overrides,
+});
+
+// --------------------------------------------------
+// MessageEntity（Domain層 - 純粋ビジネスルール）
+// --------------------------------------------------
+describe('MessageEntity', () => {
+  describe('canMarkAsRead', () => {
+    it('受信者は既読にできる', () => {
+      expect(MessageEntity.canMarkAsRead({ receiver_id: 'user2' }, 'user2')).toBe(true);
+    });
+
+    it('送信者は既読にできない', () => {
+      expect(MessageEntity.canMarkAsRead({ receiver_id: 'user2' }, 'user1')).toBe(false);
+    });
+
+    it('無関係なユーザーは既読にできない', () => {
+      expect(MessageEntity.canMarkAsRead({ receiver_id: 'user2' }, 'user3')).toBe(false);
+    });
+  });
+
+  describe('canDelete', () => {
+    it('送信者は削除できる', () => {
+      expect(MessageEntity.canDelete({ sender_id: 'user1', receiver_id: 'user2' }, 'user1')).toBe(true);
+    });
+
+    it('受信者は削除できる', () => {
+      expect(MessageEntity.canDelete({ sender_id: 'user1', receiver_id: 'user2' }, 'user2')).toBe(true);
+    });
+
+    it('無関係なユーザーは削除できない', () => {
+      expect(MessageEntity.canDelete({ sender_id: 'user1', receiver_id: 'user2' }, 'user3')).toBe(false);
+    });
+  });
 });
 
 // --------------------------------------------------
@@ -289,6 +323,20 @@ describe('MarkMessageAsReadUseCase', () => {
       expect(result).toEqual(updatedMessage);
       expect(mockRepo.markAsRead).toHaveBeenCalledWith(1, 'user2');
     });
+
+    it('Domain層のcanMarkAsReadに権限チェックを委譲する（送信者は拒否）', async () => {
+      // このテストはApplication層がDomain層に権限チェックを委譲することを保証する
+      const message = createMockMessage({ receiver_id: 'user2' });
+      mockRepo.findById.mockResolvedValue(message);
+
+      // user1（送信者）が既読操作しようとした場合 → Domain層が false を返す
+      await expect(useCase.execute(1, 'user1')).rejects.toMatchObject({
+        type: ErrorType.AUTHORIZATION,
+        statusCode: 403,
+      });
+      // 権限チェック失敗時はmarkAsReadを呼ばない
+      expect(mockRepo.markAsRead).not.toHaveBeenCalled();
+    });
   });
 
   describe('異常系', () => {
@@ -345,6 +393,20 @@ describe('DeleteMessageUseCase', () => {
       mockRepo.delete.mockResolvedValue(undefined);
 
       await expect(useCase.execute(1, 'user2')).resolves.toBeUndefined();
+    });
+
+    it('Domain層のcanDeleteに権限チェックを委譲する（無関係者は拒否）', async () => {
+      // このテストはApplication層がDomain層に権限チェックを委譲することを保証する
+      const message = createMockMessage({ sender_id: 'user1', receiver_id: 'user2' });
+      mockRepo.findById.mockResolvedValue(message);
+
+      // user3（無関係者）が削除しようとした場合 → Domain層が false を返す
+      await expect(useCase.execute(1, 'user3')).rejects.toMatchObject({
+        type: ErrorType.AUTHORIZATION,
+        statusCode: 403,
+      });
+      // 権限チェック失敗時はdeleteを呼ばない
+      expect(mockRepo.delete).not.toHaveBeenCalled();
     });
   });
 
