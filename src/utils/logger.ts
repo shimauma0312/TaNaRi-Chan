@@ -1,4 +1,4 @@
-/** ログコンテキスト情報の型定義 */
+/** ログコンテキスト情報 */
 export interface LogContext {
   [key: string]:
     | string
