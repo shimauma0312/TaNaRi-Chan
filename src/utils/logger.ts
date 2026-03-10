@@ -31,7 +31,6 @@ class ClientLogger implements ILogger {
         level,
         message,
         context: context ?? null,
-        path: typeof window !== "undefined" ? window.location.pathname : null,
       }),
     }).catch(() => {
       // ネットワークエラーは無視（ログ送信の失敗でアプリを止めない）
