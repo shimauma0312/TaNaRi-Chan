@@ -23,15 +23,21 @@ export interface ILogger {
 // ─────────────────────────────────────────────────────────────────
 class ClientLogger implements ILogger {
   private send(level: string, message: string, context?: LogContext): void {
+    let body: string
+    try {
+      body = JSON.stringify({
+        level,
+        message,
+        context: context ?? null,
+      })
+    } catch {
+      body = JSON.stringify({ level, message, context: null })
+    }
     // fire-and-forget
     fetch("/api/logs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        level,
-        message,
-        context: context ?? null,
-      }),
+      body,
     }).catch(() => {
       // ネットワークエラーは無視（ログ送信の失敗でアプリを止めない）
     })
