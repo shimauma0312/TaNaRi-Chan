@@ -54,9 +54,7 @@ const MarkdownEditor: React.FC<{
           type="button"
           onClick={() => setActiveTab(1)}
           className={`flex-1 px-4 py-2 font-medium ${
-            activeTab === 1 
-              ? "bg-blue-600 text-white" 
-              : "text-slate-300 bg-slate-700"
+            activeTab === 1 ? "bg-blue-600 text-white" : "text-slate-300 bg-slate-700"
           }`}
         >
           Edit
@@ -66,9 +64,7 @@ const MarkdownEditor: React.FC<{
           type="button"
           onClick={() => setActiveTab(0)}
           className={`flex-1 px-4 py-2 font-medium ${
-            activeTab === 0 
-              ? "bg-blue-600 text-white" 
-              : "text-slate-300 bg-slate-700"
+            activeTab === 0 ? "bg-blue-600 text-white" : "text-slate-300 bg-slate-700"
           }`}
         >
           Preview
@@ -95,11 +91,7 @@ const MarkdownEditor: React.FC<{
               - children: 現在のmarkdownテキスト
             */}
             {markdown.trim() ? (
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm, breaks]}
-              >
-                {markdown}
-              </ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm, breaks]}>{markdown}</ReactMarkdown>
             ) : (
               <div className="text-slate-400 italic text-center py-20">
                 Editタブでマークダウンを入力してください

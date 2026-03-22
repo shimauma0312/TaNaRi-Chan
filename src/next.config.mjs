@@ -16,10 +16,10 @@ const nextConfig = {
         process: false,
         path: false,
         os: false,
-      };
+      }
     }
-    return config;
+    return config
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

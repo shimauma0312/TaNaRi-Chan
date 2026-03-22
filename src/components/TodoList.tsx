@@ -1,14 +1,14 @@
-import { PublicTodo, Todo } from "@/types/todo";
-import { useState } from "react";
+import { PublicTodo, Todo } from "@/types/todo"
+import { useState } from "react"
 
 interface TodoListProps {
-  todos: (Todo | PublicTodo)[];
-  onToggleCompletion?: (todoId: number) => Promise<void>;
-  onEdit?: (todoId: number) => void;
-  onDelete?: (todoId: number) => Promise<void>;
-  showStats?: boolean;
-  allowEdit?: boolean;
-  showPublicBadge?: boolean;
+  todos: (Todo | PublicTodo)[]
+  onToggleCompletion?: (todoId: number) => Promise<void>
+  onEdit?: (todoId: number) => void
+  onDelete?: (todoId: number) => Promise<void>
+  showStats?: boolean
+  allowEdit?: boolean
+  showPublicBadge?: boolean
 }
 
 /**
@@ -24,59 +24,62 @@ export default function TodoList({
   allowEdit = true,
   showPublicBadge = true,
 }: TodoListProps) {
-  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState<number | null>(null)
 
   // Highlight todos with nearby deadline (within 3 days)
   const isDeadlineNear = (deadline: string) => {
-    const deadlineDate = new Date(deadline);
-    const now = new Date();
-    const diffTime = deadlineDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= 3 && diffDays >= 0;
-  };
+    const deadlineDate = new Date(deadline)
+    const now = new Date()
+    const diffTime = deadlineDate.getTime() - now.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays <= 3 && diffDays >= 0
+  }
 
   // Check if overdue
   const isOverdue = (deadline: string) => {
-    const deadlineDate = new Date(deadline);
-    const now = new Date();
-    return deadlineDate < now;
-  };
+    const deadlineDate = new Date(deadline)
+    const now = new Date()
+    return deadlineDate < now
+  }
 
   // Statistics data
   const stats = {
     total: todos.length,
-    completed: todos.filter(todo => todo.is_completed).length,
-    pending: todos.filter(todo => !todo.is_completed).length,
-    overdue: todos.filter(todo => !todo.is_completed && isOverdue(todo.todo_deadline)).length,
-    nearDeadline: todos.filter(todo => !todo.is_completed && isDeadlineNear(todo.todo_deadline) && !isOverdue(todo.todo_deadline)).length,
-  };
+    completed: todos.filter((todo) => todo.is_completed).length,
+    pending: todos.filter((todo) => !todo.is_completed).length,
+    overdue: todos.filter((todo) => !todo.is_completed && isOverdue(todo.todo_deadline)).length,
+    nearDeadline: todos.filter(
+      (todo) =>
+        !todo.is_completed && isDeadlineNear(todo.todo_deadline) && !isOverdue(todo.todo_deadline),
+    ).length,
+  }
 
   const handleDelete = async (todoId: number) => {
-    if (!onDelete) return;
-    
-    if (!confirm('このToDoを削除してもよろしいですか？')) {
-      return;
+    if (!onDelete) return
+
+    if (!confirm("このToDoを削除してもよろしいですか？")) {
+      return
     }
 
     try {
-      setIsDeleting(todoId);
-      await onDelete(todoId);
+      setIsDeleting(todoId)
+      await onDelete(todoId)
     } catch (error) {
-      console.error('削除エラー:', error);
+      console.error("削除エラー:", error)
     } finally {
-      setIsDeleting(null);
+      setIsDeleting(null)
     }
-  };
+  }
 
   const handleToggleCompletion = async (todoId: number) => {
-    if (!onToggleCompletion) return;
-    
+    if (!onToggleCompletion) return
+
     try {
-      await onToggleCompletion(todoId);
+      await onToggleCompletion(todoId)
     } catch (error) {
-      console.error('Toggle completion error:', error);
+      console.error("Toggle completion error:", error)
     }
-  };
+  }
 
   if (todos.length === 0) {
     return (
@@ -84,7 +87,7 @@ export default function TodoList({
         <div className="text-lg text-gray-400 mb-4">No Todos available</div>
         <p className="text-gray-500">Create a new Todo to get started</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -118,16 +121,16 @@ export default function TodoList({
       {/* TODO List */}
       <ul className="space-y-4">
         {todos.map((todo) => (
-          <li 
-            key={todo.todo_id} 
+          <li
+            key={todo.todo_id}
             className={`p-4 border rounded-lg shadow-md transition-all ${
-              todo.is_completed 
-                ? 'bg-gray-800/50 border-gray-600' 
+              todo.is_completed
+                ? "bg-gray-800/50 border-gray-600"
                 : isOverdue(todo.todo_deadline)
-                ? 'bg-red-900/30 border-red-500'
-                : isDeadlineNear(todo.todo_deadline)
-                ? 'bg-yellow-900/30 border-yellow-500'
-                : 'bg-gray-900/50 border-gray-400'
+                  ? "bg-red-900/30 border-red-500"
+                  : isDeadlineNear(todo.todo_deadline)
+                    ? "bg-yellow-900/30 border-yellow-500"
+                    : "bg-gray-900/50 border-gray-400"
             }`}
           >
             <div className="flex items-start justify-between">
@@ -141,7 +144,9 @@ export default function TodoList({
                       className="w-5 h-5 rounded border-gray-400 text-green-500 focus:ring-green-500"
                     />
                   )}
-                  <h2 className={`text-xl font-semibold ${todo.is_completed ? 'line-through text-gray-500' : ''}`}>
+                  <h2
+                    className={`text-xl font-semibold ${todo.is_completed ? "line-through text-gray-500" : ""}`}
+                  >
                     {todo.title}
                   </h2>
                   {showPublicBadge && todo.is_public && (
@@ -150,38 +155,43 @@ export default function TodoList({
                     </span>
                   )}
                 </div>
-                <p className={`text-gray-300 mb-2 ${todo.is_completed ? 'line-through' : ''}`}>
+                <p className={`text-gray-300 mb-2 ${todo.is_completed ? "line-through" : ""}`}>
                   {todo.description}
                 </p>
                 <div className="flex items-center gap-4 text-sm">
-                  <span className={`${
-                    isOverdue(todo.todo_deadline) && !todo.is_completed
-                      ? 'text-red-400 font-bold'
-                      : isDeadlineNear(todo.todo_deadline) && !todo.is_completed
-                      ? 'text-yellow-400 font-bold'
-                      : 'text-gray-500'
-                  }`}>
-                    Due: {new Date(todo.todo_deadline).toLocaleDateString('en-US')}
-                    {isOverdue(todo.todo_deadline) && !todo.is_completed && ' (Overdue)'}
-                    {isDeadlineNear(todo.todo_deadline) && !todo.is_completed && !isOverdue(todo.todo_deadline) && ' (Due soon)'}
+                  <span
+                    className={`${
+                      isOverdue(todo.todo_deadline) && !todo.is_completed
+                        ? "text-red-400 font-bold"
+                        : isDeadlineNear(todo.todo_deadline) && !todo.is_completed
+                          ? "text-yellow-400 font-bold"
+                          : "text-gray-500"
+                    }`}
+                  >
+                    Due: {new Date(todo.todo_deadline).toLocaleDateString("en-US")}
+                    {isOverdue(todo.todo_deadline) && !todo.is_completed && " (Overdue)"}
+                    {isDeadlineNear(todo.todo_deadline) &&
+                      !todo.is_completed &&
+                      !isOverdue(todo.todo_deadline) &&
+                      " (Due soon)"}
                   </span>
                   <span className="text-gray-500">
-                    Status: {todo.is_completed ? 'Completed' : 'Pending'}
+                    Status: {todo.is_completed ? "Completed" : "Pending"}
                   </span>
                   {todo.createdAt && (
                     <span className="text-gray-500">
-                      Created: {new Date(todo.createdAt).toLocaleDateString('en-US')}
+                      Created: {new Date(todo.createdAt).toLocaleDateString("en-US")}
                     </span>
                   )}
                   {/* Display username for public todos */}
-                  {'user' in todo && (
+                  {"user" in todo && (
                     <span className="text-blue-400 font-medium">
                       Author: {(todo as PublicTodo).user.user_name}
                     </span>
                   )}
                 </div>
               </div>
-              
+
               {/* 操作ボタン */}
               {allowEdit && (onEdit || onDelete) && (
                 <div className="flex gap-2 ml-4">
@@ -199,7 +209,7 @@ export default function TodoList({
                       className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm disabled:bg-gray-500 disabled:cursor-not-allowed"
                       disabled={isDeleting === todo.todo_id}
                     >
-                      {isDeleting === todo.todo_id ? 'Deleting...' : 'Delete'}
+                      {isDeleting === todo.todo_id ? "Deleting..." : "Delete"}
                     </button>
                   )}
                 </div>
@@ -209,5 +219,5 @@ export default function TodoList({
         ))}
       </ul>
     </div>
-  );
+  )
 }

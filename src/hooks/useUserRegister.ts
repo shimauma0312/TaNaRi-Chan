@@ -16,12 +16,12 @@ export const useUserRegister = () => {
 
   /**
    * ユーザー登録を実行する関数
-   * 
+   *
    * @param data 登録データ（メール、パスワード、ユーザー名）
    */
   const handleSubmit = async (data: RegisterSchema) => {
     const { email, password, userName } = data
-    
+
     try {
       // APIリクエスト
       const response = await fetch("/api/createUser", {
@@ -42,7 +42,10 @@ export const useUserRegister = () => {
         setError(errorMessage)
       }
     } catch (error) {
-      const errorMessage = handleClientError(error, "An error occurred during user registration. Cannot connect to server.")
+      const errorMessage = handleClientError(
+        error,
+        "An error occurred during user registration. Cannot connect to server.",
+      )
       setError(errorMessage)
     }
   }

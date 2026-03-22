@@ -20,12 +20,12 @@ export default function Home() {
           <Loader onTimeout={handleTimeout} timeout={1300} />
         </div>
       ) : (
-        <div className={`${fede.fadein} min-h-screen flex flex-col items-center justify-center p-4`}>
+        <div
+          className={`${fede.fadein} min-h-screen flex flex-col items-center justify-center p-4`}
+        >
           <div className="relative w-full max-w-4xl mx-auto text-center">
             <div className="backdrop-blur-sm bg-black/40 p-8 rounded-2xl shadow-2xl border border-white/20">
-              <h1 className="text-5xl font-bold mb-2 text-white">
-                TaNaRi-Chan
-              </h1>
+              <h1 className="text-5xl font-bold mb-2 text-white">TaNaRi-Chan</h1>
               <Link
                 href="/login"
                 className="inline-block px-8 py-4 text-lg font-medium text-white bg-black/60 border border-white/30 rounded-lg shadow-lg hover:bg-black/80 transform hover:scale-105 transition-all duration-300"
@@ -33,7 +33,11 @@ export default function Home() {
                 Log in to start
               </Link>
               <p className="mt-6 text-white/70">
-                Don&apos;t have an account? You can <Link href="/register" className="text-white hover:text-white/90 underline">sign up here</Link> to get started.
+                Don&apos;t have an account? You can{" "}
+                <Link href="/register" className="text-white hover:text-white/90 underline">
+                  sign up here
+                </Link>{" "}
+                to get started.
               </p>
             </div>
           </div>

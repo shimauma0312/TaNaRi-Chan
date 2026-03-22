@@ -22,19 +22,12 @@ class ServerWinstonLogger implements ILogger {
   constructor() {
     this.winston = winston.createLogger({
       level: process.env.NODE_ENV === "production" ? "warn" : "debug",
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json(),
-      ),
+      format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
       transports: [new winston.transports.Console()],
     })
   }
 
-  private persist(
-    level: LogLevel,
-    message: string,
-    context?: LogContext,
-  ): void {
+  private persist(level: LogLevel, message: string, context?: LogContext): void {
     writeLogToDB({
       level,
       message,

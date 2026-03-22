@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
-import { cookies } from 'next/headers'
-import { NextRequest } from 'next/server'
+import { PrismaClient } from "@prisma/client"
+import bcrypt from "bcryptjs"
+import { cookies } from "next/headers"
+import { NextRequest } from "next/server"
 
 const prisma = new PrismaClient()
 
@@ -30,7 +30,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
  * Generate a random user ID
  */
 export function generateUserId(): string {
-  return 'user_' + Math.random().toString(36).slice(2, 11) + Date.now().toString(36)
+  return "user_" + Math.random().toString(36).slice(2, 11) + Date.now().toString(36)
 }
 
 /**
@@ -63,7 +63,7 @@ export async function authenticateUser(email: string, password: string): Promise
     const { password: _password, ...userWithoutPassword } = user
     return userWithoutPassword
   } catch (error) {
-    console.error('Error authenticating user:', error)
+    console.error("Error authenticating user:", error)
     return null
   }
 }
@@ -73,12 +73,12 @@ export async function authenticateUser(email: string, password: string): Promise
  */
 export async function setAuthCookie(userId: string): Promise<void> {
   const cookieStore = await cookies()
-  cookieStore.set('auth-user-id', userId, {
+  cookieStore.set("auth-user-id", userId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7, // 1 week
-    path: '/',
+    path: "/",
   })
 }
 
@@ -87,12 +87,12 @@ export async function setAuthCookie(userId: string): Promise<void> {
  */
 export async function clearAuthCookie(): Promise<void> {
   const cookieStore = await cookies()
-  cookieStore.set('auth-user-id', '', {
+  cookieStore.set("auth-user-id", "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     maxAge: 0,
-    path: '/',
+    path: "/",
   })
 }
 
@@ -102,7 +102,7 @@ export async function clearAuthCookie(): Promise<void> {
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
     const cookieStore = await cookies()
-    const userId = cookieStore.get('auth-user-id')?.value
+    const userId = cookieStore.get("auth-user-id")?.value
 
     if (!userId) {
       return null
@@ -120,7 +120,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
     return user
   } catch (error) {
-    console.error('Error getting current user:', error)
+    console.error("Error getting current user:", error)
     return null
   }
 }
@@ -129,6 +129,6 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
  * Get user ID from request cookie (for API routes)
  */
 export function getUserIdFromRequest(request: NextRequest): string | null {
-  const userId = request.cookies.get('auth-user-id')?.value
+  const userId = request.cookies.get("auth-user-id")?.value
   return userId || null
 }

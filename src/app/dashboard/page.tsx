@@ -4,73 +4,66 @@ import MinLoader from "@/components/MinLoader"
 import ShakeImage from "@/components/ShakeImage"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
+import { useEffect, useState } from "react"
 
-const mockData = {
-  timelineArticles: [
-    { id: 1, title: "Article 1", content: "Content of Article 1" },
-    { id: 2, title: "Article 2", content: "Content of Article 2" },
-    { id: 3, title: "Article 3", content: "Content of Article 3" },
-    { id: 4, title: "Article 4", content: "Content of Article 4" },
-    { id: 5, title: "Article 5", content: "Content of Article 5" },
-  ],
-  activeTodos: [
-    {
-      id: 1,
-      title: "Todo 1",
-      description: "Description of Todo 1",
-      deadline: "2023-12-31",
-    },
-    {
-      id: 2,
-      title: "Todo 2",
-      description: "Description of Todo 2",
-      deadline: "2023-12-31",
-    },
-    {
-      id: 3,
-      title: "Todo 3",
-      description: "Description of Todo 3",
-      deadline: "2023-12-31",
-    },
-  ],
-  publicTodos: [
-    {
-      id: 1,
-      title: "Public Todo 1",
-      description: "Description of Public Todo 1",
-      deadline: "2023-12-31",
-    },
-    {
-      id: 2,
-      title: "Public Todo 2",
-      description: "Description of Public Todo 2",
-      deadline: "2023-12-31",
-    },
-    {
-      id: 3,
-      title: "Public Todo 3",
-      description: "Description of Public Todo 3",
-      deadline: "2023-12-31",
-    },
-    {
-      id: 4,
-      title: "Public Todo 4",
-      description: "Description of Public Todo 4",
-      deadline: "2023-12-31",
-    },
-    {
-      id: 5,
-      title: "Public Todo 5",
-      description: "Description of Public Todo 5",
-      deadline: "2023-12-31",
-    },
-  ],
+type DashboardArticle = {
+  post_id: number
+  title: string
+  content: string
+  createdAt: string
+  author: { user_name: string }
+}
+
+type DashboardTodo = {
+  todo_id: number
+  title: string
+  description: string
+  todo_deadline: string
+}
+
+type DashboardPublicTodo = DashboardTodo & {
+  user: {
+    id: string
+    user_name: string
+  }
+}
+
+type DashboardData = {
+  articles: DashboardArticle[]
+  activeTodos: DashboardTodo[]
+  publicTodos: DashboardPublicTodo[]
 }
 
 const DashboardPage = () => {
   const { user, loading } = useAuth()
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [dataLoading, setDataLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) return
+
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch("/api/dashboard")
+        if (res.ok) {
+          const data = await res.json()
+          setDashboardData(data)
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error)
+      } finally {
+        setDataLoading(false)
+      }
+    }
+
+    fetchDashboard()
+  }, [user])
 
   if (loading || !user) {
+    return <MinLoader />
+  }
+
+  if (dataLoading) {
     return <MinLoader />
   }
 
@@ -82,24 +75,30 @@ const DashboardPage = () => {
           <div className="mb-6">
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="text-xl">Welcome, {user.user_email}</p>
-            <p className="text-lg">
-              Today&apos;s Date: {new Date().toLocaleDateString()}
-            </p>
+            <p className="text-lg">Today&apos;s Date: {new Date().toLocaleDateString()}</p>
           </div>
-          
+
           <ShakeImage />
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
-              <h2 className="text-2xl font-bold mb-4">
-                Random Timeline Articles
-              </h2>
+              <h2 className="text-2xl font-bold mb-4">Random Timeline Articles</h2>
               <ul className="space-y-2">
-                {mockData.timelineArticles.map((article) => (
-                  <li key={article.id} className="p-2 border rounded-md">
+                {dashboardData?.articles.length === 0 && (
+                  <p className="text-gray-400">記事がありません</p>
+                )}
+                {dashboardData?.articles.map((article) => (
+                  <li key={article.post_id} className="p-2 border rounded-md">
                     <div className="block hover:underline cursor-pointer">
                       <h3 className="font-bold">{article.title}</h3>
-                      <p>{article.content}</p>
+                      <p className="text-sm text-gray-300">
+                        {article.content.replace(/[#*`[\]]/g, "").slice(0, 100)}
+                        {article.content.length > 100 ? "..." : ""}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        by {article.author.user_name} &middot;{" "}
+                        {new Date(article.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
                   </li>
                 ))}
@@ -108,13 +107,16 @@ const DashboardPage = () => {
             <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
               <h2 className="text-2xl font-bold mb-4">Your Active Todos</h2>
               <ul className="space-y-2">
-                {mockData.activeTodos.map((todo) => (
-                  <li key={todo.id} className="p-2 border rounded-md">
+                {dashboardData?.activeTodos.length === 0 && (
+                  <p className="text-gray-400">アクティブなTodoはありません</p>
+                )}
+                {dashboardData?.activeTodos.map((todo) => (
+                  <li key={todo.todo_id} className="p-2 border rounded-md">
                     <div className="block hover:underline cursor-pointer">
                       <h3 className="font-bold">{todo.title}</h3>
-                      <p>{todo.description}</p>
-                      <p>
-                        Deadline: {new Date(todo.deadline).toLocaleDateString()}
+                      <p className="text-sm">{todo.description}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Deadline: {new Date(todo.todo_deadline).toLocaleDateString()}
                       </p>
                     </div>
                   </li>
@@ -124,13 +126,17 @@ const DashboardPage = () => {
             <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
               <h2 className="text-2xl font-bold mb-4">Public Todos</h2>
               <ul className="space-y-2">
-                {mockData.publicTodos.map((todo) => (
-                  <li key={todo.id} className="p-2 border rounded-md">
+                {dashboardData?.publicTodos.length === 0 && (
+                  <p className="text-gray-400">公開Todoはありません</p>
+                )}
+                {dashboardData?.publicTodos.map((todo) => (
+                  <li key={todo.todo_id} className="p-2 border rounded-md">
                     <div className="block hover:underline cursor-pointer">
                       <h3 className="font-bold">{todo.title}</h3>
-                      <p>{todo.description}</p>
-                      <p>
-                        Deadline: {new Date(todo.deadline).toLocaleDateString()}
+                      <p className="text-sm">{todo.description}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        by {todo.user.user_name} &middot; Deadline:{" "}
+                        {new Date(todo.todo_deadline).toLocaleDateString()}
                       </p>
                     </div>
                   </li>

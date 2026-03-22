@@ -15,33 +15,37 @@ export const useLogin = () => {
 
   /**
    * メールアドレスとパスワードでログイン処理を実行する
-   * 
+   *
    * @param email ユーザーのメールアドレス
    * @param password ユーザーのパスワード
    */
   const login = async (email: string, password: string) => {
     setLoading(true)
     setError("")
-    
+
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
+      const response = await fetch("/api/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       })
 
       if (response.ok) {
         // ダッシュボードへリダイレクト
-        router.push('/dashboard')
+        router.push("/dashboard")
       } else {
         const errorData = await response.json()
-        const errorMessage = errorData.error || "Login failed. Please check your email and password."
+        const errorMessage =
+          errorData.error || "Login failed. Please check your email and password."
         setError(errorMessage)
       }
     } catch (err) {
-      const errorMessage = handleClientError(err, "Login failed. Please check your network connection.")
+      const errorMessage = handleClientError(
+        err,
+        "Login failed. Please check your network connection.",
+      )
       setError(errorMessage)
     } finally {
       setLoading(false)
