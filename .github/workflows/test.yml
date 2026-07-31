@@ -16,7 +16,7 @@ jobs:
     # Node.js のマトリックステスト（複数バージョンでテスト可能）
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [24.x]
     
     steps:
     # リポジトリをチェックアウト
