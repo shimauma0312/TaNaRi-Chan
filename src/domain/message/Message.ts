@@ -96,6 +96,10 @@ export class MessageEntity {
       errors.push(`本文は${MessageEntity.MAX_BODY_LENGTH}文字以内で入力してください`);
     }
 
+    if (!data.receiver_id || data.receiver_id.trim().length === 0) {
+      errors.push('受信者は必須です');
+    }
+
     if (data.sender_id && data.receiver_id && data.sender_id === data.receiver_id) {
       errors.push('自分自身にメッセージを送ることはできません');
     }
