@@ -21,11 +21,16 @@ jest.mock('@prisma/client', () => {
     update: jest.fn(),
     delete: jest.fn(),
   };
+  const mockUser = {
+    findUnique: jest.fn(),
+  };
   return {
     PrismaClient: jest.fn().mockImplementation(() => ({
       message: mockMessage,
+      user: mockUser,
     })),
     __mockMessage: mockMessage,
+    __mockUser: mockUser,
   };
 });
 
@@ -54,6 +59,7 @@ import { PATCH as patchRead } from '@/app/api/messages/[message_id]/read/route';
 
 const mockGetUserId = getUserIdFromRequest as jest.MockedFunction<typeof getUserIdFromRequest>;
 const mockPrismaMessage = (require('@prisma/client') as any).__mockMessage;
+const mockPrismaUser = (require('@prisma/client') as any).__mockUser;
 
 /** テスト用メッセージデータ */
 const mockMessageData = {
@@ -129,6 +135,7 @@ describe('POST /api/messages', () => {
 
   it('有効なデータでメッセージを送信できる', async () => {
     mockGetUserId.mockReturnValue('user1');
+    mockPrismaUser.findUnique.mockResolvedValue({ id: 'user2', user_name: '受信者' });
     mockPrismaMessage.create.mockResolvedValue(mockMessageData);
 
     const req = createRequest('POST', 'http://localhost/api/messages', {
@@ -141,6 +148,23 @@ describe('POST /api/messages', () => {
 
     expect(res.status).toBe(201);
     expect(data.subject).toBe('テスト件名');
+  });
+
+  it('存在しない受信者IDの場合は400を返し、DBへの書き込みは行わない', async () => {
+    mockGetUserId.mockReturnValue('user1');
+    mockPrismaUser.findUnique.mockResolvedValue(null);
+
+    const req = createRequest('POST', 'http://localhost/api/messages', {
+      subject: 'テスト件名',
+      body: 'テスト本文',
+      receiver_id: 'nonexistent-user-id',
+    });
+    const res = await postMessage(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.type).toBe(ErrorType.VALIDATION);
+    expect(mockPrismaMessage.create).not.toHaveBeenCalled();
   });
 
   it('未認証の場合は401を返す', async () => {
