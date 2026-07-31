@@ -1,26 +1,26 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import { cookies } from 'next/headers';
-import { NextRequest } from 'next/server';
-import { AppError, ErrorType } from '@/utils/errorHandler';
-import { generateUserId } from '@/lib/auth';
+import { PrismaClient } from "@prisma/client"
+import bcrypt from "bcryptjs"
+import { cookies } from "next/headers"
+import { NextRequest } from "next/server"
+import { AppError, ErrorType } from "@/utils/errorHandler"
+import { generateUserId } from "@/lib/auth"
 
 // Prismaクライアントのシングルトンインスタンス
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 // ユーザー情報の型定義
 export interface AuthUser {
-  id: string;
-  user_name: string;
-  user_email: string;
-  icon_number: number;
+  id: string
+  user_name: string
+  user_email: string
+  icon_number: number
 }
 
 // ユーザー作成用データの型定義
 export interface CreateUserData {
-  email: string;
-  password: string;
-  userName: string;
+  email: string
+  password: string
+  userName: string
 }
 
 /**
@@ -29,7 +29,7 @@ export interface CreateUserData {
  * @returns ハッシュ化されたパスワード
  */
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12);
+  return bcrypt.hash(password, 12)
 }
 
 /**
@@ -39,7 +39,7 @@ export async function hashPassword(password: string): Promise<string> {
  * @returns 一致すればtrue、そうでなければfalse
  */
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  return bcrypt.compare(password, hashedPassword);
+  return bcrypt.compare(password, hashedPassword)
 }
 
 /**
@@ -50,7 +50,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 export async function findUserByEmail(email: string) {
   return prisma.user.findUnique({
     where: { user_email: email },
-  });
+  })
 }
 
 /**
@@ -67,7 +67,7 @@ export async function findUserById(userId: string) {
       user_email: true,
       icon_number: true,
     },
-  });
+  })
 }
 
 /**
@@ -78,19 +78,15 @@ export async function findUserById(userId: string) {
 export async function createUser(userData: CreateUserData) {
   try {
     // Check if user already exists
-    const existingUser = await findUserByEmail(userData.email);
+    const existingUser = await findUserByEmail(userData.email)
 
     if (existingUser) {
-      throw new AppError(
-        'Email address is already registered',
-        ErrorType.VALIDATION,
-        400
-      );
+      throw new AppError("Email address is already registered", ErrorType.VALIDATION, 400)
     }
 
     // Generate user ID and hash password
-    const userId = generateUserId();
-    const hashedPassword = await hashPassword(userData.password);
+    const userId = generateUserId()
+    const hashedPassword = await hashPassword(userData.password)
 
     // Save user to database
     return await prisma.user.create({
@@ -101,17 +97,13 @@ export async function createUser(userData: CreateUserData) {
         password: hashedPassword,
         icon_number: 1, // デフォルトのアイコン番号
       },
-    });
+    })
   } catch (error) {
     if (error instanceof AppError) {
-      throw error;
+      throw error
     }
-    console.error('Error creating user:', error);
-    throw new AppError(
-      'Failed to create user',
-      ErrorType.DATABASE_ERROR,
-      500
-    );
+    console.error("Error creating user:", error)
+    throw new AppError("Failed to create user", ErrorType.DATABASE_ERROR, 500)
   }
 }
 
@@ -132,21 +124,21 @@ export async function authenticateUser(email: string, password: string): Promise
       icon_number: true,
       password: true,
     },
-  });
+  })
 
   if (!user) {
-    return null;
+    return null
   }
 
-  const isPasswordValid = await verifyPassword(password, user.password);
+  const isPasswordValid = await verifyPassword(password, user.password)
   if (!isPasswordValid) {
-    return null;
+    return null
   }
 
   // パスワードを除外してユーザー情報を返却
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password: _password, ...userWithoutPassword } = user;
-  return userWithoutPassword;
+  const { password: _password, ...userWithoutPassword } = user
+  return userWithoutPassword
 }
 
 /**
@@ -154,28 +146,28 @@ export async function authenticateUser(email: string, password: string): Promise
  * @param userId ユーザーID
  */
 export async function setAuthCookie(userId: string): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.set('auth-user-id', userId, {
+  const cookieStore = await cookies()
+  cookieStore.set("auth-user-id", userId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7, // 1 week
-    path: '/',
-  });
+    path: "/",
+  })
 }
 
 /**
  * 認証用Cookieをクリアする
  */
 export async function clearAuthCookie(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.set('auth-user-id', '', {
+  const cookieStore = await cookies()
+  cookieStore.set("auth-user-id", "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     maxAge: 0,
-    path: '/',
-  });
+    path: "/",
+  })
 }
 
 /**
@@ -183,14 +175,14 @@ export async function clearAuthCookie(): Promise<void> {
  * @returns 認証済みユーザーまたはnull
  */
 export async function getCurrentUser(): Promise<AuthUser | null> {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get('auth-user-id')?.value;
+  const cookieStore = await cookies()
+  const userId = cookieStore.get("auth-user-id")?.value
 
   if (!userId) {
-    return null;
+    return null
   }
 
-  return await findUserById(userId);
+  return await findUserById(userId)
 }
 
 /**
@@ -199,6 +191,6 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
  * @returns ユーザーIDまたはnull
  */
 export function getUserIdFromRequest(request: NextRequest): string | null {
-  const userId = request.cookies.get('auth-user-id')?.value;
-  return userId || null;
+  const userId = request.cookies.get("auth-user-id")?.value
+  return userId || null
 }

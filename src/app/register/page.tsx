@@ -33,13 +33,10 @@ const RegisterPage = () => {
 
   // フォーム入力の変更ハンドラー
   // useUserRegister の状態と form の状態を同期する
-  const handleInputChange = (
-    field: "userName" | "email" | "password",
-    value: string,
-  ) => {
+  const handleInputChange = (field: "userName" | "email" | "password", value: string) => {
     // フォームの値を更新し、バリデーションを実行
     setValue(field, value, { shouldValidate: true })
-    
+
     // 対応する状態を更新
     if (field === "userName") setUserName(value)
     if (field === "email") setEmail(value)
@@ -54,15 +51,10 @@ const RegisterPage = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       <div className="bg-transparent p-8 rounded-lg shadow-md w-full max-w-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
-        <h1 className="text-2xl font-bold mb-6 text-center text-white">
-          Register Page
-        </h1>
+        <h1 className="text-2xl font-bold mb-6 text-center text-white">Register Page</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-4">
-            <label
-              htmlFor="username"
-              className="block text-sm font-medium text-gray-300"
-            >
+            <label htmlFor="username" className="block text-sm font-medium text-gray-300">
               Username:
             </label>
             <input
@@ -74,16 +66,11 @@ const RegisterPage = () => {
               className="mt-1 block w-full px-3 py-2 bg-transparent border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-white"
             />
             {errors.userName && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.userName.message}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.userName.message}</p>
             )}
           </div>
           <div className="mb-4">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-300"
-            >
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300">
               Email:
             </label>
             <input
@@ -94,17 +81,10 @@ const RegisterPage = () => {
               onChange={(e) => handleInputChange("email", e.target.value)}
               className="mt-1 block w-full px-3 py-2 bg-transparent border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-white"
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.email.message}
-              </p>
-            )}
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
           </div>
           <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-300"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-gray-300">
               Password:
             </label>
             <input
@@ -116,9 +96,7 @@ const RegisterPage = () => {
               className="mt-1 block w-full px-3 py-2 bg-transparent border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-white"
             />
             {errors.password && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.password.message}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
             )}
           </div>
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
@@ -131,10 +109,7 @@ const RegisterPage = () => {
         </form>
         <p className="mt-4 text-center text-gray-300">
           Already have an account?{" "}
-          <Link
-            className="font-bold text-indigo-600 hover:text-indigo-500"
-            href="login"
-          >
+          <Link className="font-bold text-indigo-600 hover:text-indigo-500" href="login">
             Login here
           </Link>
         </p>

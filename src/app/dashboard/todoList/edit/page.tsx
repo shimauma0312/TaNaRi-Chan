@@ -1,135 +1,138 @@
-"use client";
+"use client"
 
-import MinLoader from "@/components/MinLoader";
-import SideMenu from "@/components/SideMenu";
-import useAuth from "@/hooks/useAuth";
-import { Todo } from "@/types/todo";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import MinLoader from "@/components/MinLoader"
+import SideMenu from "@/components/SideMenu"
+import useAuth from "@/hooks/useAuth"
+import { Todo } from "@/types/todo"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useCallback, useEffect, useState } from "react"
 
 function EditTodoPageSearchParams({ setTodoId }: { setTodoId: (id: string | null) => void }) {
-  const searchParams = useSearchParams();
-  
+  const searchParams = useSearchParams()
+
   useEffect(() => {
-    const id = searchParams.get('id');
-    setTodoId(id);
-  }, [searchParams, setTodoId]);
-  
-  return null;
+    const id = searchParams.get("id")
+    setTodoId(id)
+  }, [searchParams, setTodoId])
+
+  return null
 }
 
 function EditTodoPageContent({ todoId }: { todoId: string | null }) {
-  const router = useRouter();
-  const { user, loading } = useAuth();
+  const router = useRouter()
+  const { user, loading } = useAuth()
 
   // フォームの状態管理
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [visibility, setVisibility] = useState("private");
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [dueDate, setDueDate] = useState("")
+  const [visibility, setVisibility] = useState("private")
+  const [isCompleted, setIsCompleted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   /**
    * ToDoを取得する
    */
-  const fetchTodo = useCallback(async (id: string): Promise<Todo | null> => {
-    if (!user?.id) return null;
-    
-    const response = await fetch(`/api/todoList/${user.id}`, {
-      method: 'GET',
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch ToDo');
-    }
-    
-    const todos: Todo[] = await response.json();
-    const todo = todos.find(t => t.todo_id === parseInt(id));
-    
-    if (!todo) {
-      throw new Error('ToDo not found');
-    }
-    
-    return todo;
-  }, [user?.id]);
+  const fetchTodo = useCallback(
+    async (id: string): Promise<Todo | null> => {
+      if (!user?.id) return null
+
+      const response = await fetch(`/api/todoList/${user.id}`, {
+        method: "GET",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch ToDo")
+      }
+
+      const todos: Todo[] = await response.json()
+      const todo = todos.find((t) => t.todo_id === parseInt(id))
+
+      if (!todo) {
+        throw new Error("ToDo not found")
+      }
+
+      return todo
+    },
+    [user?.id],
+  )
 
   /**
    * ToDo更新APIを呼び出す
    */
   const updateTodo = async (todoData: {
-    todo_id: number;
-    title: string;
-    description: string;
-    todo_deadline: string;
-    is_completed: boolean;
-    is_public: boolean;
+    todo_id: number
+    title: string
+    description: string
+    todo_deadline: string
+    is_completed: boolean
+    is_public: boolean
   }) => {
     const response = await fetch(`/api/todoList/${user?.id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(todoData),
-    });
+    })
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to update ToDo');
+      const errorData = await response.json()
+      throw new Error(errorData.error || "Failed to update ToDo")
     }
 
-    return response.json();
-  };
+    return response.json()
+  }
 
   // ToDoデータの初期化
   useEffect(() => {
     const initializeTodo = async () => {
-      if (!user || !todoId) return;
-      
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const todo = await fetchTodo(todoId);
-        if (!todo) {
-          throw new Error('ToDo not found');
-        }
-        setTitle(todo.title);
-        setDescription(todo.description || '');
-        setDueDate(new Date(todo.todo_deadline).toISOString().split('T')[0]);
-        setVisibility(todo.is_public ? 'public' : 'private');
-        setIsCompleted(todo.is_completed);
-      } catch (error) {
-        console.error('ToDo取得エラー:', error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch ToDo');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      if (!user || !todoId) return
 
-    initializeTodo();
-  }, [user, todoId, fetchTodo]);
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        const todo = await fetchTodo(todoId)
+        if (!todo) {
+          throw new Error("ToDo not found")
+        }
+        setTitle(todo.title)
+        setDescription(todo.description || "")
+        setDueDate(new Date(todo.todo_deadline).toISOString().split("T")[0])
+        setVisibility(todo.is_public ? "public" : "private")
+        setIsCompleted(todo.is_completed)
+      } catch (error) {
+        console.error("ToDo取得エラー:", error)
+        setError(error instanceof Error ? error.message : "Failed to fetch ToDo")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    initializeTodo()
+  }, [user, todoId, fetchTodo])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!todoId || !user) return;
-    
-    setIsSubmitting(true);
-    setError(null);
+    e.preventDefault()
+
+    if (!todoId || !user) return
+
+    setIsSubmitting(true)
+    setError(null)
 
     try {
       // バリデーション
       if (!title.trim()) {
-        throw new Error('Title is required');
+        throw new Error("Title is required")
       }
       if (!description.trim()) {
-        throw new Error('Description is required');
+        throw new Error("Description is required")
       }
       if (!dueDate) {
-        throw new Error('Due date is required');
+        throw new Error("Due date is required")
       }
 
       const todoData = {
@@ -138,20 +141,20 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
         description: description.trim(),
         todo_deadline: new Date(dueDate).toISOString(),
         is_completed: isCompleted,
-        is_public: visibility === 'public',
-      };
+        is_public: visibility === "public",
+      }
 
-      await updateTodo(todoData);
-      
+      await updateTodo(todoData)
+
       // 成功時はToDo一覧ページにリダイレクト
-      router.push('/dashboard/todoList');
+      router.push("/dashboard/todoList")
     } catch (error) {
-      console.error('ToDo更新エラー:', error);
-      setError(error instanceof Error ? error.message : 'Failed to update ToDo');
+      console.error("ToDo更新エラー:", error)
+      setError(error instanceof Error ? error.message : "Failed to update ToDo")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   if (loading || !user) {
     return <MinLoader />
@@ -173,7 +176,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   if (isLoading) {
@@ -197,7 +200,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
           {/* フォーム */}
           <div className="w-full max-w-lg p-6 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-[var(--background)] text-[var(--foreground)]">
             <h2 className="text-2xl font-bold mb-4">Edit ToDo</h2>
-            
+
             {/* エラーメッセージ */}
             {error && (
               <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-300">
@@ -276,11 +279,11 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
                   className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition disabled:bg-gray-500 disabled:cursor-not-allowed"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Updating...' : 'Update'}
+                  {isSubmitting ? "Updating..." : "Update"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => router.push('/dashboard/todoList')}
+                  onClick={() => router.push("/dashboard/todoList")}
                   className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition"
                   disabled={isSubmitting}
                 >
@@ -292,16 +295,16 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export default function EditTodoPage() {
-  const [todoId, setTodoId] = useState<string | null>(null);
-  
+  const [todoId, setTodoId] = useState<string | null>(null)
+
   return (
     <Suspense fallback={<MinLoader />}>
       <EditTodoPageSearchParams setTodoId={setTodoId} />
       <EditTodoPageContent todoId={todoId} />
     </Suspense>
-  );
+  )
 }

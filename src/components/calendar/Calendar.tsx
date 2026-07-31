@@ -41,9 +41,7 @@ const Calendar = ({ currentDate, todos }: CalendarProps) => {
     for (let i = 1; i <= totalDays; i++) {
       const date = new Date(year, month, i)
       const iso = date.toISOString().split("T")[0]
-      const dayTodos = todos.filter((t) =>
-        t.todo_deadline.startsWith(iso),
-      )
+      const dayTodos = todos.filter((t) => t.todo_deadline.startsWith(iso))
       items.push({ date, todos: dayTodos })
     }
 
@@ -59,15 +57,10 @@ const Calendar = ({ currentDate, todos }: CalendarProps) => {
         </div>
       ))}
       {days.map((d, idx) => (
-        <div
-          key={idx}
-          className="border border-gray-400 rounded-md h-24 p-1 text-xs flex flex-col"
-        >
+        <div key={idx} className="border border-gray-400 rounded-md h-24 p-1 text-xs flex flex-col">
           {d.date && (
             <>
-              <span className="self-end text-sm font-medium">
-                {d.date.getDate()}
-              </span>
+              <span className="self-end text-sm font-medium">{d.date.getDate()}</span>
               <ul className="list-disc ml-2 overflow-hidden">
                 {d.todos.map((todo) => (
                   <li key={todo.todo_id} className="truncate text-left">

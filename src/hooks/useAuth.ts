@@ -16,7 +16,7 @@ const useAuth = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/me')
+        const response = await fetch("/api/me")
         if (response.ok) {
           const userData = await response.json()
           setUser(userData)
@@ -25,7 +25,7 @@ const useAuth = () => {
           router.push("/login")
         }
       } catch (error) {
-        console.error('Auth check failed:', error)
+        console.error("Auth check failed:", error)
         setUser(null)
         router.push("/login")
       } finally {

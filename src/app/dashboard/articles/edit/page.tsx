@@ -9,87 +9,87 @@ import { Suspense, useEffect, useState } from "react"
 
 async function fetchArticleData(postId: number) {
   try {
-    const response = await fetch(`/api/articles?post_id=${postId}`);
-    const data = await response.json();
+    const response = await fetch(`/api/articles?post_id=${postId}`)
+    const data = await response.json()
     return {
       title: data.title ?? "",
-      content: data.content ?? ""
-    };
+      content: data.content ?? "",
+    }
   } catch (error) {
-    console.error("Error fetching article:", error);
-    return { title: "", content: "" };
+    console.error("Error fetching article:", error)
+    return { title: "", content: "" }
   }
 }
 
 function EditArticleContent({ postId }: { postId: number | null }) {
-  const router = useRouter();
-  const [articleData, setArticleData] = useState({ title: "", content: "" });
-  const [loading, setLoading] = useState(true);
+  const router = useRouter()
+  const [articleData, setArticleData] = useState({ title: "", content: "" })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (postId === null) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
 
     const loadArticleData = async () => {
-      setLoading(true);
+      setLoading(true)
       try {
-        const data = await fetchArticleData(postId);
-        setArticleData(data);
+        const data = await fetchArticleData(postId)
+        setArticleData(data)
       } catch (error) {
-        console.error("Failed to load article:", error);
-        setArticleData({ title: "", content: "" });
+        console.error("Failed to load article:", error)
+        setArticleData({ title: "", content: "" })
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    loadArticleData();
-  }, [postId]);
+    loadArticleData()
+  }, [postId])
 
   const handleSuccess = () => {
-    router.push("/dashboard/articles");
-  };
+    router.push("/dashboard/articles")
+  }
 
   if (postId === null) {
-    return <div className="text-center p-8">Invalid article ID.</div>;
+    return <div className="text-center p-8">Invalid article ID.</div>
   }
 
   if (loading) {
-    return <MinLoader />;
+    return <MinLoader />
   }
 
   return (
-      <div className="min-h-screen text-white p-4 flex">
-        <SideMenu />
-        <ArticleForm 
-          postId={postId}
-          initialTitle={articleData.title}
-          initialContent={articleData.content}
-          onSuccess={handleSuccess}
-        />
-      </div>
-  );
+    <div className="min-h-screen text-white p-4 flex">
+      <SideMenu />
+      <ArticleForm
+        postId={postId}
+        initialTitle={articleData.title}
+        initialContent={articleData.content}
+        onSuccess={handleSuccess}
+      />
+    </div>
+  )
 }
 
 const EditArticlePageInner = () => {
-  const { user, loading } = useAuth();
-  const [postId, setPostId] = useState<number | null>(null);
-  const searchParams = useSearchParams();
+  const { user, loading } = useAuth()
+  const [postId, setPostId] = useState<number | null>(null)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    const postIdParam = searchParams.get('post_id');
+    const postIdParam = searchParams.get("post_id")
     if (postIdParam) {
-      setPostId(Number(postIdParam));
+      setPostId(Number(postIdParam))
     }
-  }, [searchParams]);
+  }, [searchParams])
 
   if (loading || !user) {
-    return <MinLoader />;
+    return <MinLoader />
   }
 
-  return <EditArticleContent postId={postId} />;
+  return <EditArticleContent postId={postId} />
 }
 
 const EditArticlePage = () => {
@@ -97,7 +97,7 @@ const EditArticlePage = () => {
     <Suspense fallback={<MinLoader />}>
       <EditArticlePageInner />
     </Suspense>
-  );
+  )
 }
 
-export default EditArticlePage;
+export default EditArticlePage

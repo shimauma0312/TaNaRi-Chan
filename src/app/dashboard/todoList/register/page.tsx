@@ -1,91 +1,91 @@
-"use client";
+"use client"
 
-import MinLoader from "@/components/MinLoader";
-import SideMenu from "@/components/SideMenu";
-import useAuth from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import MinLoader from "@/components/MinLoader"
+import SideMenu from "@/components/SideMenu"
+import useAuth from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export default function RegisterForm() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
+  const router = useRouter()
+  const { user, loading } = useAuth()
 
   // フォームの状態管理
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [visibility, setVisibility] = useState("private");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [dueDate, setDueDate] = useState("")
+  const [visibility, setVisibility] = useState("private")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   /**
    * ToDo作成APIを呼び出す
    */
   const createTodo = async (todoData: {
-    title: string;
-    description: string;
-    todo_deadline: string;
-    is_public: boolean;
+    title: string
+    description: string
+    todo_deadline: string
+    is_public: boolean
   }) => {
-    const response = await fetch('/api/todoList', {
-      method: 'POST',
+    const response = await fetch("/api/todoList", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(todoData),
-    });
+    })
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create ToDo');
+      const errorData = await response.json()
+      throw new Error(errorData.error || "Failed to create ToDo")
     }
 
-    return response.json();
-  };
+    return response.json()
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+    e.preventDefault()
+    setIsSubmitting(true)
+    setError(null)
 
     try {
       // バリデーション
       if (!title.trim()) {
-        throw new Error('Title is required');
+        throw new Error("Title is required")
       }
       if (!description.trim()) {
-        throw new Error('Description is required');
+        throw new Error("Description is required")
       }
       if (!dueDate) {
-        throw new Error('Due date is required');
+        throw new Error("Due date is required")
       }
 
       // 期限が過去でないかチェック
-      const deadline = new Date(dueDate);
-      const now = new Date();
-      now.setHours(0, 0, 0, 0); // 時刻を00:00:00にリセット
+      const deadline = new Date(dueDate)
+      const now = new Date()
+      now.setHours(0, 0, 0, 0) // 時刻を00:00:00にリセット
       if (deadline < now) {
-        throw new Error('Due date must be today or later');
+        throw new Error("Due date must be today or later")
       }
 
       const todoData = {
         title: title.trim(),
         description: description.trim(),
         todo_deadline: new Date(dueDate).toISOString(),
-        is_public: visibility === 'public',
-      };
+        is_public: visibility === "public",
+      }
 
-      await createTodo(todoData);
-      
+      await createTodo(todoData)
+
       // 成功時はToDo一覧ページにリダイレクト
-      router.push('/dashboard/todoList');
+      router.push("/dashboard/todoList")
     } catch (error) {
-      console.error('ToDo作成エラー:', error);
-      setError(error instanceof Error ? error.message : 'Failed to create ToDo');
+      console.error("ToDo作成エラー:", error)
+      setError(error instanceof Error ? error.message : "Failed to create ToDo")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   if (loading || !user) {
     return <MinLoader />
@@ -108,7 +108,7 @@ export default function RegisterForm() {
           {/* フォーム */}
           <div className="w-full max-w-lg p-6 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-[var(--background)] text-[var(--foreground)]">
             <h2 className="text-2xl font-bold mb-4">Register New ToDo</h2>
-            
+
             {/* エラーメッセージ */}
             {error && (
               <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-300">
@@ -152,7 +152,7 @@ export default function RegisterForm() {
                   className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
                   required
                   disabled={isSubmitting}
-                  min={new Date().toISOString().split('T')[0]} // 今日以降の日付のみ選択可能
+                  min={new Date().toISOString().split("T")[0]} // 今日以降の日付のみ選択可能
                 />
               </div>
 
@@ -174,12 +174,12 @@ export default function RegisterForm() {
                 className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition disabled:bg-gray-500 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Registering...' : 'Register'}
+                {isSubmitting ? "Registering..." : "Register"}
               </button>
             </form>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

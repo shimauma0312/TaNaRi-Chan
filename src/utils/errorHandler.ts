@@ -2,17 +2,17 @@
  * エラーハンドリングユーティリティ
  */
 
-import logger from '@/logging/logging';
+import logger from "@/logging/logging"
 
 // エラーの種類を定義
 export enum ErrorType {
-  VALIDATION = 'VALIDATION',
-  AUTHENTICATION = 'AUTHENTICATION',
-  AUTHORIZATION = 'AUTHORIZATION',
-  NOT_FOUND = 'NOT_FOUND',
-  SERVER_ERROR = 'SERVER_ERROR',
-  NETWORK_ERROR = 'NETWORK_ERROR',
-  DATABASE_ERROR = 'DATABASE_ERROR',
+  VALIDATION = "VALIDATION",
+  AUTHENTICATION = "AUTHENTICATION",
+  AUTHORIZATION = "AUTHORIZATION",
+  NOT_FOUND = "NOT_FOUND",
+  SERVER_ERROR = "SERVER_ERROR",
+  NETWORK_ERROR = "NETWORK_ERROR",
+  DATABASE_ERROR = "DATABASE_ERROR",
 }
 
 /**
@@ -20,20 +20,20 @@ export enum ErrorType {
  */
 export interface PrismaError extends Error {
   /** Prismaエラーコード (例: P2002, P2003, P2025) */
-  code: string;
+  code: string
   /** エラーメタ */
   meta?: {
     /** 対象フィールド名 */
-    target?: string | string[];
+    target?: string | string[]
     /** 制約名 */
-    constraint?: string;
+    constraint?: string
     /** 詳細 */
-    [key: string]: any;
-  };
+    [key: string]: any
+  }
   /** クライアントバージョン */
-  clientVersion?: string;
+  clientVersion?: string
   /** その他プロパティ */
-  [key: string]: any;
+  [key: string]: any
 }
 
 /**
@@ -41,11 +41,11 @@ export interface PrismaError extends Error {
  */
 export interface NetworkError extends Error {
   /** エラーの名前 */
-  name: string;
+  name: string
   /** エラーメッセージ */
-  message: string;
+  message: string
   /** その他のプロパティ */
-  [key: string]: any;
+  [key: string]: any
 }
 
 /**
@@ -57,9 +57,9 @@ export interface NetworkError extends Error {
  * throw new AppError('データベース接続に失敗しました', ErrorType.DATABASE_ERROR, 500);
  */
 export class AppError extends Error {
-  public readonly type: ErrorType;
-  public readonly statusCode: number;
-  public readonly isOperational: boolean;
+  public readonly type: ErrorType
+  public readonly statusCode: number
+  public readonly isOperational: boolean
 
   /**
    * @param message エラーメッセージ
@@ -71,23 +71,23 @@ export class AppError extends Error {
     message: string,
     type: ErrorType = ErrorType.SERVER_ERROR,
     statusCode: number = 500,
-    isOperational: boolean = true
+    isOperational: boolean = true,
   ) {
-    super(message);
-    this.type = type;
-    this.statusCode = statusCode;
-    this.isOperational = isOperational;
+    super(message)
+    this.type = type
+    this.statusCode = statusCode
+    this.isOperational = isOperational
 
-    Error.captureStackTrace(this, this.constructor);
+    Error.captureStackTrace(this, this.constructor)
   }
 }
 
 // API エラーレスポンス型
 export interface ApiErrorResponse {
-  error: string;
-  type: ErrorType;
-  statusCode: number;
-  timestamp: string;
+  error: string
+  type: ErrorType
+  statusCode: number
+  timestamp: string
 }
 
 /**
@@ -98,26 +98,26 @@ export interface ApiErrorResponse {
  */
 export const handleApiError = (error: unknown, fallbackMessage: string): string => {
   if (error instanceof AppError) {
-    logger.error('Application Error', {
+    logger.error("Application Error", {
       message: error.message,
       type: error.type,
       statusCode: error.statusCode,
       stack: error.stack,
-    });
-    return error.message;
+    })
+    return error.message
   }
 
   if (error instanceof Error) {
-    logger.error('Unexpected Error', {
+    logger.error("Unexpected Error", {
       message: error.message,
       stack: error.stack,
-    });
-    return error.message;
+    })
+    return error.message
   }
 
-  logger.error('Unknown Error', { error: String(error), fallbackMessage });
-  return fallbackMessage;
-};
+  logger.error("Unknown Error", { error: String(error), fallbackMessage })
+  return fallbackMessage
+}
 
 /**
  * Prismaエラーかどうかを判定する
@@ -127,12 +127,12 @@ export const handleApiError = (error: unknown, fallbackMessage: string): string 
 const isPrismaError = (error: unknown): error is PrismaError => {
   return (
     error !== null &&
-    typeof error === 'object' &&
-    'code' in error &&
-    typeof (error as any).code === 'string' &&
-    (error as any).code.startsWith('P')
-  );
-};
+    typeof error === "object" &&
+    "code" in error &&
+    typeof (error as any).code === "string" &&
+    (error as any).code.startsWith("P")
+  )
+}
 
 /**
  * APIレスポンス用のエラー処理
@@ -142,57 +142,57 @@ const isPrismaError = (error: unknown): error is PrismaError => {
  */
 export const createApiErrorResponse = (
   error: unknown,
-  fallbackMessage: string = 'Internal server error occurred'
+  fallbackMessage: string = "Internal server error occurred",
 ): ApiErrorResponse => {
   if (error instanceof AppError) {
-    logger.error('API Error', {
+    logger.error("API Error", {
       message: error.message,
       type: error.type,
       statusCode: error.statusCode,
-    });
+    })
 
     return {
       error: error.message,
       type: error.type,
       statusCode: error.statusCode,
       timestamp: new Date().toISOString(),
-    };
+    }
   }
 
   // Prismaエラーの場合、handleDatabaseErrorを使用
   if (isPrismaError(error)) {
-    const dbError = handleDatabaseError(error);
+    const dbError = handleDatabaseError(error)
     return {
       error: dbError.message,
       type: dbError.type,
       statusCode: dbError.statusCode,
       timestamp: new Date().toISOString(),
-    };
+    }
   }
 
   if (error instanceof Error) {
-    logger.error('Unexpected API Error', {
+    logger.error("Unexpected API Error", {
       message: error.message,
       stack: error.stack,
-    });
+    })
 
     return {
       error: error.message,
       type: ErrorType.SERVER_ERROR,
       statusCode: 500,
       timestamp: new Date().toISOString(),
-    };
+    }
   }
 
-  logger.error('Unknown API Error', { error: String(error) });
+  logger.error("Unknown API Error", { error: String(error) })
 
   return {
     error: fallbackMessage,
     type: ErrorType.SERVER_ERROR,
     statusCode: 500,
     timestamp: new Date().toISOString(),
-  };
-};
+  }
+}
 
 /**
  * フロントエンド用のエラー処理フック
@@ -202,22 +202,22 @@ export const createApiErrorResponse = (
  */
 export const handleClientError = (error: unknown, fallbackMessage: string): string => {
   if (error instanceof AppError) {
-    console.error('Client Error:', {
+    console.error("Client Error:", {
       message: error.message,
       type: error.type,
       statusCode: error.statusCode,
-    });
-    return error.message;
+    })
+    return error.message
   }
 
   if (error instanceof Error) {
-    console.error('Unexpected Client Error:', error.message);
-    return error.message;
+    console.error("Unexpected Client Error:", error.message)
+    return error.message
   }
 
-  console.error('Unknown Client Error:', error);
-  return fallbackMessage;
-};
+  console.error("Unknown Client Error:", error)
+  return fallbackMessage
+}
 
 /**
  * データベースエラー専用のハンドラー
@@ -225,72 +225,54 @@ export const handleClientError = (error: unknown, fallbackMessage: string): stri
  * @returns AppError インスタンス
  */
 export const handleDatabaseError = (error: PrismaError): AppError => {
-  logger.error('Database Error', {
+  logger.error("Database Error", {
     code: error.code,
     message: error.message,
     meta: JSON.stringify(error.meta),
     clientVersion: error.clientVersion,
-  });
+  })
 
   // Prismaエラーコードに基づく処理
   switch (error.code) {
-    case 'P2002':
-      const duplicateField = error.meta?.target ? ` (${Array.isArray(error.meta.target) ? error.meta.target.join(', ') : error.meta.target})` : '';
+    case "P2002":
+      const duplicateField = error.meta?.target
+        ? ` (${Array.isArray(error.meta.target) ? error.meta.target.join(", ") : error.meta.target})`
+        : ""
       return new AppError(
         `Duplicate data constraint violation${duplicateField}`,
         ErrorType.VALIDATION,
-        400
-      );
-    case 'P2003':
+        400,
+      )
+    case "P2003":
+      return new AppError("Related data does not exist", ErrorType.VALIDATION, 400)
+    case "P2025":
+      return new AppError("Requested data not found", ErrorType.NOT_FOUND, 404)
+    case "P2004":
+      return new AppError("A constraint failed on the database", ErrorType.VALIDATION, 400)
+    case "P2015":
+      return new AppError("A related record could not be found", ErrorType.NOT_FOUND, 404)
+    case "P2016":
+      return new AppError("Query interpretation error", ErrorType.VALIDATION, 400)
+    case "P2021":
       return new AppError(
-        'Related data does not exist',
-        ErrorType.VALIDATION,
-        400
-      );
-    case 'P2025':
-      return new AppError(
-        'Requested data not found',
-        ErrorType.NOT_FOUND,
-        404
-      );
-    case 'P2004':
-      return new AppError(
-        'A constraint failed on the database',
-        ErrorType.VALIDATION,
-        400
-      );
-    case 'P2015':
-      return new AppError(
-        'A related record could not be found',
-        ErrorType.NOT_FOUND,
-        404
-      );
-    case 'P2016':
-      return new AppError(
-        'Query interpretation error',
-        ErrorType.VALIDATION,
-        400
-      );
-    case 'P2021':
-      return new AppError(
-        'The table does not exist in the current database',
+        "The table does not exist in the current database",
         ErrorType.DATABASE_ERROR,
-        500
-      );
-    case 'P2022':
+        500,
+      )
+    case "P2022":
       return new AppError(
-        'The column does not exist in the current database',
+        "The column does not exist in the current database",
         ErrorType.DATABASE_ERROR,
-        500
-      );
+        500,
+      )
     default:
       return new AppError(
         `Database error occurred: ${error.message}`,
         ErrorType.DATABASE_ERROR,
-        500
-      );
+        500,
+      )
   }
-};
+}
 
 /**
  * ネットワークエラーハンドラー
@@ -298,22 +280,22 @@ export const handleDatabaseError = (error: PrismaError): AppError => {
  * @returns AppError インスタンス
  */
 export const handleNetworkError = (error: NetworkError): AppError => {
-  logger.error('Network Error', {
+  logger.error("Network Error", {
     name: error.name,
     message: error.message,
-  });
+  })
 
-  if (error.name === 'NetworkError' || (error.message && error.message.includes('fetch'))) {
+  if (error.name === "NetworkError" || (error.message && error.message.includes("fetch"))) {
     return new AppError(
-      'Network connection failed. Please check your internet connection',
+      "Network connection failed. Please check your internet connection",
       ErrorType.NETWORK_ERROR,
-      503
-    );
+      503,
+    )
   }
 
   return new AppError(
     `Communication error occurred: ${error.message}`,
     ErrorType.NETWORK_ERROR,
-    503
-  );
-};
+    503,
+  )
+}

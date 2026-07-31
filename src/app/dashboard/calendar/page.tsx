@@ -56,9 +56,7 @@ const CalendarPage = () => {
             <button
               className="px-3 py-1 bg-blue-500 text-white rounded-md"
               onClick={() =>
-                setCurrentDate(
-                  (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1),
-                )
+                setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
               }
             >
               Prev
@@ -69,9 +67,7 @@ const CalendarPage = () => {
             <button
               className="px-3 py-1 bg-blue-500 text-white rounded-md"
               onClick={() =>
-                setCurrentDate(
-                  (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1),
-                )
+                setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
               }
             >
               Next

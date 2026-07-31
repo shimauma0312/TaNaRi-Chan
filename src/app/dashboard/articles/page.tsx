@@ -8,9 +8,9 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 interface Article {
-  post_id: number;
-  title: string;
-  createdAt: string;
+  post_id: number
+  title: string
+  createdAt: string
 }
 
 const getArticles = async () => {
@@ -53,7 +53,7 @@ const ArticlesPage = () => {
    */
   const handleDelete = async (postId: number) => {
     if (!confirm("Are you sure you want to delete this article?")) {
-      return;
+      return
     }
 
     try {
@@ -101,10 +101,7 @@ const ArticlesPage = () => {
           ) : (
             <ul className="space-y-4">
               {articles.map((article) => (
-                <li
-                  key={article.post_id}
-                  className="p-4 border rounded-lg shadow-md"
-                >
+                <li key={article.post_id} className="p-4 border rounded-lg shadow-md">
                   <h2 className="text-xl font-semibold">{article.title}</h2>
                   <p className="text-white">
                     Published: {new Date(article.createdAt).toLocaleDateString()}

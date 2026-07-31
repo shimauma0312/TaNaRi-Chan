@@ -1,18 +1,18 @@
-import { Todo } from "@/types/todo";
-import { useState } from "react";
+import { Todo } from "@/types/todo"
+import { useState } from "react"
 
 interface TodoFormProps {
-  initialData?: Partial<Todo>;
+  initialData?: Partial<Todo>
   onSubmit: (data: {
-    title: string;
-    description: string;
-    todo_deadline: string;
-    is_public: boolean;
-    is_completed?: boolean;
-  }) => Promise<void>;
-  onCancel?: () => void;
-  submitLabel?: string;
-  isSubmitting?: boolean;
+    title: string
+    description: string
+    todo_deadline: string
+    is_public: boolean
+    is_completed?: boolean
+  }) => Promise<void>
+  onCancel?: () => void
+  submitLabel?: string
+  isSubmitting?: boolean
 }
 
 /**
@@ -26,42 +26,40 @@ export default function TodoForm({
   submitLabel = "Submit",
   isSubmitting = false,
 }: TodoFormProps) {
-  const [title, setTitle] = useState(initialData.title || "");
-  const [description, setDescription] = useState(initialData.description || "");
+  const [title, setTitle] = useState(initialData.title || "")
+  const [description, setDescription] = useState(initialData.description || "")
   const [dueDate, setDueDate] = useState(
-    initialData.todo_deadline 
-      ? new Date(initialData.todo_deadline).toISOString().split('T')[0]
-      : ""
-  );
-  const [visibility, setVisibility] = useState(
-    initialData.is_public ? "public" : "private"
-  );
-  const [isCompleted, setIsCompleted] = useState(initialData.is_completed || false);
-  const [error, setError] = useState<string | null>(null);
+    initialData.todo_deadline
+      ? new Date(initialData.todo_deadline).toISOString().split("T")[0]
+      : "",
+  )
+  const [visibility, setVisibility] = useState(initialData.is_public ? "public" : "private")
+  const [isCompleted, setIsCompleted] = useState(initialData.is_completed || false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
     try {
       // フロントエンドバリデーション
       if (!title.trim()) {
-        throw new Error('Title is required');
+        throw new Error("Title is required")
       }
       if (!description.trim()) {
-        throw new Error('Description is required');
+        throw new Error("Description is required")
       }
       if (!dueDate) {
-        throw new Error('Due date is required');
+        throw new Error("Due date is required")
       }
 
       // 期限が過去でないかチェック（編集時は除く）
       if (!initialData.todo_id) {
-        const deadline = new Date(dueDate);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
+        const deadline = new Date(dueDate)
+        const now = new Date()
+        now.setHours(0, 0, 0, 0)
         if (deadline < now) {
-          throw new Error('Due date must be today or later');
+          throw new Error("Due date must be today or later")
         }
       }
 
@@ -69,22 +67,22 @@ export default function TodoForm({
         title: title.trim(),
         description: description.trim(),
         todo_deadline: new Date(dueDate).toISOString(),
-        is_public: visibility === 'public',
+        is_public: visibility === "public",
         ...(initialData.todo_id && { is_completed: isCompleted }),
-      };
+      }
 
-      await onSubmit(formData);
+      await onSubmit(formData)
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      setError(error instanceof Error ? error.message : "An error occurred")
     }
-  };
+  }
 
   return (
     <div className="w-full max-w-lg p-6 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-[var(--background)] text-[var(--foreground)]">
       <h2 className="text-2xl font-bold mb-4">
-        {initialData.todo_id ? 'Edit Todo' : 'Create New Todo'}
+        {initialData.todo_id ? "Edit Todo" : "Create New Todo"}
       </h2>
-      
+
       {/* エラーメッセージ */}
       {error && (
         <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-300">
@@ -105,9 +103,7 @@ export default function TodoForm({
             placeholder="e.g., Create project documentation"
             maxLength={100}
           />
-          <div className="text-xs text-gray-400 mt-1">
-            {title.length}/100 characters
-          </div>
+          <div className="text-xs text-gray-400 mt-1">{title.length}/100 characters</div>
         </div>
 
         <div>
@@ -122,9 +118,7 @@ export default function TodoForm({
             placeholder="Enter detailed description"
             maxLength={500}
           />
-          <div className="text-xs text-gray-400 mt-1">
-            {description.length}/500 characters
-          </div>
+          <div className="text-xs text-gray-400 mt-1">{description.length}/500 characters</div>
         </div>
 
         <div>
@@ -136,7 +130,7 @@ export default function TodoForm({
             className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
             required
             disabled={isSubmitting}
-            min={!initialData.todo_id ? new Date().toISOString().split('T')[0] : undefined}
+            min={!initialData.todo_id ? new Date().toISOString().split("T")[0] : undefined}
           />
         </div>
 
@@ -178,7 +172,7 @@ export default function TodoForm({
             className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition disabled:bg-gray-500 disabled:cursor-not-allowed"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Processing...' : submitLabel}
+            {isSubmitting ? "Processing..." : submitLabel}
           </button>
           {onCancel && (
             <button
@@ -193,5 +187,5 @@ export default function TodoForm({
         </div>
       </form>
     </div>
-  );
+  )
 }
