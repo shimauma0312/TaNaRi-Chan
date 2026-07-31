@@ -108,6 +108,12 @@ const ArticlesPage = () => {
                   </p>
                   <div className="flex space-x-2 mt-2">
                     <button
+                      onClick={() => router.push(`/dashboard/articles/view?post_id=${article.post_id}`)}
+                      className="px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-700"
+                    >
+                      View
+                    </button>
+                    <button
                       onClick={() => handleEdit(article.post_id)}
                       className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-700"
                     >
