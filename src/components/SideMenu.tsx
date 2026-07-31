@@ -39,6 +39,12 @@ const SideMenu = () => {
         >
           My Page
         </Link>
+        <Link
+          href="/dashboard/tetris"
+          className="block text-lg text-indigo-400 hover:text-indigo-300"
+        >
+          Tetris
+        </Link>
         {/* <Link
           href="/dashboard/calendar"
           className="block text-lg text-indigo-400 hover:text-indigo-300"

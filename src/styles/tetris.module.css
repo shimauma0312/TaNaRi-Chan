@@ -1,0 +1,29 @@
+/* Purely visual feedback for line clears - no audio anywhere in this game. */
+.flash {
+  animation: flashBorder 0.25s ease-in-out;
+}
+
+@keyframes flashBorder {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+  50% {
+    box-shadow: 0 0 24px 6px rgba(74, 222, 128, 0.85);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+}
+
+.gameOverOverlay {
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
