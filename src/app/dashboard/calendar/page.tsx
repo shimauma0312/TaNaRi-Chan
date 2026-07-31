@@ -25,6 +25,8 @@ const CalendarPage = () => {
   const router = useRouter()
 
   useEffect(() => {
+    if (user.loading) return
+
     const fetchData = async () => {
       try {
         if (!user.user) {
@@ -32,6 +34,7 @@ const CalendarPage = () => {
         }
         const data = await getTodoList(user.user.id)
         setTodos(data)
+        setError(null)
       } catch (err) {
         console.error("Error fetching user todos:", err)
         setError("Failed to load todos. Please try again later.")
@@ -41,7 +44,7 @@ const CalendarPage = () => {
     }
 
     fetchData()
-  }, [user.user?.id, user.user])
+  }, [user.user?.id, user.user, user.loading])
 
   if (!user || loading) {
     return <MinLoader />
