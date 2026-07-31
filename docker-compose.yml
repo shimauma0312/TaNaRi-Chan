@@ -4,6 +4,7 @@ services:
     build:
       context: .
     tty: true
+    stdin_open: true
     volumes:
       - ./src:/app
       - /app/node_modules
