@@ -38,6 +38,20 @@ export class PrismaMessageRepository implements IMessageRepository {
   }
 
   /**
+   * 指定ユーザーIDのユーザーが存在するかを確認する
+   *
+   * @param userId - 確認対象のユーザーID
+   * @returns ユーザーが存在すれば `true`、存在しなければ `false`
+   */
+  async userExists(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    return user !== null;
+  }
+
+  /**
    * 指定ユーザーの受信トレイを取得する（新しい順）
    *
    * @param userId - 受信者ユーザーID

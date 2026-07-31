@@ -13,6 +13,17 @@ export interface IMessageRepository {
   create(data: CreateMessageData): Promise<MessageWithUsers>;
 
   /**
+   * 指定ユーザーIDのユーザーが存在するかを確認する
+   *
+   * メッセージ作成時、受信者IDが実在するユーザーを指すことを
+   * DB書き込み前に検証するために使用する。
+   *
+   * @param userId - 確認対象のユーザーID
+   * @returns ユーザーが存在すれば `true`、存在しなければ `false`
+   */
+  userExists(userId: string): Promise<boolean>;
+
+  /**
    * 指定ユーザーの受信トレイを取得する
    *
    * @param userId - 対象ユーザーID
