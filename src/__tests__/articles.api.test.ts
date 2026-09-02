@@ -49,8 +49,6 @@ jest.mock("@/logging/logging", () => ({
   },
 }))
 
-// Import after mocking
-import { PrismaClient } from "@prisma/client"
 import { DELETE, GET, POST, PUT } from "../app/api/articles/route"
 
 // Access the mock

@@ -6,14 +6,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { getUserIdFromRequest } from '@/lib/auth';
+import { getUserIdFromRequest, isSameOriginRequest } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 import { PrismaMessageRepository } from '@/infrastructure/message/PrismaMessageRepository';
 import { GetInboxMessagesUseCase } from '@/application/message/GetInboxMessagesUseCase';
 import { SendMessageUseCase } from '@/application/message/SendMessageUseCase';
 import { AppError, createApiErrorResponse } from '@/utils/errorHandler';
-
-const prisma = new PrismaClient();
+import { createMessageRequestSchema, firstValidationMessage } from '@/schemas/api';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -26,7 +25,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const userId = getUserIdFromRequest(request);
+    const userId = await getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
     }
@@ -54,13 +53,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const userId = getUserIdFromRequest(request);
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: '不正な送信元です' }, { status: 403 });
+    }
+
+    const userId = await getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { subject, body: messageBody, receiver_id } = body;
+    const parsed = createMessageRequestSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstValidationMessage(parsed.error) }, { status: 400 });
+    }
+    const { subject, body: messageBody, receiver_id } = parsed.data;
 
     const repository = new PrismaMessageRepository(prisma);
     const useCase = new SendMessageUseCase(repository);

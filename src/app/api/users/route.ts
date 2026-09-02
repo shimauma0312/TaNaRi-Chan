@@ -5,11 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { getUserIdFromRequest } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 import { createApiErrorResponse } from '@/utils/errorHandler';
-
-const prisma = new PrismaClient();
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -24,7 +22,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const userId = getUserIdFromRequest(request);
+    const userId = await getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
     }

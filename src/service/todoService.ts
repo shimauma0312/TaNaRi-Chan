@@ -1,4 +1,16 @@
+import prisma from "@/lib/prisma"
 import { PrismaClient, Todo } from "@prisma/client"
+
+const DEFAULT_QUERY_LIMIT = 100
+
+function isRecordNotFoundError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "P2025"
+  )
+}
 
 /**
  * ToDoサービスクラス
@@ -7,7 +19,7 @@ import { PrismaClient, Todo } from "@prisma/client"
 export class TodoService {
   private prisma: PrismaClient
   constructor(prismaClient?: PrismaClient) {
-    this.prisma = prismaClient || new PrismaClient()
+    this.prisma = prismaClient ?? prisma
   }
 
   /**
@@ -23,6 +35,7 @@ export class TodoService {
       orderBy: {
         createdAt: "desc",
       },
+      take: DEFAULT_QUERY_LIMIT,
     })
   }
 
@@ -40,6 +53,7 @@ export class TodoService {
       orderBy: {
         todo_deadline: "asc",
       },
+      take: DEFAULT_QUERY_LIMIT,
     })
   }
 
@@ -47,10 +61,18 @@ export class TodoService {
    * 公開されているToDoリストを取得する（ユーザー情報付き）
    * @returns 公開ToDoリストの配列（ユーザー情報含む）
    */
-  async getPublicTodos(): Promise<(Todo & { user: { id: string; user_name: string } })[]> {
+  async getPublicTodos(options: {
+    userId?: string
+    excludeUserId?: string
+    limit?: number
+  } = {}): Promise<(Todo & { user: { id: string; user_name: string } })[]> {
+    const limit = Math.min(Math.max(options.limit ?? DEFAULT_QUERY_LIMIT, 1), DEFAULT_QUERY_LIMIT)
+
     return await this.prisma.todo.findMany({
       where: {
         is_public: true,
+        ...(options.userId ? { id: options.userId } : {}),
+        ...(options.excludeUserId ? { id: { not: options.excludeUserId } } : {}),
       },
       include: {
         user: {
@@ -63,6 +85,7 @@ export class TodoService {
       orderBy: {
         createdAt: "desc",
       },
+      take: limit,
     })
   }
 
@@ -144,18 +167,6 @@ export class TodoService {
       is_public?: boolean
     },
   ): Promise<Todo | null> {
-    // 権限チェック：所有者のみ更新可能
-    const existingTodo = await this.prisma.todo.findFirst({
-      where: {
-        todo_id: todoId,
-        id: userId,
-      },
-    })
-
-    if (!existingTodo) {
-      return null
-    }
-
     // バリデーション
     if (updateData.title !== undefined && !updateData.title.trim()) {
       throw new Error("タイトルは必須です")
@@ -187,11 +198,15 @@ export class TodoService {
       return await this.prisma.todo.update({
         where: {
           todo_id: todoId,
+          id: userId,
         },
         data: sanitizedData,
       })
     } catch (error) {
-      return null
+      if (isRecordNotFoundError(error)) {
+        return null
+      }
+      throw error
     }
   }
 
@@ -202,27 +217,19 @@ export class TodoService {
    * @returns 削除の成功可否
    */
   async deleteTodo(todoId: number, userId: string): Promise<boolean> {
-    // 権限チェック：所有者のみ削除可能
-    const existingTodo = await this.prisma.todo.findFirst({
-      where: {
-        todo_id: todoId,
-        id: userId,
-      },
-    })
-
-    if (!existingTodo) {
-      return false
-    }
-
     try {
       await this.prisma.todo.delete({
         where: {
           todo_id: todoId,
+          id: userId,
         },
       })
       return true
     } catch (error) {
-      return false
+      if (isRecordNotFoundError(error)) {
+        return false
+      }
+      throw error
     }
   }
 
@@ -248,13 +255,18 @@ export class TodoService {
       return await this.prisma.todo.update({
         where: {
           todo_id: todoId,
+          id: userId,
+          is_completed: existingTodo.is_completed,
         },
         data: {
           is_completed: !existingTodo.is_completed,
         },
       })
     } catch (error) {
-      return null
+      if (isRecordNotFoundError(error)) {
+        return null
+      }
+      throw error
     }
   }
 }
