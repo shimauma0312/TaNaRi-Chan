@@ -33,6 +33,11 @@ jest.mock("@prisma/client", () => {
   }
 })
 
+jest.mock("@/lib/auth", () => ({
+  getUserIdFromRequest: jest.fn().mockResolvedValue("user123"),
+  isSameOriginRequest: jest.fn().mockReturnValue(true),
+}))
+
 // Mock logger - need to match the correct import path
 jest.mock("@/logging/logging", () => ({
   __esModule: true,
@@ -50,9 +55,13 @@ import { DELETE, GET, POST, PUT } from "../app/api/articles/route"
 
 // Access the mock
 const mockPrismaPost = (require("@prisma/client") as any).__mockPrismaPost
+const mockAuth = jest.requireMock("@/lib/auth") as {
+  getUserIdFromRequest: jest.Mock
+  isSameOriginRequest: jest.Mock
+}
 
 // Helper function to create a mock Request using built-in Request
-function createMockRequest(method: string, url: string, body?: any): Request {
+function createMockRequest(method: string, url: string, body?: any): NextRequest {
   const headers = new Headers()
   headers.set("content-type", "application/json")
 
@@ -233,6 +242,48 @@ describe("Articles API - POST Endpoint", () => {
     })
   })
 
+  test("should ignore a forged author_id from the request body", async () => {
+    mockPrismaPost.create.mockResolvedValue({ post_id: 3 })
+    const request = createMockRequest("POST", "http://localhost:3000/api/articles", {
+      title: "New Article",
+      content: "Content",
+      author_id: "victim-user",
+    })
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(201)
+    expect(mockPrismaPost.create).toHaveBeenCalledWith({
+      data: { title: "New Article", content: "Content", author_id: "user123" },
+    })
+  })
+
+  test("should return 401 without an active session", async () => {
+    mockAuth.getUserIdFromRequest.mockResolvedValueOnce(null)
+    const request = createMockRequest("POST", "http://localhost:3000/api/articles", {
+      title: "New Article",
+      content: "Content",
+    })
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(401)
+    expect(mockPrismaPost.create).not.toHaveBeenCalled()
+  })
+
+  test("should reject an explicitly cross-site request", async () => {
+    mockAuth.isSameOriginRequest.mockReturnValueOnce(false)
+    const request = createMockRequest("POST", "http://localhost:3000/api/articles", {
+      title: "New Article",
+      content: "Content",
+    })
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(403)
+    expect(mockPrismaPost.create).not.toHaveBeenCalled()
+  })
+
   test("should return 400 when title is missing", async () => {
     const incompleteData = {
       content: "Content without title",
@@ -244,7 +295,7 @@ describe("Articles API - POST Endpoint", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("Title, content, and author ID are required")
+    expect(data.error).toBe("Title and content are required")
     expect(data.type).toBe(ErrorType.VALIDATION)
     expect(mockPrismaPost.create).not.toHaveBeenCalled()
   })
@@ -260,23 +311,25 @@ describe("Articles API - POST Endpoint", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("Title, content, and author ID are required")
+    expect(data.error).toBe("Title and content are required")
     expect(data.type).toBe(ErrorType.VALIDATION)
   })
 
-  test("should return 400 when author_id is missing", async () => {
-    const incompleteData = {
+  test("should derive author_id from the authenticated session", async () => {
+    const requestData = {
       title: "Title",
       content: "Content",
     }
+    const createdArticle = { post_id: 3, ...requestData, author_id: "user123" }
+    mockPrismaPost.create.mockResolvedValue(createdArticle)
 
-    const request = createMockRequest("POST", "http://localhost:3000/api/articles", incompleteData)
+    const request = createMockRequest("POST", "http://localhost:3000/api/articles", requestData)
     const response = await POST(request)
-    const data = await response.json()
 
-    expect(response.status).toBe(400)
-    expect(data.error).toBe("Title, content, and author ID are required")
-    expect(data.type).toBe(ErrorType.VALIDATION)
+    expect(response.status).toBe(201)
+    expect(mockPrismaPost.create).toHaveBeenCalledWith({
+      data: { ...requestData, author_id: "user123" },
+    })
   })
 
   test("should handle database constraint violation", async () => {
@@ -299,7 +352,7 @@ describe("Articles API - POST Endpoint", () => {
     const response = await POST(request)
     const data = await response.json()
 
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(409)
     expect(data.error).toContain("Duplicate data constraint violation")
     expect(data.type).toBe(ErrorType.VALIDATION)
   })
@@ -314,8 +367,8 @@ describe("Articles API - POST Endpoint", () => {
     const response = await POST(request)
     const data = await response.json()
 
-    expect(response.status).toBe(500)
-    expect(data.error).toContain("Failed to create article")
+    expect(response.status).toBe(400)
+    expect(data.error).toBe("Request body must be valid JSON")
   })
 })
 
@@ -346,7 +399,7 @@ describe("Articles API - PUT Endpoint", () => {
     expect(response.status).toBe(200)
     expect(data).toEqual(convertDatesForJson(updatedArticle))
     expect(mockPrismaPost.update).toHaveBeenCalledWith({
-      where: { post_id: updateData.post_id },
+      where: { post_id: updateData.post_id, author_id: "user123" },
       data: {
         title: updateData.title,
         content: updateData.content,
@@ -449,7 +502,7 @@ describe("Articles API - DELETE Endpoint", () => {
     expect(response.status).toBe(200)
     expect(data).toEqual(convertDatesForJson(deletedArticle))
     expect(mockPrismaPost.delete).toHaveBeenCalledWith({
-      where: { post_id: deleteData.post_id },
+      where: { post_id: deleteData.post_id, author_id: "user123" },
     })
   })
 
@@ -528,7 +581,7 @@ describe("Articles API - Edge Cases and Integration", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("Title, content, and author ID are required")
+    expect(data.error).toBe("Title and content are required")
     expect(data.type).toBe(ErrorType.VALIDATION)
   })
 
@@ -544,7 +597,7 @@ describe("Articles API - Edge Cases and Integration", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("Title, content, and author ID are required")
+    expect(data.error).toBe("Title and content are required")
     expect(data.type).toBe(ErrorType.VALIDATION)
   })
 

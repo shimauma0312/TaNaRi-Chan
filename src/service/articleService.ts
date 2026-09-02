@@ -1,9 +1,6 @@
 import logger from "@/logging/logging"
+import prisma from "@/lib/prisma"
 import { AppError, ErrorType } from "@/utils/errorHandler"
-import { PrismaClient } from "@prisma/client"
-
-// Prismaクライアントのシングルトンインスタンス
-const prisma = new PrismaClient()
 
 // 記事の型定義
 export interface Article {
@@ -26,6 +23,7 @@ export interface UpdateArticleData {
   post_id: number
   title: string
   content: string
+  author_id: string
 }
 
 /**
@@ -128,6 +126,7 @@ export async function updateArticle(data: UpdateArticleData) {
   return prisma.post.update({
     where: {
       post_id: data.post_id,
+      author_id: data.author_id,
     },
     data: {
       title: data.title,
@@ -141,10 +140,11 @@ export async function updateArticle(data: UpdateArticleData) {
  * @param post_id 削除する記事のID
  * @returns 削除された記事
  */
-export async function deleteArticle(post_id: number) {
+export async function deleteArticle(post_id: number, author_id: string) {
   return prisma.post.delete({
     where: {
-      post_id: post_id,
+      post_id,
+      author_id,
     },
   })
 }
