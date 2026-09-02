@@ -23,6 +23,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Cross-origin request is not allowed" }, { status: 403 })
     }
 
+    const userId = await getUserIdFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+    }
+
     const declaredLength = Number(request.headers.get("content-length"))
     if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_BYTES) {
       return NextResponse.json({ error: "Log payload is too large" }, { status: 413 })
@@ -52,7 +57,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ...parsed.data,
       source: LogSource.CLIENT,
       // Never trust a userId supplied by client JSON.
-      userId: await getUserIdFromRequest(request),
+      userId,
       path: request.headers.get("referer")?.slice(0, 2_048) ?? null,
     })
 
