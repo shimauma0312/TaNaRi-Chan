@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import * as userService from "@/service/userService"
 import logger from "@/utils/logger"
+import { firstValidationMessage, loginRequestSchema } from "@/schemas/api"
+import { isSameOriginRequest } from "@/lib/auth"
 
 interface LoginRequestBody {
   email: string
@@ -11,12 +13,17 @@ export async function POST(req: NextRequest) {
   let requestBody: LoginRequestBody | null = null
 
   try {
-    const body: LoginRequestBody = await req.json()
-    requestBody = body
-
-    if (!body.email || !body.password) {
-      return NextResponse.json({ error: "メールアドレスとパスワードは必須です" }, { status: 400 })
+    if (!isSameOriginRequest(req)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
     }
+
+    const parsed = loginRequestSchema.safeParse(await req.json())
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstValidationMessage(parsed.error) }, { status: 400 })
+    }
+
+    const body: LoginRequestBody = parsed.data
+    requestBody = body
 
     const user = await userService.authenticateUser(body.email, body.password)
 

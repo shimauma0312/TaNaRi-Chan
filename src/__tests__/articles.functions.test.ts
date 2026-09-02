@@ -220,7 +220,7 @@ describe("Articles API Functions", () => {
         expect(appError).toBeInstanceOf(AppError)
         expect(appError.message).toContain("Duplicate data constraint violation")
         expect(appError.type).toBe(ErrorType.VALIDATION)
-        expect(appError.statusCode).toBe(400)
+        expect(appError.statusCode).toBe(409)
       }
     })
   })

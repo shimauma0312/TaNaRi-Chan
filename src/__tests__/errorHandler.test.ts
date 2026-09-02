@@ -120,7 +120,7 @@ describe("createApiErrorResponse Function", () => {
     const standardError = new Error("Database connection failed")
     const response = createApiErrorResponse(standardError)
 
-    expect(response.error).toBe("Database connection failed")
+    expect(response.error).toBe("Internal server error occurred")
     expect(response.type).toBe(ErrorType.SERVER_ERROR)
     expect(response.statusCode).toBe(500)
     expect(response.timestamp).toBeDefined()
@@ -192,7 +192,7 @@ describe("handleDatabaseError Function", () => {
     expect(result).toBeInstanceOf(AppError)
     expect(result.message).toBe("Duplicate data constraint violation")
     expect(result.type).toBe(ErrorType.VALIDATION)
-    expect(result.statusCode).toBe(400)
+    expect(result.statusCode).toBe(409)
   })
 
   test("should handle P2003 (foreign key constraint violation)", () => {
@@ -228,7 +228,7 @@ describe("handleDatabaseError Function", () => {
     const result = handleDatabaseError(prismaError)
 
     expect(result).toBeInstanceOf(AppError)
-    expect(result.message).toBe("Database error occurred: Unknown database error")
+    expect(result.message).toBe("Database operation failed")
     expect(result.type).toBe(ErrorType.DATABASE_ERROR)
     expect(result.statusCode).toBe(500)
   })
@@ -238,7 +238,7 @@ describe("handleDatabaseError Function", () => {
     const result = handleDatabaseError(databaseError)
 
     expect(result).toBeInstanceOf(AppError)
-    expect(result.message).toBe("Database error occurred: Connection timeout")
+    expect(result.message).toBe("Database operation failed")
     expect(result.type).toBe(ErrorType.DATABASE_ERROR)
     expect(result.statusCode).toBe(500)
   })
@@ -311,7 +311,7 @@ describe("Integration Tests", () => {
 
     expect(apiResponse.error).toBe("Duplicate data constraint violation")
     expect(apiResponse.type).toBe(ErrorType.VALIDATION)
-    expect(apiResponse.statusCode).toBe(400)
+    expect(apiResponse.statusCode).toBe(409)
     expect(apiResponse.timestamp).toBeDefined()
   })
 

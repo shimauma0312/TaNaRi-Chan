@@ -1,6 +1,8 @@
 import { AppError, createApiErrorResponse, ErrorType } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
 import * as userService from "@/service/userService"
+import { firstValidationMessage, registerRequestSchema } from "@/schemas/api"
+import { isSameOriginRequest } from "@/lib/auth"
 
 interface UserRequestBody {
   email: string
@@ -10,12 +12,15 @@ interface UserRequestBody {
 
 export async function POST(req: NextRequest) {
   try {
-    const body: UserRequestBody = await req.json()
-
-    // バリデーション
-    if (!body.email || !body.password || !body.userName) {
-      throw new AppError("Email, password, and username are required", ErrorType.VALIDATION, 400)
+    if (!isSameOriginRequest(req)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
     }
+
+    const parsed = registerRequestSchema.safeParse(await req.json())
+    if (!parsed.success) {
+      throw new AppError(firstValidationMessage(parsed.error), ErrorType.VALIDATION, 400)
+    }
+    const body: UserRequestBody = parsed.data
 
     // サービス層を使用してユーザーを作成
     await userService.createUser({

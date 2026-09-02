@@ -1,4 +1,4 @@
-import { getUserIdFromRequest } from "@/lib/auth"
+import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
 import { todoService } from "@/service/todoService"
 import { createApiErrorResponse } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
@@ -20,7 +20,11 @@ interface RouteParams {
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   try {
-    const requestUserId = getUserIdFromRequest(request)
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
+    }
+
+    const requestUserId = await getUserIdFromRequest(request)
     if (!requestUserId) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }

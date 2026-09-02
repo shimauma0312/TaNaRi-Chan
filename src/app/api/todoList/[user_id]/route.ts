@@ -1,7 +1,8 @@
-import { getUserIdFromRequest } from "@/lib/auth"
+import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
 import { todoService } from "@/service/todoService"
 import { createApiErrorResponse } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
+import { firstValidationMessage, todoIdSchema, updateTodoRequestSchema } from "@/schemas/api"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
@@ -20,7 +21,7 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   try {
-    const requestUserId = getUserIdFromRequest(request)
+    const requestUserId = await getUserIdFromRequest(request)
     const { user_id: targetUserId } = await params
 
     // 自分のToDoリストの場合
@@ -30,9 +31,8 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
     }
 
     // 他人のToDoリストの場合は公開されているもののみ
-    const publicTodos = await todoService.getPublicTodos()
-    const userPublicTodos = publicTodos.filter((todo) => todo.id === targetUserId)
-    return NextResponse.json(userPublicTodos)
+    const publicTodos = await todoService.getPublicTodos({ userId: targetUserId })
+    return NextResponse.json(publicTodos)
   } catch (error) {
     const errorResponse = createApiErrorResponse(error, "ToDoリストの取得に失敗しました")
     return NextResponse.json({ error: errorResponse.error }, { status: errorResponse.statusCode })
@@ -50,22 +50,25 @@ export async function PUT(
   { params: _params }: RouteParams,
 ): Promise<NextResponse> {
   try {
-    const requestUserId = getUserIdFromRequest(request)
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
+    }
+
+    const requestUserId = await getUserIdFromRequest(request)
     if (!requestUserId) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { todo_id, title, description, todo_deadline, is_completed, is_public } = body
-
-    if (!todo_id) {
-      return NextResponse.json({ error: "ToDoIDは必須です" }, { status: 400 })
+    const parsed = updateTodoRequestSchema.safeParse(await request.json())
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstValidationMessage(parsed.error) }, { status: 400 })
     }
+    const { todo_id, title, description, todo_deadline, is_completed, is_public } = parsed.data
 
-    const updatedTodo = await todoService.updateTodo(parseInt(todo_id), requestUserId, {
+    const updatedTodo = await todoService.updateTodo(todo_id, requestUserId, {
       title,
       description,
-      todo_deadline: todo_deadline ? new Date(todo_deadline) : undefined,
+      todo_deadline,
       is_completed,
       is_public,
     })
@@ -92,19 +95,23 @@ export async function DELETE(
   { params: _params }: RouteParams,
 ): Promise<NextResponse> {
   try {
-    const requestUserId = getUserIdFromRequest(request)
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
+    }
+
+    const requestUserId = await getUserIdFromRequest(request)
     if (!requestUserId) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
     const url = new URL(request.url)
-    const todoId = url.searchParams.get("todo_id")
+    const parsedTodoId = todoIdSchema.safeParse(url.searchParams.get("todo_id"))
 
-    if (!todoId) {
+    if (!parsedTodoId.success) {
       return NextResponse.json({ error: "ToDoIDは必須です" }, { status: 400 })
     }
 
-    const deleted = await todoService.deleteTodo(parseInt(todoId), requestUserId)
+    const deleted = await todoService.deleteTodo(parsedTodoId.data, requestUserId)
 
     if (!deleted) {
       return NextResponse.json({ error: "ToDoが見つからないか、権限がありません" }, { status: 404 })

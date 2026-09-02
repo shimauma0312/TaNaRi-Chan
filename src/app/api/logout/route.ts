@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import * as userService from "@/service/userService"
+import { isSameOriginRequest } from "@/lib/auth"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
 
 export async function POST(_req: NextRequest) {
   try {
+    if (!isSameOriginRequest(_req)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
+    }
+
     // Clear authentication cookie
     await userService.clearAuthCookie()
 
