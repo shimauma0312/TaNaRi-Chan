@@ -78,7 +78,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate Compose model
-        run: docker compose --profile debug --profile tools config --quiet
+        run: docker compose --profile debug --profile tools --profile production config --quiet
 
       - name: Build development image and start stack
         run: docker compose up --build --wait app
@@ -86,8 +86,14 @@ jobs:
       - name: Verify migrations
         run: docker compose run --rm migrate
 
-      - name: Build production image
-        run: docker build --target production --tag tanari-chan:ci .
+      - name: Start and verify production image
+        run: |
+          docker compose --profile production up --build --wait production
+          curl --fail --retry 5 --retry-connrefused http://127.0.0.1:3002/api/health/live
+          test "$(docker compose exec -T production id -u | tr -d '\r')" = "1000"
+
+      - name: Smoke-test production authentication and ownership
+        run: node scripts/production-smoke.mjs
 
       - name: Show container logs
         if: failure()
