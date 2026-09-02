@@ -16,21 +16,21 @@
 
    ```
 
-2. Build the Docker containers:
+2. Build the reproducible development image. Dependencies are installed from
+   `src/package-lock.json` with `npm ci` during the image build:
 
    ```bash
    docker compose build
    ```
 
-3. Start the application:
+3. Start the application. PostgreSQL must pass its health check and all tracked
+   migrations are applied before Next.js starts:
 
    ```bash
    docker compose up -d
    ```
 
-4. Set up the database (see Prisma Migration Instructions below)
-
-5. Access
+4. Access
 
    ```bash
    http://localhost:3000
@@ -50,36 +50,69 @@ This project requires environment variables to be set up. Follow these steps to 
 2. Open the .env file and set the database URL and other necessary environment variables. For example:
 
    ```bash
-   DATABASE_URL="postgresql://postgres:example_password@db:/app_db"
+   DATABASE_URL="postgresql://postgres:example_password@db:5432/app_db"
    # Add other environment variables as needed for your application
    ```
 
-   Note: You do not need to modify the DATABASE_URL value.
+   Note: Docker Compose supplies this value to containers, so a local `.env`
+   value is only needed when commands run outside Compose.
+
+## Docker Development and Debugging
+
+The image contains its dependencies. Container startup never runs `npm install`,
+changes source ownership, or requires `sudo`. After changing `package-lock.json`,
+rebuild and renew the anonymous dependency volume:
+
+```bash
+docker compose build app
+docker compose up -d --renew-anon-volumes app
+```
+
+Useful commands:
+
+```bash
+# Follow application logs
+docker compose logs -f app
+
+# Run the test suite in the same image used for development
+docker compose run --rm app npm test -- --runInBand
+
+# Apply tracked migrations explicitly (also runs automatically before app)
+docker compose run --rm migrate
+
+# Open Prisma Studio at http://localhost:5555
+docker compose --profile tools up studio
+
+# Start Next.js with the Node inspector on localhost:9229 (app on port 3001)
+docker compose --profile debug up debug
+
+# Build the production runtime image
+docker build --target production -t tanari-chan:production .
+```
+
+The application, database, Studio, and inspector ports are bound to
+`127.0.0.1` by default and are not exposed to the local network. VS Code and
+Chrome-based debuggers can attach to `localhost:9229`.
 
 ## Prisma Database Setup
 
-> **Important**: All Prisma commands below must be executed _inside_ the Docker container.
+> **Important**: Run Prisma commands through Docker Compose.
 >
 > ```bash
-> docker compose exec app bash
+> docker compose run --rm app sh
 > ```
 
 ### Initial Database Setup
 
-When starting the application for the first time, follow these steps in order:
+`docker compose up` applies all tracked migrations automatically. Seeding is an
+explicit operation so existing development data is not replaced unexpectedly:
 
 ```bash
-# 1. Generate Prisma Client
-npx prisma generate
+# Apply existing tracked migrations manually
+docker compose run --rm migrate
 
-# 2. Apply existing migrations (if any)
-npx prisma migrate deploy
-
-# 3. If no migrations exist, create the initial migration
-npx prisma migrate dev --name init
-
-# 4. Seed the database with initial data
-npx prisma db seed
+# Seed initial data when required
+docker compose run --rm app npx prisma db seed
 ```
 
 ### Development Workflow
@@ -90,10 +123,10 @@ When you modify the Prisma schema file (`prisma/schema.prisma`):
 
 ```bash
 # 1. Create and apply a new migration
-npx prisma migrate dev --name describe_your_changes
+docker compose run --rm app npx prisma migrate dev --name describe_your_changes
 
 # 2. Regenerate Prisma Client
-npx prisma generate
+docker compose run --rm app npx prisma generate
 ```
 
 #### Database Reset (Development Only)
