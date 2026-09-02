@@ -39,7 +39,9 @@ jobs:
         run: npm ci
 
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        # Prisma 6 exposes its development CLI as an optional peer of the runtime client.
+        # Audit the dependencies shipped in the standalone production image.
+        run: npm audit --omit=dev --omit=optional --audit-level=high
 
       - name: Type-check
         run: npx tsc --noEmit
