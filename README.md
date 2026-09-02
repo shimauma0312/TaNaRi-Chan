@@ -4,7 +4,7 @@
 
 - This project is set up to run within a **Docker** environment.
 - Ensure Docker and Docker Compose are installed on your machine.
-  -This project is primarily developed on WSL2 (Ubuntu). We have not tested it on other environments.
+- The supported development and debugging workflow runs through Docker Compose.
 
 ## Setup Instructions
 
@@ -135,11 +135,11 @@ If you need to completely reset your development database:
 
 ```bash
 # Reset database, apply all migrations, and run seed
-npx prisma migrate reset
+docker compose run --rm app npx prisma migrate reset
 
 # Alternative: Manual reset
-npx prisma db push --force-reset
-npx prisma db seed
+docker compose run --rm app npx prisma db push --force-reset
+docker compose run --rm app npx prisma db seed
 ```
 
 #### Production Deployment
@@ -148,26 +148,26 @@ For production environments:
 
 ```bash
 # Apply pending migrations without prompts
-npx prisma migrate deploy
+docker compose run --rm migrate
 
-# Generate Prisma Client
-npx prisma generate
+# Build the non-root standalone production image
+docker build --target production -t tanari-chan:production .
 ```
 
 ### Useful Commands
 
 ```bash
 # View database with Prisma Studio (opens at http://localhost:5555)
-npx prisma studio
+docker compose --profile tools up studio
 
 # Check migration status
-npx prisma migrate status
+docker compose run --rm app npx prisma migrate status
 
 # View current database schema
-npx prisma db pull
+docker compose run --rm app npx prisma db pull
 
 # Format schema file
-npx prisma format
+docker compose run --rm app npx prisma format
 ```
 
 ### Troubleshooting
@@ -197,19 +197,12 @@ This project includes comprehensive test coverage for error handling functionali
 ### Running Tests
 
 ```bash
-# Navigate to src directory
-cd src
-
 # Run all tests once
-npm test
+docker compose run --rm app npm test -- --runInBand
 
-# Run tests in watch mode (automatically re-run when files change)
-npm run test:watch
+# Run tests in watch mode
+docker compose run --rm app npm run test:watch
 
-# Run tests with coverage report
-npm run test:coverage
-
-# Alternative: Use the test runner script
-chmod +x run-tests.sh
-./run-tests.sh --coverage
+# Run tests with coverage
+docker compose run --rm app npm run test:coverage -- --runInBand
 ```
