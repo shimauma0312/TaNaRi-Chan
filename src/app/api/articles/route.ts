@@ -18,6 +18,12 @@ const deleteArticleInput = z.object({
   post_id: z.coerce.number().int().positive(),
 })
 
+const articleListQuery = z.object({
+  cursor: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  mine: z.enum(["true"]).optional(),
+})
+
 function errorResponse(error: unknown, fallback: string): NextResponse {
   const response = createApiErrorResponse(error, fallback)
   return NextResponse.json(response, { status: response.statusCode })
@@ -45,9 +51,32 @@ async function readJson(req: NextRequest): Promise<unknown> {
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const postId = new URL(req.url).searchParams.get("post_id")
+    const url = new URL(req.url)
+    const postId = url.searchParams.get("post_id")
     if (!postId) {
-      return NextResponse.json(await articleService.getArticles())
+      const query = articleListQuery.safeParse({
+        cursor: url.searchParams.get("cursor") ?? undefined,
+        limit: url.searchParams.get("limit") ?? undefined,
+        mine: url.searchParams.get("mine") ?? undefined,
+      })
+      if (!query.success) {
+        throw new AppError("Invalid pagination parameters", ErrorType.VALIDATION, 400)
+      }
+      let authorId: string | undefined
+      if (query.data.mine) {
+        const currentUserId = await getUserIdFromRequest(req)
+        if (!currentUserId) {
+          throw new AppError("Authentication required", ErrorType.AUTHENTICATION, 401)
+        }
+        authorId = currentUserId
+      }
+      return NextResponse.json(
+        await articleService.getArticles({
+          cursor: query.data.cursor,
+          limit: query.data.limit,
+          authorId,
+        }),
+      )
     }
 
     const article = await articleService.getArticle(postId)

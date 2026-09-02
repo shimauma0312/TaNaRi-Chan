@@ -178,7 +178,7 @@ describe("/api/login", () => {
       expect(mockUserService.setAuthCookie).not.toHaveBeenCalled()
     })
 
-    it("JSON解析エラーが発生した場合は500エラーを返し、ログに記録する", async () => {
+    it("JSON解析エラーが発生した場合は400エラーを返す", async () => {
       // Arrange
       const jsonError = new Error("Invalid JSON")
       const request = {
@@ -190,17 +190,11 @@ describe("/api/login", () => {
       const responseData = await response.json()
 
       // Assert
-      expect(response.status).toBe(500)
+      expect(response.status).toBe(400)
       expect(responseData).toEqual({
-        error: "ログイン処理中にエラーが発生しました",
+        error: "リクエスト本文が不正です",
       })
-
-      // ログ出力の確認（メールアドレスが取得できない場合）
-      expect(mockLogger.error).toHaveBeenCalledWith("Login error occurred", {
-        email: "unknown",
-        error: "Invalid JSON",
-        stack: jsonError.stack,
-      })
+      expect(mockLogger.error).not.toHaveBeenCalled()
     })
   })
 

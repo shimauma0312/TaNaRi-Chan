@@ -1,7 +1,7 @@
 import { AppError, createApiErrorResponse, ErrorType } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
 import * as userService from "@/service/userService"
-import { firstValidationMessage, registerRequestSchema } from "@/schemas/api"
+import { firstValidationMessage, readJsonRequest, registerRequestSchema } from "@/schemas/api"
 import { isSameOriginRequest } from "@/lib/auth"
 
 interface UserRequestBody {
@@ -16,7 +16,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
     }
 
-    const parsed = registerRequestSchema.safeParse(await req.json())
+    const json = await readJsonRequest(req)
+    if (!json.success) {
+      throw new AppError("Request body must be valid JSON", ErrorType.VALIDATION, 400)
+    }
+
+    const parsed = registerRequestSchema.safeParse(json.data)
     if (!parsed.success) {
       throw new AppError(firstValidationMessage(parsed.error), ErrorType.VALIDATION, 400)
     }
