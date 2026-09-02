@@ -176,6 +176,20 @@ npx prisma format
 - **Client out of sync**: Run `npx prisma generate` after schema changes
 - **Database connection issues**: Check `DATABASE_URL` in docker-compose.yml
 
+If a database volume was created before migrations were tracked, startup can
+fail with Prisma `P3005` or `P3018`. Do not mark migrations as applied until the
+existing schema has been compared with the migration SQL. If the local data is
+disposable, this recreates only this Compose project's database volume:
+
+```bash
+# Warning: this permanently deletes the local PostgreSQL data for this project.
+docker compose down --volumes
+docker compose up -d app
+```
+
+Back up any data that must be retained and baseline the existing database before
+starting the new migration service.
+
 ## Testing
 
 This project includes comprehensive test coverage for error handling functionality using Jest.
