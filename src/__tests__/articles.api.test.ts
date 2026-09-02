@@ -131,9 +131,10 @@ describe("Articles API - GET Endpoint", () => {
         select: {
           post_id: true,
           title: true,
-          content: true,
           createdAt: true,
         },
+        orderBy: { post_id: "desc" },
+        take: 50,
       })
     })
 
@@ -153,6 +154,21 @@ describe("Articles API - GET Endpoint", () => {
       expect(response.status).toBe(500)
       expect(data.error).toBe("The table does not exist in the current database")
       expect(data.type).toBe(ErrorType.DATABASE_ERROR)
+    })
+
+    test("should scope the management list to the authenticated author", async () => {
+      mockPrismaPost.findMany.mockResolvedValue([])
+      const request = createMockRequest(
+        "GET",
+        "http://localhost:3000/api/articles?mine=true",
+      )
+
+      const response = await GET(request)
+
+      expect(response.status).toBe(200)
+      expect(mockPrismaPost.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { author_id: "user123" }, take: 50 }),
+      )
     })
   })
 
@@ -204,6 +220,18 @@ describe("Articles API - GET Endpoint", () => {
 
       expect(response.status).toBe(404)
       expect(data.error).toBe("Article not found")
+    })
+
+    test("should reject a post_id with trailing characters", async () => {
+      const request = createMockRequest(
+        "GET",
+        "http://localhost:3000/api/articles?post_id=1junk",
+      )
+
+      const response = await GET(request)
+
+      expect(response.status).toBe(404)
+      expect(mockPrismaPost.findUnique).not.toHaveBeenCalled()
     })
   })
 })

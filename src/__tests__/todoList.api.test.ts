@@ -199,5 +199,18 @@ describe("/api/todoList", () => {
       expect(response.status).toBe(500)
       expect(data).toHaveProperty("error")
     })
+
+    it("不正なJSONの場合400を返すこと", async () => {
+      mockGetUserIdFromRequest.mockResolvedValue("test-user-id")
+      const request = {
+        json: jest.fn().mockRejectedValue(new SyntaxError("Invalid JSON")),
+        cookies: { get: jest.fn() },
+      } as unknown as NextRequest
+
+      const response = await POST(request)
+
+      expect(response.status).toBe(400)
+      expect(mockTodoService.createTodo).not.toHaveBeenCalled()
+    })
   })
 })
