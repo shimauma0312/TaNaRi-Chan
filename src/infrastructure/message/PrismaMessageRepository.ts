@@ -19,22 +19,29 @@ export class PrismaMessageRepository implements IMessageRepository {
    * @returns 作成されたメッセージ（ユーザー情報付き）
    */
   async create(data: CreateMessageData): Promise<MessageWithUsers> {
-    return this.prisma.message.create({
-      data: {
-        subject: data.subject,
-        body: data.body,
-        sender_id: data.sender_id,
-        receiver_id: data.receiver_id,
-      },
-      include: {
-        sender: {
-          select: { id: true, user_name: true },
+    try {
+      return await this.prisma.message.create({
+        data: {
+          subject: data.subject,
+          body: data.body,
+          sender_id: data.sender_id,
+          receiver_id: data.receiver_id,
         },
-        receiver: {
-          select: { id: true, user_name: true },
+        include: {
+          sender: {
+            select: { id: true, user_name: true },
+          },
+          receiver: {
+            select: { id: true, user_name: true },
+          },
         },
-      },
-    });
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2003') {
+        throw new AppError('送信先ユーザーが存在しません', ErrorType.VALIDATION, 400);
+      }
+      throw error;
+    }
   }
 
   /**

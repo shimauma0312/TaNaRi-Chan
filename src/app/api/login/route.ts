@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import * as userService from "@/service/userService"
 import logger from "@/utils/logger"
-import { firstValidationMessage, loginRequestSchema } from "@/schemas/api"
+import { firstValidationMessage, loginRequestSchema, readJsonRequest } from "@/schemas/api"
 import { isSameOriginRequest } from "@/lib/auth"
 
 interface LoginRequestBody {
@@ -17,7 +17,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
     }
 
-    const parsed = loginRequestSchema.safeParse(await req.json())
+    const json = await readJsonRequest(req)
+    if (!json.success) {
+      return NextResponse.json({ error: "リクエスト本文が不正です" }, { status: 400 })
+    }
+
+    const parsed = loginRequestSchema.safeParse(json.data)
     if (!parsed.success) {
       return NextResponse.json({ error: firstValidationMessage(parsed.error) }, { status: 400 })
     }

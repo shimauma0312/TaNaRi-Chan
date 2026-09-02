@@ -12,7 +12,7 @@ import { PrismaMessageRepository } from '@/infrastructure/message/PrismaMessageR
 import { GetInboxMessagesUseCase } from '@/application/message/GetInboxMessagesUseCase';
 import { SendMessageUseCase } from '@/application/message/SendMessageUseCase';
 import { AppError, createApiErrorResponse } from '@/utils/errorHandler';
-import { createMessageRequestSchema, firstValidationMessage } from '@/schemas/api';
+import { createMessageRequestSchema, firstValidationMessage, readJsonRequest } from '@/schemas/api';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -62,7 +62,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
     }
 
-    const parsed = createMessageRequestSchema.safeParse(await request.json());
+    const json = await readJsonRequest(request);
+    if (!json.success) {
+      return NextResponse.json({ error: 'リクエスト本文が不正です' }, { status: 400 });
+    }
+
+    const parsed = createMessageRequestSchema.safeParse(json.data);
     if (!parsed.success) {
       return NextResponse.json({ error: firstValidationMessage(parsed.error) }, { status: 400 });
     }

@@ -10,6 +10,7 @@ import prisma from '@/lib/prisma';
 import { PrismaMessageRepository } from '@/infrastructure/message/PrismaMessageRepository';
 import { DeleteMessageUseCase } from '@/application/message/DeleteMessageUseCase';
 import { AppError, createApiErrorResponse, ErrorType } from '@/utils/errorHandler';
+import { todoIdSchema } from '@/schemas/api';
 
 /**
  * メッセージを削除する
@@ -35,10 +36,11 @@ export async function DELETE(
     }
 
     const { message_id } = await params;
-    const messageId = parseInt(message_id, 10);
-    if (isNaN(messageId) || messageId <= 0) {
+    const parsedMessageId = todoIdSchema.safeParse(message_id);
+    if (!parsedMessageId.success) {
       throw new AppError('無効なメッセージIDです', ErrorType.VALIDATION, 400);
     }
+    const messageId = parsedMessageId.data;
 
     const repository = new PrismaMessageRepository(prisma);
     const useCase = new DeleteMessageUseCase(repository);

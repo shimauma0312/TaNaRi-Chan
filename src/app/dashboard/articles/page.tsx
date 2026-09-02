@@ -14,7 +14,7 @@ interface Article {
 }
 
 const getArticles = async () => {
-  const response = await fetch("/api/articles")
+  const response = await fetch("/api/articles?mine=true")
   const data = await response.json()
   return data
 }

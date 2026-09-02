@@ -181,6 +181,36 @@ describe('POST /api/messages', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('存在しない送信先は400を返す', async () => {
+    mockGetUserId.mockResolvedValue('user1');
+    mockPrismaMessage.create.mockRejectedValue(
+      Object.assign(new Error('Foreign key constraint failed'), { code: 'P2003' })
+    );
+
+    const req = createRequest('POST', 'http://localhost/api/messages', {
+      subject: '件名',
+      body: '本文',
+      receiver_id: 'missing-user',
+    });
+    const res = await postMessage(req);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('不正なJSONは400を返す', async () => {
+    mockGetUserId.mockResolvedValue('user1');
+    const req = new NextRequest('http://localhost/api/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{bad',
+    });
+
+    const res = await postMessage(req);
+
+    expect(res.status).toBe(400);
+    expect(mockPrismaMessage.create).not.toHaveBeenCalled();
+  });
 });
 
 // --------------------------------------------------
@@ -252,6 +282,18 @@ describe('DELETE /api/messages/[message_id]', () => {
     });
 
     expect(res.status).toBe(400);
+  });
+
+  it('末尾に文字を含むIDは400を返す', async () => {
+    mockGetUserId.mockResolvedValue('user1');
+
+    const req = createRequest('DELETE', 'http://localhost/api/messages/1junk');
+    const res = await deleteMessage(req, {
+      params: Promise.resolve({ message_id: '1junk' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockPrismaMessage.findUnique).not.toHaveBeenCalled();
   });
 
   it('存在しないメッセージは404を返す', async () => {

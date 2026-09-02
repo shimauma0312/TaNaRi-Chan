@@ -2,6 +2,7 @@ import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
 import { todoService } from "@/service/todoService"
 import { createApiErrorResponse } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
+import { todoIdSchema } from "@/schemas/api"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
@@ -30,10 +31,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams): Prom
     }
 
     const { todo_id } = await params
-    const todoId = parseInt(todo_id)
-    if (isNaN(todoId)) {
+    const parsedTodoId = todoIdSchema.safeParse(todo_id)
+    if (!parsedTodoId.success) {
       return NextResponse.json({ error: "無効なToDoIDです" }, { status: 400 })
     }
+    const todoId = parsedTodoId.data
 
     const updatedTodo = await todoService.toggleTodoCompletion(todoId, requestUserId)
 

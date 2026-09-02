@@ -2,7 +2,12 @@ import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
 import { todoService } from "@/service/todoService"
 import { createApiErrorResponse } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
-import { firstValidationMessage, todoIdSchema, updateTodoRequestSchema } from "@/schemas/api"
+import {
+  firstValidationMessage,
+  readJsonRequest,
+  todoIdSchema,
+  updateTodoRequestSchema,
+} from "@/schemas/api"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
@@ -59,7 +64,12 @@ export async function PUT(
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
-    const parsed = updateTodoRequestSchema.safeParse(await request.json())
+    const json = await readJsonRequest(request)
+    if (!json.success) {
+      return NextResponse.json({ error: "リクエスト本文が不正です" }, { status: 400 })
+    }
+
+    const parsed = updateTodoRequestSchema.safeParse(json.data)
     if (!parsed.success) {
       return NextResponse.json({ error: firstValidationMessage(parsed.error) }, { status: 400 })
     }

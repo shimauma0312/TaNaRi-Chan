@@ -67,3 +67,13 @@ export const createMessageRequestSchema = z
 export function firstValidationMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "入力内容が不正です"
 }
+
+export async function readJsonRequest(
+  request: Request,
+): Promise<{ success: true; data: unknown } | { success: false }> {
+  try {
+    return { success: true, data: await request.json() }
+  } catch {
+    return { success: false }
+  }
+}
