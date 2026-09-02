@@ -31,6 +31,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       where: { id: { not: userId } },
       select: { id: true, user_name: true },
       orderBy: { user_name: 'asc' },
+      take: 100,
     });
 
     return NextResponse.json(users);
