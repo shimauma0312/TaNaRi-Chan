@@ -64,6 +64,21 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  production:
+    profiles: [production]
+    build:
+      context: .
+      target: production
+    init: true
+    environment: *app-environment
+    ports:
+      - "127.0.0.1:${PRODUCTION_APP_PORT:-3002}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
   migrate:
     build:
       context: .

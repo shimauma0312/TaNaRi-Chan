@@ -88,6 +88,9 @@ docker compose --profile debug up debug
 
 # Build the production runtime image
 docker build --target production -t tanari-chan:production .
+
+# Run the standalone production image locally at http://localhost:3002
+docker compose --profile production up --build production
 ```
 
 The application, database, Studio, and inspector ports are bound to
