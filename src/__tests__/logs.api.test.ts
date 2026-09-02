@@ -50,15 +50,15 @@ describe("POST /api/logs", () => {
     )
   })
 
-  test("allows an anonymous log but does not accept a claimed identity", async () => {
+  test("rejects anonymous log writes", async () => {
     mockGetUserIdFromRequest.mockResolvedValue(null)
 
     const response = await POST(
       request({ level: LogLevel.WARN, message: "anonymous", userId: "victim-user" }),
     )
 
-    expect(response.status).toBe(201)
-    expect(mockWriteLogToDB).toHaveBeenCalledWith(expect.objectContaining({ userId: null }))
+    expect(response.status).toBe(401)
+    expect(mockWriteLogToDB).not.toHaveBeenCalled()
   })
 
   test("rejects oversized messages", async () => {
