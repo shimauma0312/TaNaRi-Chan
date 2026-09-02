@@ -5,6 +5,7 @@ FROM node:24-alpine AS base
 RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
+RUN chown node:node /app
 
 FROM base AS dependencies
 
@@ -16,7 +17,9 @@ FROM dependencies AS development
 ENV NODE_ENV=development
 
 COPY --chown=node:node src/ ./
-RUN npx prisma generate
+RUN mkdir -p .next \
+  && chown node:node .next \
+  && npx prisma generate
 
 USER node
 
