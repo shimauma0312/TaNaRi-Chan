@@ -75,15 +75,9 @@ function EditArticleContent({ postId }: { postId: number | null }) {
 
 const EditArticlePageInner = () => {
   const { user, loading } = useAuth()
-  const [postId, setPostId] = useState<number | null>(null)
   const searchParams = useSearchParams()
-
-  useEffect(() => {
-    const postIdParam = searchParams.get("post_id")
-    if (postIdParam) {
-      setPostId(Number(postIdParam))
-    }
-  }, [searchParams])
+  const postIdParam = searchParams.get("post_id")
+  const postId = postIdParam ? Number(postIdParam) : null
 
   if (loading || !user) {
     return <MinLoader />
