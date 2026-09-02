@@ -14,8 +14,8 @@ export interface LogEntry {
   message: string
   context?: Record<string, unknown>
   source?: LogSource
-  userId?: string
-  path?: string
+  userId?: string | null
+  path?: string | null
 }
 
 /**
