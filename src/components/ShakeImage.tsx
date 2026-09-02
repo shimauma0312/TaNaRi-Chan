@@ -13,14 +13,18 @@ const ShakeImage = () => {
 
   // コンポーネントがマウントされたときにランダムな位置を設定
   useEffect(() => {
-    // ランダムな位置を生成
-    const randomTop = Math.floor(Math.random() * 60) // 15% ~ 75%
-    const randomLeft = Math.floor(Math.random() * 60) // 15% ~ 75%
+    const animationFrame = window.requestAnimationFrame(() => {
+      // ランダムな位置を生成
+      const randomTop = Math.floor(Math.random() * 60) // 15% ~ 75%
+      const randomLeft = Math.floor(Math.random() * 60) // 15% ~ 75%
 
-    setPosition({
-      top: `${randomTop}%`,
-      left: `${randomLeft}%`,
+      setPosition({
+        top: `${randomTop}%`,
+        left: `${randomLeft}%`,
+      })
     })
+
+    return () => window.cancelAnimationFrame(animationFrame)
   }, [])
 
   const handleClick = () => {

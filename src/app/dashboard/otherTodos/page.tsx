@@ -6,7 +6,7 @@ import useAuth from "@/hooks/useAuth"
 import { useTodoList } from "@/hooks/useTodoList"
 import { PublicTodo } from "@/types/todo"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 interface PublicUser {
   id: string
@@ -21,8 +21,6 @@ export default function OtherTodosPage() {
   })
 
   const [selectedUser, setSelectedUser] = useState<string>("")
-  const [filteredTodos, setFilteredTodos] = useState(todos)
-  const [uniqueUsers, setUniqueUsers] = useState<PublicUser[]>([])
 
   // 公開ToDoを取得
   useEffect(() => {
@@ -31,8 +29,8 @@ export default function OtherTodosPage() {
     }
   }, [user, fetchPublicTodos])
 
-  // ユニークなユーザーリストを作成
-  useEffect(() => {
+  // 公開ToDoから表示用のユーザーリストを導出
+  const uniqueUsers = useMemo(() => {
     const userMap = new Map<string, PublicUser>()
     todos.forEach((todo) => {
       // PublicTodoかどうかをチェック
@@ -46,24 +44,21 @@ export default function OtherTodosPage() {
         }
       }
     })
-    setUniqueUsers(Array.from(userMap.values()))
+    return Array.from(userMap.values())
   }, [todos])
 
-  // フィルタリング
-  useEffect(() => {
+  // 選択中のユーザーに応じた一覧を導出
+  const filteredTodos = useMemo(() => {
     if (selectedUser) {
-      setFilteredTodos(
-        todos.filter((todo) => {
-          if ("user" in todo) {
-            const publicTodo = todo as PublicTodo
-            return publicTodo.user.id === selectedUser
-          }
-          return false
-        }),
-      )
-    } else {
-      setFilteredTodos(todos)
+      return todos.filter((todo) => {
+        if ("user" in todo) {
+          const publicTodo = todo as PublicTodo
+          return publicTodo.user.id === selectedUser
+        }
+        return false
+      })
     }
+    return todos
   }, [todos, selectedUser])
 
   if (loading || !user) {
