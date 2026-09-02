@@ -55,6 +55,7 @@ export class PrismaMessageRepository implements IMessageRepository {
         },
       },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
   }
 
@@ -76,6 +77,7 @@ export class PrismaMessageRepository implements IMessageRepository {
         },
       },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
   }
 
@@ -110,7 +112,7 @@ export class PrismaMessageRepository implements IMessageRepository {
   async markAsRead(messageId: number, userId: string): Promise<Message> {
     try {
       return await this.prisma.message.update({
-        where: { message_id: messageId },
+        where: { message_id: messageId, receiver_id: userId },
         data: { is_read: true },
       });
     } catch (error: any) {
@@ -135,7 +137,10 @@ export class PrismaMessageRepository implements IMessageRepository {
   async delete(messageId: number, userId: string): Promise<void> {
     try {
       await this.prisma.message.delete({
-        where: { message_id: messageId },
+        where: {
+          message_id: messageId,
+          OR: [{ sender_id: userId }, { receiver_id: userId }],
+        },
       });
     } catch (error: any) {
       if (error?.code === 'P2025') {

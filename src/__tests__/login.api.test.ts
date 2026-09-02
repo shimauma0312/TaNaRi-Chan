@@ -14,8 +14,14 @@ import * as userService from "@/service/userService"
 import logger from "@/utils/logger"
 
 // userServiceをモック
-jest.mock("@/service/userService")
+jest.mock("@/service/userService", () => ({
+  authenticateUser: jest.fn(),
+  setAuthCookie: jest.fn(),
+}))
 jest.mock("@/utils/logger")
+jest.mock("@/lib/auth", () => ({
+  isSameOriginRequest: jest.fn().mockReturnValue(true),
+}))
 
 const mockUserService = userService as jest.Mocked<typeof userService>
 const mockLogger = logger as jest.Mocked<typeof logger>

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { GET, POST } from "../app/api/todoList/route"
-import { getUserIdFromRequest } from "../lib/auth"
+import { getUserIdFromRequest, isSameOriginRequest } from "../lib/auth"
 import { todoService } from "../service/todoService"
 
 // モック設定
@@ -17,10 +17,14 @@ const mockTodoService = todoService as jest.Mocked<typeof todoService>
 const mockGetUserIdFromRequest = getUserIdFromRequest as jest.MockedFunction<
   typeof getUserIdFromRequest
 >
+const mockIsSameOriginRequest = isSameOriginRequest as jest.MockedFunction<
+  typeof isSameOriginRequest
+>
 
 describe("/api/todoList", () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockIsSameOriginRequest.mockReturnValue(true)
   })
 
   describe("GET", () => {
@@ -97,7 +101,7 @@ describe("/api/todoList", () => {
         is_public: todoData.is_public,
       }
 
-      mockGetUserIdFromRequest.mockReturnValue(userId)
+      mockGetUserIdFromRequest.mockResolvedValue(userId)
       mockTodoService.createTodo.mockResolvedValue(createdTodo)
 
       const request = {
@@ -129,7 +133,7 @@ describe("/api/todoList", () => {
 
     it("認証されていないユーザーの場合401を返すこと", async () => {
       // Arrange
-      mockGetUserIdFromRequest.mockReturnValue(null)
+      mockGetUserIdFromRequest.mockResolvedValue(null)
 
       const request = {
         json: jest.fn(),
@@ -153,7 +157,7 @@ describe("/api/todoList", () => {
         // description と todo_deadline が不足
       }
 
-      mockGetUserIdFromRequest.mockReturnValue(userId)
+      mockGetUserIdFromRequest.mockResolvedValue(userId)
 
       const request = {
         json: jest.fn().mockResolvedValue(incompleteTodoData),
@@ -166,7 +170,7 @@ describe("/api/todoList", () => {
 
       // Assert
       expect(response.status).toBe(400)
-      expect(data).toEqual({ error: "タイトル、詳細、期限は必須です" })
+      expect(data).toEqual({ error: "詳細は必須です" })
     })
 
     it("サービス層でエラーが発生した場合適切にハンドリングすること", async () => {
@@ -179,7 +183,7 @@ describe("/api/todoList", () => {
         is_public: false,
       }
 
-      mockGetUserIdFromRequest.mockReturnValue(userId)
+      mockGetUserIdFromRequest.mockResolvedValue(userId)
       mockTodoService.createTodo.mockRejectedValue(new Error("Service error"))
 
       const request = {
