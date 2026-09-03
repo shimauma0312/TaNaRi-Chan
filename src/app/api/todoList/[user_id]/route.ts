@@ -1,6 +1,7 @@
 import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
 import { todoService } from "@/service/todoService"
 import { createApiErrorResponse } from "@/utils/errorHandler"
+import { parseTodoDate } from "@/utils/todoDate"
 import { NextRequest, NextResponse } from "next/server"
 import {
   firstValidationMessage,
@@ -22,6 +23,8 @@ interface RouteParams {
 const paginationQuery = z.object({
   cursor: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
 })
 
 /**
@@ -35,15 +38,48 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
     const requestUserId = await getUserIdFromRequest(request)
     const { user_id: targetUserId } = await params
     const url = new URL(request.url)
+    const requestedTodoId = url.searchParams.get("todo_id")
+
+    if (requestedTodoId !== null) {
+      const todoId = todoIdSchema.safeParse(requestedTodoId)
+      if (!todoId.success) {
+        return NextResponse.json({ error: "ToDoIDが不正です" }, { status: 400 })
+      }
+
+      const todo = await todoService.getTodoById(todoId.data, requestUserId ?? undefined)
+      if (!todo || todo.id !== targetUserId) {
+        return NextResponse.json({ error: "ToDoが見つかりません" }, { status: 404 })
+      }
+      return NextResponse.json(todo)
+    }
+
     const page = paginationQuery.safeParse({
       cursor: url.searchParams.get("cursor") ?? undefined,
       limit: url.searchParams.get("limit") ?? undefined,
+      from: url.searchParams.get("from") ?? undefined,
+      to: url.searchParams.get("to") ?? undefined,
     })
     if (!page.success) return NextResponse.json({ error: "ページ指定が不正です" }, { status: 400 })
 
+    const from = page.data.from ? parseTodoDate(page.data.from) : undefined
+    const to = page.data.to ? parseTodoDate(page.data.to) : undefined
+    if (
+      Boolean(page.data.from) !== Boolean(page.data.to) ||
+      (page.data.from && !from) ||
+      (page.data.to && !to) ||
+      (from && to && from >= to)
+    ) {
+      return NextResponse.json({ error: "日付範囲が不正です" }, { status: 400 })
+    }
+
     // 自分のToDoリストの場合
     if (requestUserId === targetUserId) {
-      const todos = await todoService.getUserTodos(targetUserId, page.data)
+      const todos = await todoService.getUserTodos(targetUserId, {
+        cursor: page.data.cursor,
+        limit: page.data.limit,
+        from: from ?? undefined,
+        to: to ?? undefined,
+      })
       const response = NextResponse.json(todos)
       if (page.data.limit && todos.length === page.data.limit) {
         response.headers.set("X-Next-Cursor", String(todos.at(-1)?.todo_id))

@@ -7,13 +7,32 @@ import useAuth from "@/hooks/useAuth"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-const getTodoList = async (id: string) => {
-  const response = await fetch(`/api/todoList/${id}`)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch todos: ${response.status}`)
-  }
-  const data = (await response.json()) as TodoItem[]
-  return data
+const getTodoList = async (id: string, currentDate: Date) => {
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
+  const from = `${year}-${String(month + 1).padStart(2, "0")}-01`
+  const nextMonth = new Date(year, month + 1, 1)
+  const to = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, "0")}-01`
+  const todos: TodoItem[] = []
+  let cursor: string | null = null
+
+  do {
+    const query = new URLSearchParams({ from, to, limit: "100" })
+    if (cursor) query.set("cursor", cursor)
+    const response = await fetch(`/api/todoList/${id}?${query}`)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch todos: ${response.status}`)
+    }
+    const page = (await response.json()) as TodoItem[]
+    todos.push(...page)
+    const nextCursor = response.headers.get("X-Next-Cursor")
+    if (nextCursor === cursor) {
+      throw new Error("Todo pagination did not advance")
+    }
+    cursor = nextCursor
+  } while (cursor)
+
+  return todos
 }
 
 const CalendarPage = () => {
@@ -29,10 +48,11 @@ const CalendarPage = () => {
 
     const fetchData = async () => {
       try {
+        setLoading(true)
         if (!user.user) {
           throw new Error("User is not authenticated")
         }
-        const data = await getTodoList(user.user.id)
+        const data = await getTodoList(user.user.id, currentDate)
         setTodos(data)
         setError(null)
       } catch (err) {
@@ -44,7 +64,7 @@ const CalendarPage = () => {
     }
 
     fetchData()
-  }, [user.user?.id, user.user, user.loading])
+  }, [user.user?.id, user.user, user.loading, currentDate])
 
   if (!user || loading) {
     return <MinLoader />

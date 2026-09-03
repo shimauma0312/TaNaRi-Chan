@@ -41,7 +41,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
     async (id: string): Promise<Todo | null> => {
       if (!user?.id) return null
 
-      const response = await fetch(`/api/todoList/${user.id}`, {
+      const response = await fetch(`/api/todoList/${user.id}?todo_id=${encodeURIComponent(id)}`, {
         method: "GET",
       })
 
@@ -49,14 +49,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
         throw new Error("Failed to fetch ToDo")
       }
 
-      const todos: Todo[] = await response.json()
-      const todo = todos.find((t) => t.todo_id === parseInt(id))
-
-      if (!todo) {
-        throw new Error("ToDo not found")
-      }
-
-      return todo
+      return (await response.json()) as Todo
     },
     [user?.id],
   )

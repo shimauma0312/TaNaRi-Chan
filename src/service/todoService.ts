@@ -31,12 +31,15 @@ export class TodoService {
    */
   async getUserTodos(
     userId: string,
-    options: { cursor?: number; limit?: number } = {},
+    options: { cursor?: number; limit?: number; from?: Date; to?: Date } = {},
   ): Promise<Todo[]> {
     const limit = Math.min(Math.max(options.limit ?? DEFAULT_QUERY_LIMIT, 1), DEFAULT_QUERY_LIMIT)
     return await this.prisma.todo.findMany({
       where: {
         id: userId,
+        ...(options.from && options.to
+          ? { todo_deadline: { gte: options.from, lt: options.to } }
+          : {}),
       },
       orderBy: { todo_id: "desc" },
       take: limit,

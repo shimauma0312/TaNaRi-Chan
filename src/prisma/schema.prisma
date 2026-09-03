@@ -80,6 +80,7 @@ model Todo {
   @@index([id, is_completed, todo_deadline])
   @@index([id, todo_id])
   @@index([is_public, todo_id])
+  @@index([id, todo_deadline])
 }
 
 model Post {
