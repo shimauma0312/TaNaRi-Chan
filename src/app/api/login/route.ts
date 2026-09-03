@@ -78,9 +78,11 @@ export async function POST(req: NextRequest) {
     )
   } catch (error) {
     logger.error("Login error occurred", {
-      email: requestBody?.email || "unknown",
+      accountProvided: requestBody !== null,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
+      ...(process.env.NODE_ENV !== "production" && error instanceof Error
+        ? { stack: error.stack }
+        : {}),
     })
     return NextResponse.json({ error: "ログイン処理中にエラーが発生しました" }, { status: 500 })
   }
