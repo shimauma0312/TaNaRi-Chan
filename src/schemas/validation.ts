@@ -15,8 +15,10 @@ export const registerValidation = () => {
     email: z
       .string()
       .nonempty("メールアドレスは必須です")
+      .trim()
       .email("正しいメールアドレスを入力してください。")
-      .max(100, "メールアドレスは100文字以内で入力してください。"),
+      .max(100, "メールアドレスは100文字以内で入力してください。")
+      .transform((value) => value.toLowerCase()),
     password: registrationPasswordSchema,
   })
 }
@@ -30,7 +32,9 @@ export const loginValidation = () => {
     email: z
       .string()
       .nonempty("メールアドレスは必須です")
-      .email("正しいメールアドレスを入力してください。"),
+      .trim()
+      .email("正しいメールアドレスを入力してください。")
+      .transform((value) => value.toLowerCase()),
     password: loginPasswordSchema,
   })
 }
