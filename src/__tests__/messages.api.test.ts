@@ -19,6 +19,7 @@ jest.mock('@prisma/client', () => {
     findUnique: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    deleteMany: jest.fn(),
   };
   return {
     PrismaClient: jest.fn().mockImplementation(() => ({
@@ -252,7 +253,8 @@ describe('DELETE /api/messages/[message_id]', () => {
   it('送信者がメッセージを削除できる', async () => {
     mockGetUserId.mockResolvedValue('user1');
     mockPrismaMessage.findUnique.mockResolvedValue(mockMessageData);
-    mockPrismaMessage.delete.mockResolvedValue(mockMessageData);
+    mockPrismaMessage.update.mockResolvedValue({ ...mockMessageData, deletedBySender: true });
+    mockPrismaMessage.deleteMany.mockResolvedValue({ count: 0 });
 
     const req = createRequest('DELETE', 'http://localhost/api/messages/1');
     const res = await deleteMessage(req, {

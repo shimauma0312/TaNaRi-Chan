@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
-import { CreateMessageData, Message, MessageWithUsers } from '@/domain/message/Message';
-import { IMessageRepository } from '@/domain/message/MessageRepository';
-import { AppError, ErrorType } from '@/utils/errorHandler';
+import { PrismaClient } from "@prisma/client"
+import { CreateMessageData, Message, MessageWithUsers } from "@/domain/message/Message"
+import { IMessageRepository } from "@/domain/message/MessageRepository"
+import { AppError, ErrorType } from "@/utils/errorHandler"
 
 /**
  * Prismaを使ったメッセージリポジトリ実装クラス
@@ -35,12 +35,12 @@ export class PrismaMessageRepository implements IMessageRepository {
             select: { id: true, user_name: true },
           },
         },
-      });
+      })
     } catch (error: any) {
-      if (error?.code === 'P2003') {
-        throw new AppError('送信先ユーザーが存在しません', ErrorType.VALIDATION, 400);
+      if (error?.code === "P2003") {
+        throw new AppError("送信先ユーザーが存在しません", ErrorType.VALIDATION, 400)
       }
-      throw error;
+      throw error
     }
   }
 
@@ -52,7 +52,7 @@ export class PrismaMessageRepository implements IMessageRepository {
    */
   async findByReceiverId(userId: string): Promise<MessageWithUsers[]> {
     return this.prisma.message.findMany({
-      where: { receiver_id: userId },
+      where: { receiver_id: userId, deletedByReceiver: false },
       include: {
         sender: {
           select: { id: true, user_name: true },
@@ -61,9 +61,9 @@ export class PrismaMessageRepository implements IMessageRepository {
           select: { id: true, user_name: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: 100,
-    });
+    })
   }
 
   /**
@@ -74,7 +74,7 @@ export class PrismaMessageRepository implements IMessageRepository {
    */
   async findBySenderId(userId: string): Promise<MessageWithUsers[]> {
     return this.prisma.message.findMany({
-      where: { sender_id: userId },
+      where: { sender_id: userId, deletedBySender: false },
       include: {
         sender: {
           select: { id: true, user_name: true },
@@ -83,9 +83,9 @@ export class PrismaMessageRepository implements IMessageRepository {
           select: { id: true, user_name: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: 100,
-    });
+    })
   }
 
   /**
@@ -105,7 +105,7 @@ export class PrismaMessageRepository implements IMessageRepository {
           select: { id: true, user_name: true },
         },
       },
-    });
+    })
   }
 
   /**
@@ -121,16 +121,12 @@ export class PrismaMessageRepository implements IMessageRepository {
       return await this.prisma.message.update({
         where: { message_id: messageId, receiver_id: userId },
         data: { is_read: true },
-      });
+      })
     } catch (error: any) {
-      if (error?.code === 'P2025') {
-        throw new AppError(
-          'メッセージが見つかりません',
-          ErrorType.NOT_FOUND,
-          404
-        );
+      if (error?.code === "P2025") {
+        throw new AppError("メッセージが見つかりません", ErrorType.NOT_FOUND, 404)
       }
-      throw error;
+      throw error
     }
   }
 
@@ -143,21 +139,36 @@ export class PrismaMessageRepository implements IMessageRepository {
    */
   async delete(messageId: number, userId: string): Promise<void> {
     try {
-      await this.prisma.message.delete({
-        where: {
-          message_id: messageId,
-          OR: [{ sender_id: userId }, { receiver_id: userId }],
-        },
-      });
-    } catch (error: any) {
-      if (error?.code === 'P2025') {
-        throw new AppError(
-          'メッセージが見つかりません',
-          ErrorType.NOT_FOUND,
-          404
-        );
+      const message = await this.prisma.message.findUnique({
+        where: { message_id: messageId },
+        select: { sender_id: true, receiver_id: true },
+      })
+      if (!message) throw Object.assign(new Error("Record not found"), { code: "P2025" })
+
+      if (message.sender_id === userId) {
+        await this.prisma.message.update({
+          where: { message_id: messageId, sender_id: userId, deletedBySender: false },
+          data: { deletedBySender: true },
+        })
+      } else if (message.receiver_id === userId) {
+        await this.prisma.message.update({
+          where: { message_id: messageId, receiver_id: userId, deletedByReceiver: false },
+          data: { deletedByReceiver: true },
+        })
+      } else {
+        throw Object.assign(new Error("Record not found"), { code: "P2025" })
       }
-      throw error;
+
+      // Retain the other participant's copy, then reclaim the row after both
+      // mailboxes have deleted it.
+      await this.prisma.message.deleteMany({
+        where: { message_id: messageId, deletedBySender: true, deletedByReceiver: true },
+      })
+    } catch (error: any) {
+      if (error?.code === "P2025") {
+        throw new AppError("メッセージが見つかりません", ErrorType.NOT_FOUND, 404)
+      }
+      throw error
     }
   }
 }
