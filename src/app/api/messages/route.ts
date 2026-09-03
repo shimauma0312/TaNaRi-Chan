@@ -13,9 +13,15 @@ import { GetInboxMessagesUseCase } from "@/application/message/GetInboxMessagesU
 import { SendMessageUseCase } from "@/application/message/SendMessageUseCase"
 import { AppError, createApiErrorResponse } from "@/utils/errorHandler"
 import { createMessageRequestSchema, firstValidationMessage, readJsonRequest } from "@/schemas/api"
+import { z } from "zod"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
+
+const paginationQuery = z.object({
+  cursor: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+})
 
 /**
  * 受信メッセージ一覧を取得する
@@ -32,9 +38,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const repository = new PrismaMessageRepository(prisma)
     const useCase = new GetInboxMessagesUseCase(repository)
-    const messages = await useCase.execute(userId)
+    const url = new URL(request.url)
+    const page = paginationQuery.safeParse({
+      cursor: url.searchParams.get("cursor") ?? undefined,
+      limit: url.searchParams.get("limit") ?? undefined,
+    })
+    if (!page.success) {
+      return NextResponse.json({ error: "ページ指定が不正です" }, { status: 400 })
+    }
+    const messages = await useCase.execute(userId, page.data)
 
-    return NextResponse.json(messages)
+    const response = NextResponse.json(messages)
+    if (page.data.limit && messages.length === page.data.limit) {
+      response.headers.set("X-Next-Cursor", String(messages.at(-1)?.message_id))
+    }
+    return response
   } catch (error) {
     if (error instanceof AppError) {
       const errorResponse = createApiErrorResponse(error, "受信メッセージの取得に失敗しました")
