@@ -85,4 +85,22 @@ describe("POST /api/logs", () => {
     expect(response.status).toBe(403)
     expect(mockWriteLogToDB).not.toHaveBeenCalled()
   })
+
+  test("stores only the referer pathname", async () => {
+    const response = await POST(
+      request(
+        { level: LogLevel.INFO, message: "hello" },
+        { referer: "https://tanari.example/dashboard?token=secret#private" },
+      ),
+    )
+
+    expect(response.status).toBe(201)
+    expect(mockWriteLogToDB).toHaveBeenCalledWith(expect.objectContaining({ path: "/dashboard" }))
+  })
+
+  test("reports persistence failures instead of claiming success", async () => {
+    mockWriteLogToDB.mockRejectedValue(new Error("database unavailable"))
+    const response = await POST(request({ level: LogLevel.ERROR, message: "failed" }))
+    expect(response.status).toBe(500)
+  })
 })
