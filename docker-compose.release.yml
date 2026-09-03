@@ -44,3 +44,25 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+  maintenance:
+    profiles: [maintenance]
+    build:
+      context: .
+      target: development
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      DATABASE_URL: ${PRODUCTION_DATABASE_URL:?PRODUCTION_DATABASE_URL is required}
+      LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
+      REVOKED_SESSION_RETENTION_DAYS: ${REVOKED_SESSION_RETENTION_DAYS:-7}
+    command: ["npm", "run", "maintenance:cleanup"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
