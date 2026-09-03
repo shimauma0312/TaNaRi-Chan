@@ -66,7 +66,7 @@ export async function PUT(
 
     const json = await readJsonRequest(request)
     if (!json.success) {
-      return NextResponse.json({ error: "リクエスト本文が不正です" }, { status: 400 })
+      return NextResponse.json({ error: json.error }, { status: json.status })
     }
 
     const parsed = updateTodoRequestSchema.safeParse(json.data)

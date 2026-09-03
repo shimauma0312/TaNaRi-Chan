@@ -78,12 +78,60 @@ export function firstValidationMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "入力内容が不正です"
 }
 
+export const DEFAULT_JSON_BODY_LIMIT = 128 * 1024
+
 export async function readJsonRequest(
   request: Request,
-): Promise<{ success: true; data: unknown } | { success: false }> {
+  maxBytes: number = DEFAULT_JSON_BODY_LIMIT,
+): Promise<
+  { success: true; data: unknown } | { success: false; status: 400 | 413; error: string }
+> {
+  const contentLength = request.headers?.get?.("content-length") ?? null
+  if (contentLength !== null) {
+    const declaredBytes = Number(contentLength)
+    if (Number.isFinite(declaredBytes) && declaredBytes > maxBytes) {
+      return { success: false, status: 413, error: "リクエスト本文が大きすぎます" }
+    }
+  }
+
   try {
-    return { success: true, data: await request.json() }
+    // Some route unit tests use a minimal Request double. Keep that boundary
+    // compatible while real Fetch API requests take the bounded streaming path.
+    if (request.body === undefined && typeof request.json === "function") {
+      return { success: true, data: await request.json() }
+    }
+
+    if (!request.body) {
+      return { success: false, status: 400, error: "リクエスト本文が不正です" }
+    }
+
+    const reader = request.body.getReader()
+    const chunks: Uint8Array[] = []
+    let totalBytes = 0
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      totalBytes += value.byteLength
+      if (totalBytes > maxBytes) {
+        await reader.cancel()
+        return { success: false, status: 413, error: "リクエスト本文が大きすぎます" }
+      }
+      chunks.push(value)
+    }
+
+    const bytes = new Uint8Array(totalBytes)
+    let offset = 0
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset)
+      offset += chunk.byteLength
+    }
+
+    return {
+      success: true,
+      data: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)),
+    }
   } catch {
-    return { success: false }
+    return { success: false, status: 400, error: "リクエスト本文が不正です" }
   }
 }

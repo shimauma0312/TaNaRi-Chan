@@ -4,6 +4,7 @@ import * as articleService from "@/service/articleService"
 import { AppError, createApiErrorResponse, ErrorType } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import { readJsonRequest } from "@/schemas/api"
 
 const articleFields = z.object({
   title: z.string().trim().min(1).max(200),
@@ -42,11 +43,15 @@ async function requireUserId(req: NextRequest): Promise<string> {
 }
 
 async function readJson(req: NextRequest): Promise<unknown> {
-  try {
-    return await req.json()
-  } catch {
-    throw new AppError("Request body must be valid JSON", ErrorType.VALIDATION, 400)
+  const result = await readJsonRequest(req)
+  if (!result.success) {
+    throw new AppError(
+      result.status === 400 ? "Request body must be valid JSON" : result.error,
+      ErrorType.VALIDATION,
+      result.status,
+    )
   }
+  return result.data
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
