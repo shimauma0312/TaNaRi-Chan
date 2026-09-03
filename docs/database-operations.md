@@ -19,9 +19,13 @@ The PowerShell helpers operate on the running Compose `db` service and use Postg
 docker compose up -d db
 ./scripts/backup-db.ps1 -OutputDirectory D:\backups\tanari
 
-# Destructive: restore into the configured app_db database.
+# Stop application writers before the destructive restore.
+docker compose stop app
 ./scripts/restore-db.ps1 -BackupFile D:\backups\tanari\tanari-YYYYMMDDTHHMMSSZ.dump -ConfirmRestore
 ```
+
+The restore uses one database transaction and exits on the first SQL error, so
+a failed restore rolls back instead of leaving a partially restored schema.
 
 Copy completed backups to encrypted off-host storage. A file left beside the database is not a disaster-recovery backup.
 

@@ -25,7 +25,7 @@ $containerFile = "/tmp/tanari-restore-$([guid]::NewGuid().ToString('N')).dump"
 try {
   docker cp $resolvedBackup "${containerId}:${containerFile}"
   if ($LASTEXITCODE -ne 0) { throw "docker cp failed." }
-  docker exec $containerId pg_restore --clean --if-exists --no-owner --username $DatabaseUser --dbname $DatabaseName $containerFile
+  docker exec $containerId pg_restore --clean --if-exists --exit-on-error --single-transaction --no-owner --username $DatabaseUser --dbname $DatabaseName $containerFile
   if ($LASTEXITCODE -ne 0) { throw "pg_restore failed." }
 } finally {
   docker exec $containerId rm -f -- $containerFile | Out-Null
