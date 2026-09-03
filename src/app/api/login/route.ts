@@ -3,6 +3,7 @@ import * as userService from "@/service/userService"
 import logger from "@/utils/logger"
 import { firstValidationMessage, loginRequestSchema, readJsonRequest } from "@/schemas/api"
 import { isSameOriginRequest } from "@/lib/auth"
+import { enforceRateLimits, getRateLimitClientId } from "@/lib/rateLimit"
 
 interface LoginRequestBody {
   email: string
@@ -29,6 +30,27 @@ export async function POST(req: NextRequest) {
 
     const body: LoginRequestBody = parsed.data
     requestBody = body
+
+    const rateLimit = await enforceRateLimits([
+      {
+        scope: "login-ip",
+        identifier: getRateLimitClientId(req),
+        limit: 30,
+        windowSeconds: 5 * 60,
+      },
+      {
+        scope: "login-account",
+        identifier: body.email.toLowerCase(),
+        limit: 10,
+        windowSeconds: 5 * 60,
+      },
+    ])
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "ログイン試行回数が上限に達しました。しばらく待ってから再試行してください" },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfter) } },
+      )
+    }
 
     const user = await userService.authenticateUser(body.email, body.password)
 
