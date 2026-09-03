@@ -75,13 +75,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         }
         authorId = currentUserId
       }
-      return NextResponse.json(
-        await articleService.getArticles({
-          cursor: query.data.cursor,
-          limit: query.data.limit,
-          authorId,
-        }),
-      )
+      const articles = await articleService.getArticles({
+        cursor: query.data.cursor,
+        limit: query.data.limit,
+        authorId,
+      })
+      const response = NextResponse.json(articles)
+      if (query.data.limit && articles.length === query.data.limit) {
+        response.headers.set("X-Next-Cursor", String(articles.at(-1)?.post_id))
+      }
+      return response
     }
 
     const article = await articleService.getArticle(postId)

@@ -29,15 +29,18 @@ export class TodoService {
    * @param userId ユーザーID
    * @returns ToDoリストの配列
    */
-  async getUserTodos(userId: string): Promise<Todo[]> {
+  async getUserTodos(
+    userId: string,
+    options: { cursor?: number; limit?: number } = {},
+  ): Promise<Todo[]> {
+    const limit = Math.min(Math.max(options.limit ?? DEFAULT_QUERY_LIMIT, 1), DEFAULT_QUERY_LIMIT)
     return await this.prisma.todo.findMany({
       where: {
         id: userId,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: DEFAULT_QUERY_LIMIT,
+      orderBy: { todo_id: "desc" },
+      take: limit,
+      ...(options.cursor ? { cursor: { todo_id: options.cursor }, skip: 1 } : {}),
     })
   }
 
@@ -68,6 +71,7 @@ export class TodoService {
       userId?: string
       excludeUserId?: string
       limit?: number
+      cursor?: number
     } = {},
   ): Promise<(Todo & { user: { id: string; user_name: string } })[]> {
     const limit = Math.min(Math.max(options.limit ?? DEFAULT_QUERY_LIMIT, 1), DEFAULT_QUERY_LIMIT)
@@ -86,10 +90,9 @@ export class TodoService {
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { todo_id: "desc" },
       take: limit,
+      ...(options.cursor ? { cursor: { todo_id: options.cursor }, skip: 1 } : {}),
     })
   }
 

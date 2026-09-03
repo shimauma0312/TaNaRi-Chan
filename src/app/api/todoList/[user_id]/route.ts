@@ -8,6 +8,7 @@ import {
   todoIdSchema,
   updateTodoRequestSchema,
 } from "@/schemas/api"
+import { z } from "zod"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
@@ -17,6 +18,11 @@ interface RouteParams {
     user_id: string
   }>
 }
+
+const paginationQuery = z.object({
+  cursor: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+})
 
 /**
  * 指定ユーザーのToDoリスト取得API
@@ -28,15 +34,25 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
   try {
     const requestUserId = await getUserIdFromRequest(request)
     const { user_id: targetUserId } = await params
+    const url = new URL(request.url)
+    const page = paginationQuery.safeParse({
+      cursor: url.searchParams.get("cursor") ?? undefined,
+      limit: url.searchParams.get("limit") ?? undefined,
+    })
+    if (!page.success) return NextResponse.json({ error: "ページ指定が不正です" }, { status: 400 })
 
     // 自分のToDoリストの場合
     if (requestUserId === targetUserId) {
-      const todos = await todoService.getUserTodos(targetUserId)
-      return NextResponse.json(todos)
+      const todos = await todoService.getUserTodos(targetUserId, page.data)
+      const response = NextResponse.json(todos)
+      if (page.data.limit && todos.length === page.data.limit) {
+        response.headers.set("X-Next-Cursor", String(todos.at(-1)?.todo_id))
+      }
+      return response
     }
 
     // 他人のToDoリストの場合は公開されているもののみ
-    const publicTodos = await todoService.getPublicTodos({ userId: targetUserId })
+    const publicTodos = await todoService.getPublicTodos({ userId: targetUserId, ...page.data })
     return NextResponse.json(publicTodos)
   } catch (error) {
     const errorResponse = createApiErrorResponse(error, "ToDoリストの取得に失敗しました")
