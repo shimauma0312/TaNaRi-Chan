@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { CreateMessageData, Message, MessageWithUsers } from "@/domain/message/Message"
-import { IMessageRepository } from "@/domain/message/MessageRepository"
+import { IMessageRepository, MessagePageOptions } from "@/domain/message/MessageRepository"
 import { AppError, ErrorType } from "@/utils/errorHandler"
 
 /**
@@ -50,7 +50,11 @@ export class PrismaMessageRepository implements IMessageRepository {
    * @param userId - 受信者ユーザーID
    * @returns ユーザー情報付きメッセージの配列
    */
-  async findByReceiverId(userId: string): Promise<MessageWithUsers[]> {
+  async findByReceiverId(
+    userId: string,
+    options: MessagePageOptions = {},
+  ): Promise<MessageWithUsers[]> {
+    const limit = Math.min(Math.max(options.limit ?? 100, 1), 100)
     return this.prisma.message.findMany({
       where: { receiver_id: userId, deletedByReceiver: false },
       include: {
@@ -61,8 +65,9 @@ export class PrismaMessageRepository implements IMessageRepository {
           select: { id: true, user_name: true },
         },
       },
-      orderBy: { createdAt: "desc" },
-      take: 100,
+      orderBy: { message_id: "desc" },
+      take: limit,
+      ...(options.cursor ? { cursor: { message_id: options.cursor }, skip: 1 } : {}),
     })
   }
 
@@ -72,7 +77,11 @@ export class PrismaMessageRepository implements IMessageRepository {
    * @param userId - 送信者ユーザーID
    * @returns ユーザー情報付きメッセージの配列
    */
-  async findBySenderId(userId: string): Promise<MessageWithUsers[]> {
+  async findBySenderId(
+    userId: string,
+    options: MessagePageOptions = {},
+  ): Promise<MessageWithUsers[]> {
+    const limit = Math.min(Math.max(options.limit ?? 100, 1), 100)
     return this.prisma.message.findMany({
       where: { sender_id: userId, deletedBySender: false },
       include: {
@@ -83,8 +92,9 @@ export class PrismaMessageRepository implements IMessageRepository {
           select: { id: true, user_name: true },
         },
       },
-      orderBy: { createdAt: "desc" },
-      take: 100,
+      orderBy: { message_id: "desc" },
+      take: limit,
+      ...(options.cursor ? { cursor: { message_id: options.cursor }, skip: 1 } : {}),
     })
   }
 

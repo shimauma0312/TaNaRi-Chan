@@ -30,6 +30,8 @@ const MessagesPage = () => {
   const [sentMessages, setSentMessages] = useState<MessageWithUsers[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [inboxCursor, setInboxCursor] = useState<string | null>(null)
+  const [sentCursor, setSentCursor] = useState<string | null>(null)
   const router = useRouter()
 
   /**
@@ -40,27 +42,52 @@ const MessagesPage = () => {
     setError(null)
     try {
       const [inboxRes, sentRes] = await Promise.all([
-        fetch("/api/messages"),
-        fetch("/api/messages/sent"),
+        fetch("/api/messages?limit=20"),
+        fetch("/api/messages/sent?limit=20"),
       ])
 
       if (!inboxRes.ok || !sentRes.ok) {
         throw new Error("メッセージの取得に失敗しました")
       }
 
-      const [inboxData, sentData] = await Promise.all([
-        inboxRes.json(),
-        sentRes.json(),
-      ])
+      const [inboxData, sentData] = await Promise.all([inboxRes.json(), sentRes.json()])
 
       setInboxMessages(inboxData)
       setSentMessages(sentData)
+      setInboxCursor(inboxRes.headers.get("X-Next-Cursor"))
+      setSentCursor(sentRes.headers.get("X-Next-Cursor"))
     } catch (err) {
       setError(handleClientError(err, "メッセージの取得に失敗しました"))
     } finally {
       setDataLoading(false)
     }
   }, [])
+
+  const loadMore = async (tab: Tab) => {
+    const cursor = tab === "inbox" ? inboxCursor : sentCursor
+    if (!cursor) return
+    setDataLoading(true)
+    setError(null)
+    try {
+      const path = tab === "inbox" ? "/api/messages" : "/api/messages/sent"
+      const response = await fetch(`${path}?limit=20&cursor=${cursor}`)
+      const data = await response.json().catch(() => null)
+      if (!response.ok || !Array.isArray(data)) {
+        throw new Error(data?.error || "メッセージの取得に失敗しました")
+      }
+      if (tab === "inbox") {
+        setInboxMessages((previous) => [...previous, ...data])
+        setInboxCursor(response.headers.get("X-Next-Cursor"))
+      } else {
+        setSentMessages((previous) => [...previous, ...data])
+        setSentCursor(response.headers.get("X-Next-Cursor"))
+      }
+    } catch (error) {
+      setError(handleClientError(error, "メッセージの取得に失敗しました"))
+    } finally {
+      setDataLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (user) {
@@ -82,12 +109,8 @@ const MessagesPage = () => {
       })
 
       if (response.ok) {
-        setInboxMessages((prev) =>
-          prev.filter((m) => m.message_id !== messageId)
-        )
-        setSentMessages((prev) =>
-          prev.filter((m) => m.message_id !== messageId)
-        )
+        setInboxMessages((prev) => prev.filter((m) => m.message_id !== messageId))
+        setSentMessages((prev) => prev.filter((m) => m.message_id !== messageId))
       } else {
         const data = await response.json()
         alert(data.error || "削除に失敗しました")
@@ -110,9 +133,7 @@ const MessagesPage = () => {
 
       if (response.ok) {
         setInboxMessages((prev) =>
-          prev.map((m) =>
-            m.message_id === messageId ? { ...m, is_read: true } : m
-          )
+          prev.map((m) => (m.message_id === messageId ? { ...m, is_read: true } : m)),
         )
       } else {
         const data = await response.json()
@@ -190,11 +211,17 @@ const MessagesPage = () => {
                 />
               )}
               {activeTab === "sent" && (
-                <MessageList
-                  messages={sentMessages}
-                  variant="sent"
-                  onDelete={handleDelete}
-                />
+                <MessageList messages={sentMessages} variant="sent" onDelete={handleDelete} />
+              )}
+              {((activeTab === "inbox" && inboxCursor) || (activeTab === "sent" && sentCursor)) && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => loadMore(activeTab)}
+                    className="px-5 py-2 bg-indigo-500 rounded-md hover:bg-indigo-600"
+                  >
+                    さらに読み込む
+                  </button>
+                </div>
               )}
             </>
           )}
