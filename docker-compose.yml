@@ -16,7 +16,9 @@ services:
     init: true
     tty: true
     stdin_open: true
-    environment: *app-environment
+    environment:
+      <<: *app-environment
+      TRUSTED_ORIGINS: http://localhost:${APP_PORT:-3000},http://127.0.0.1:${APP_PORT:-3000},${TRUSTED_ORIGINS:-}
     volumes: *app-volumes
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000"
@@ -44,7 +46,9 @@ services:
     init: true
     tty: true
     stdin_open: true
-    environment: *app-environment
+    environment:
+      <<: *app-environment
+      TRUSTED_ORIGINS: http://localhost:${DEBUG_APP_PORT:-3001},http://127.0.0.1:${DEBUG_APP_PORT:-3001},${TRUSTED_ORIGINS:-}
     volumes: *app-volumes
     command:
       - node_modules/.bin/next
@@ -70,7 +74,9 @@ services:
       context: .
       target: production
     init: true
-    environment: *app-environment
+    environment:
+      <<: *app-environment
+      TRUSTED_ORIGINS: http://localhost:${PRODUCTION_APP_PORT:-3002},http://127.0.0.1:${PRODUCTION_APP_PORT:-3002},${TRUSTED_ORIGINS:-}
     ports:
       - "127.0.0.1:${PRODUCTION_APP_PORT:-3002}:3000"
     depends_on:

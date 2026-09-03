@@ -157,12 +157,57 @@ export async function getUserFromRequest(request: NextRequest): Promise<AuthUser
   return findUserBySessionToken(request.cookies.get(AUTH_COOKIE_NAME)?.value)
 }
 
-/** Reject browser requests whose origin is explicitly cross-site. */
+function configuredTrustedOrigins(): Set<string> {
+  const origins = new Set<string>()
+
+  for (const candidate of (process.env.TRUSTED_ORIGINS ?? "").split(",")) {
+    const value = candidate.trim()
+    if (!value) {
+      continue
+    }
+
+    try {
+      const url = new URL(value)
+      if ((url.protocol === "http:" || url.protocol === "https:") && url.origin === value.replace(/\/$/, "")) {
+        origins.add(url.origin)
+      }
+    } catch {
+      // Invalid configuration must never broaden the set of trusted origins.
+    }
+  }
+
+  return origins
+}
+
+/**
+ * Reject browser requests whose Origin is not the internal URL or an explicitly
+ * configured public URL. Forwarded headers are intentionally not trusted here:
+ * deployments behind a proxy must put their externally visible origins in
+ * TRUSTED_ORIGINS.
+ */
 export function isSameOriginRequest(request: Request): boolean {
   if (request.headers.get("sec-fetch-site") === "cross-site") {
     return false
   }
 
   const origin = request.headers.get("origin")
-  return origin === null || origin === new URL(request.url).origin
+  if (origin === null) {
+    return true
+  }
+
+  let normalizedOrigin: string
+  try {
+    const url = new URL(origin)
+    if ((url.protocol !== "http:" && url.protocol !== "https:") || url.origin !== origin.replace(/\/$/, "")) {
+      return false
+    }
+    normalizedOrigin = url.origin
+  } catch {
+    return false
+  }
+
+  return (
+    normalizedOrigin === new URL(request.url).origin ||
+    configuredTrustedOrigins().has(normalizedOrigin)
+  )
 }
