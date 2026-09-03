@@ -33,11 +33,14 @@ For data that must be retained:
 
 1. Run the old PostgreSQL image against the legacy volume without exposing it publicly.
 2. Create and verify a custom-format `pg_dump`.
-3. Start PostgreSQL 17 with `pgdata17` and apply migrations.
-4. Restore into an isolated database, compare row counts and application smoke tests, then schedule the production cutover.
-5. Keep the old volume and pre-cutover dump until the retention window expires.
+3. Start PostgreSQL 17 with an empty `pgdata17` volume and restore the full dump into an isolated database.
+4. Point the matching application release at that restored copy and run `prisma migrate deploy` to apply migrations created after the dump.
+5. Compare row counts, run application smoke tests, and only then schedule the production cutover.
+6. Keep the old volume and pre-cutover dump until the retention window expires.
 
 Never point PostgreSQL 17 directly at a PostgreSQL 13 data directory.
+Do not apply the new schema before restoring a schema-inclusive dump: the restore
+would replace it with the schema and migration history captured from PostgreSQL 13.
 
 ## Existing Prisma databases
 
