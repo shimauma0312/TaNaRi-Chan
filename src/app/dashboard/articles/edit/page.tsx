@@ -8,23 +8,19 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 
 async function fetchArticleData(postId: number) {
-  try {
-    const response = await fetch(`/api/articles?post_id=${postId}`)
-    const data = await response.json()
-    return {
-      title: data.title ?? "",
-      content: data.content ?? "",
-    }
-  } catch (error) {
-    console.error("Error fetching article:", error)
-    return { title: "", content: "" }
+  const response = await fetch(`/api/articles?post_id=${postId}`)
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(data?.error || "記事の取得に失敗しました")
   }
+  return { title: data.title, content: data.content }
 }
 
 function EditArticleContent({ postId }: { postId: number | null }) {
   const router = useRouter()
   const [articleData, setArticleData] = useState({ title: "", content: "" })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (postId === null) {
@@ -39,7 +35,7 @@ function EditArticleContent({ postId }: { postId: number | null }) {
         setArticleData(data)
       } catch (error) {
         console.error("Failed to load article:", error)
-        setArticleData({ title: "", content: "" })
+        setError(error instanceof Error ? error.message : "記事の取得に失敗しました")
       } finally {
         setLoading(false)
       }
@@ -60,8 +56,27 @@ function EditArticleContent({ postId }: { postId: number | null }) {
     return <MinLoader />
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
+        <SideMenu />
+        <div className="w-full md:w-4/5 p-8">
+          <p role="alert" className="text-red-300">
+            {error}
+          </p>
+          <button
+            className="mt-4 text-indigo-300 underline"
+            onClick={() => router.push("/dashboard/articles")}
+          >
+            記事一覧へ戻る
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen text-white p-4 flex">
+    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
       <ArticleForm
         postId={postId}

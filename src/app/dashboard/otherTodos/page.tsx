@@ -36,7 +36,7 @@ export default function OtherTodosPage() {
       // PublicTodoかどうかをチェック
       if ("user" in todo) {
         const publicTodo = todo as PublicTodo
-        if (!userMap.has(publicTodo.user.id)) {
+        if (publicTodo.user.id !== user?.id && !userMap.has(publicTodo.user.id)) {
           userMap.set(publicTodo.user.id, {
             id: publicTodo.user.id,
             user_name: publicTodo.user.user_name,
@@ -45,21 +45,17 @@ export default function OtherTodosPage() {
       }
     })
     return Array.from(userMap.values())
-  }, [todos])
+  }, [todos, user?.id])
 
   // 選択中のユーザーに応じた一覧を導出
   const filteredTodos = useMemo(() => {
-    if (selectedUser) {
-      return todos.filter((todo) => {
-        if ("user" in todo) {
-          const publicTodo = todo as PublicTodo
-          return publicTodo.user.id === selectedUser
-        }
-        return false
-      })
-    }
-    return todos
-  }, [todos, selectedUser])
+    return todos.filter((todo) => {
+      if (!("user" in todo)) return false
+      const publicTodo = todo as PublicTodo
+      if (publicTodo.user.id === user?.id) return false
+      return !selectedUser || publicTodo.user.id === selectedUser
+    })
+  }, [todos, selectedUser, user?.id])
 
   if (loading || !user) {
     return (
@@ -70,9 +66,9 @@ export default function OtherTodosPage() {
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
+    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
-      <div className="w-4/5 p-4">
+      <div className="w-full md:w-4/5 p-4">
         <div className="container mx-auto">
           {/* ヘッダー */}
           <div className="flex justify-between items-center mb-6">
@@ -95,8 +91,11 @@ export default function OtherTodosPage() {
 
           {/* フィルター */}
           <div className="mb-6">
-            <label className="block text-lg font-medium mb-2">Filter by User:</label>
+            <label htmlFor="public-todo-user" className="block text-lg font-medium mb-2">
+              Filter by User:
+            </label>
             <select
+              id="public-todo-user"
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
               className="px-4 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
@@ -138,7 +137,7 @@ export default function OtherTodosPage() {
 
           {/* エラーメッセージ */}
           {error && (
-            <div className="mb-6 p-4 bg-red-500/20 border border-red-500 rounded-lg">
+            <div role="alert" className="mb-6 p-4 bg-red-500/20 border border-red-500 rounded-lg">
               <div className="flex justify-between items-center">
                 <span className="text-red-300">{error}</span>
                 <button onClick={clearError} className="text-red-300 hover:text-white">
@@ -156,7 +155,7 @@ export default function OtherTodosPage() {
           )}
 
           {/* ToDoリスト */}
-          {!isLoading && (
+          {!isLoading && filteredTodos.length > 0 && (
             <TodoList
               todos={filteredTodos}
               showStats={false} // 統計は上で表示するため無効化
