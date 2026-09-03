@@ -1,4 +1,6 @@
 import prisma from "@/lib/prisma"
+import { AppError, ErrorType } from "@/utils/errorHandler"
+import { isTodoDateBeforeToday, normalizeTodoDate } from "@/utils/todoDate"
 import { PrismaClient, Todo } from "@prisma/client"
 
 const DEFAULT_QUERY_LIMIT = 100
@@ -61,11 +63,13 @@ export class TodoService {
    * 公開されているToDoリストを取得する（ユーザー情報付き）
    * @returns 公開ToDoリストの配列（ユーザー情報含む）
    */
-  async getPublicTodos(options: {
-    userId?: string
-    excludeUserId?: string
-    limit?: number
-  } = {}): Promise<(Todo & { user: { id: string; user_name: string } })[]> {
+  async getPublicTodos(
+    options: {
+      userId?: string
+      excludeUserId?: string
+      limit?: number
+    } = {},
+  ): Promise<(Todo & { user: { id: string; user_name: string } })[]> {
     const limit = Math.min(Math.max(options.limit ?? DEFAULT_QUERY_LIMIT, 1), DEFAULT_QUERY_LIMIT)
 
     return await this.prisma.todo.findMany({
@@ -134,15 +138,17 @@ export class TodoService {
       throw new Error("タイトルは必須です")
     }
 
-    if (todoData.todo_deadline < new Date()) {
-      throw new Error("期限は現在時刻より後に設定してください")
+    if (isTodoDateBeforeToday(todoData.todo_deadline)) {
+      throw new AppError("期限は今日以降に設定してください", ErrorType.VALIDATION, 400)
     }
+
+    const normalizedDeadline = normalizeTodoDate(todoData.todo_deadline)
 
     return await this.prisma.todo.create({
       data: {
         title: todoData.title.trim(),
         description: todoData.description.trim(),
-        todo_deadline: todoData.todo_deadline,
+        todo_deadline: normalizedDeadline,
         is_public: todoData.is_public || false,
         id: userId,
       },
@@ -172,8 +178,8 @@ export class TodoService {
       throw new Error("タイトルは必須です")
     }
 
-    if (updateData.todo_deadline && updateData.todo_deadline < new Date()) {
-      throw new Error("期限は現在時刻より後に設定してください")
+    if (updateData.todo_deadline && isTodoDateBeforeToday(updateData.todo_deadline)) {
+      throw new AppError("期限は今日以降に設定してください", ErrorType.VALIDATION, 400)
     }
 
     // データの整形
@@ -185,7 +191,7 @@ export class TodoService {
       sanitizedData.description = updateData.description.trim()
     }
     if (updateData.todo_deadline !== undefined) {
-      sanitizedData.todo_deadline = updateData.todo_deadline
+      sanitizedData.todo_deadline = normalizeTodoDate(updateData.todo_deadline)
     }
     if (updateData.is_completed !== undefined) {
       sanitizedData.is_completed = updateData.is_completed
