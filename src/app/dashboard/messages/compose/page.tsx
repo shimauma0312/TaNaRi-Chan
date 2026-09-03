@@ -34,12 +34,17 @@ const ComposeMessagePage = () => {
   const [users, setUsers] = useState<User[]>([])
   const [usersLoading, setUsersLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [query, setQuery] = useState("")
 
   useEffect(() => {
     if (user) {
+      const controller = new AbortController()
       const fetchUsers = async () => {
         try {
-          const response = await fetch("/api/users")
+          setUsersLoading(true)
+          const response = await fetch(`/api/users?limit=50&q=${encodeURIComponent(query)}`, {
+            signal: controller.signal,
+          })
           if (response.ok) {
             const data = await response.json()
             setUsers(data)
@@ -47,15 +52,20 @@ const ComposeMessagePage = () => {
             setError("ユーザー一覧の取得に失敗しました")
           }
         } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") return
           setError(handleClientError(err, "ユーザー一覧の取得に失敗しました"))
         } finally {
           setUsersLoading(false)
         }
       }
 
-      fetchUsers()
+      const timer = setTimeout(fetchUsers, 250)
+      return () => {
+        clearTimeout(timer)
+        controller.abort()
+      }
     }
-  }, [user])
+  }, [query, user])
 
   if (loading || !user) {
     return <MinLoader />
@@ -74,11 +84,19 @@ const ComposeMessagePage = () => {
             </div>
           )}
 
-          {usersLoading ? (
-            <MinLoader />
-          ) : (
-            <MessageForm users={users} />
-          )}
+          <label htmlFor="recipient-search" className="block text-sm text-gray-300 mb-1">
+            送信先を検索
+          </label>
+          <input
+            id="recipient-search"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="ユーザー名"
+            className="w-full mb-4 px-3 py-2 bg-transparent border border-gray-600 rounded-md text-white"
+          />
+
+          {usersLoading ? <MinLoader /> : <MessageForm users={users} />}
         </div>
       </div>
     </div>
