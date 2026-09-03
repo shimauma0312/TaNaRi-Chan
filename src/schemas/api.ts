@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { parseTodoDate } from "@/utils/todoDate"
+import { loginPasswordSchema, registrationPasswordSchema } from "@/schemas/password"
 
 const trimmedString = (field: string, max: number) =>
   z
@@ -26,7 +27,7 @@ export const registerRequestSchema = z
       .trim()
       .email("メールアドレスの形式が不正です")
       .max(100),
-    password: z.string().min(8, "パスワードは8文字以上必要です").max(72),
+    password: registrationPasswordSchema,
     userName: trimmedString("ユーザー名", 50),
   })
   .strict()
@@ -39,10 +40,7 @@ export const loginRequestSchema = z
       .min(1, "メールアドレスとパスワードは必須です")
       .email("メールアドレスの形式が不正です")
       .max(100),
-    password: z
-      .string({ required_error: "メールアドレスとパスワードは必須です" })
-      .min(1, "メールアドレスとパスワードは必須です")
-      .max(72),
+    password: loginPasswordSchema,
   })
   .strict()
 
