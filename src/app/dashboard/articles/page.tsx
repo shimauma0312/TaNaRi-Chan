@@ -15,20 +15,36 @@ interface Article {
 
 const getArticles = async () => {
   const response = await fetch("/api/articles?mine=true")
-  const data = await response.json()
-  return data
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(data?.error || "記事の取得に失敗しました")
+  }
+  if (!Array.isArray(data)) {
+    throw new Error("記事一覧の応答形式が不正です")
+  }
+  return data as Article[]
 }
 
 const ArticlesPage = () => {
   const { user, loading } = useAuth()
   const [articles, setArticles] = useState<Article[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     if (user) {
       const fetchData = async () => {
-        const articlesData = await getArticles()
-        setArticles(articlesData)
+        setDataLoading(true)
+        setError(null)
+        try {
+          const articlesData = await getArticles()
+          setArticles(articlesData)
+        } catch (error) {
+          setError(handleClientError(error, "記事の取得に失敗しました"))
+        } finally {
+          setDataLoading(false)
+        }
       }
 
       fetchData()
@@ -83,9 +99,9 @@ const ArticlesPage = () => {
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
+    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
-      <div className="w-4/5 p-4">
+      <div className="w-full md:w-4/5 p-4">
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">Articles</h1>
@@ -96,7 +112,14 @@ const ArticlesPage = () => {
               New Article
             </button>
           </div>
-          {articles.length === 0 ? (
+          {error && (
+            <p role="alert" className="mb-4 text-red-300">
+              {error}
+            </p>
+          )}
+          {dataLoading ? (
+            <MinLoader />
+          ) : articles.length === 0 && !error ? (
             <p>記事が見つかりません</p>
           ) : (
             <ul className="space-y-4">

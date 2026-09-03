@@ -5,6 +5,7 @@ import ShakeImage from "@/components/ShakeImage"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
 import { useEffect, useState } from "react"
+import Link from "next/link"
 
 type DashboardArticle = {
   post_id: number
@@ -38,6 +39,7 @@ const DashboardPage = () => {
   const { user, loading } = useAuth()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [dataLoading, setDataLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -45,12 +47,14 @@ const DashboardPage = () => {
     const fetchDashboard = async () => {
       try {
         const res = await fetch("/api/dashboard")
-        if (res.ok) {
-          const data = await res.json()
-          setDashboardData(data)
+        const data = await res.json().catch(() => null)
+        if (!res.ok) {
+          throw new Error(data?.error || "ダッシュボードの取得に失敗しました")
         }
+        setDashboardData(data)
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error)
+        setError(error instanceof Error ? error.message : "ダッシュボードの取得に失敗しました")
       } finally {
         setDataLoading(false)
       }
@@ -68,9 +72,9 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
+    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
-      <div className="w-4/5 p-4 relative">
+      <div className="w-full md:w-4/5 p-4 relative">
         <div className="container mx-auto">
           <div className="mb-6">
             <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -79,6 +83,12 @@ const DashboardPage = () => {
           </div>
 
           <ShakeImage />
+
+          {error && (
+            <p role="alert" className="mb-6 text-red-300">
+              {error}
+            </p>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
@@ -89,7 +99,10 @@ const DashboardPage = () => {
                 )}
                 {dashboardData?.articles.map((article) => (
                   <li key={article.post_id} className="p-2 border rounded-md">
-                    <div className="block hover:underline cursor-pointer">
+                    <Link
+                      className="block hover:underline"
+                      href={`/dashboard/articles/view?post_id=${article.post_id}`}
+                    >
                       <h3 className="font-bold">{article.title}</h3>
                       <p className="text-sm text-gray-300">
                         {article.content.replace(/[#*`[\]]/g, "").slice(0, 100)}
@@ -99,7 +112,7 @@ const DashboardPage = () => {
                         by {article.author.user_name} &middot;{" "}
                         {new Date(article.createdAt).toLocaleDateString()}
                       </p>
-                    </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -112,7 +125,7 @@ const DashboardPage = () => {
                 )}
                 {dashboardData?.activeTodos.map((todo) => (
                   <li key={todo.todo_id} className="p-2 border rounded-md">
-                    <div className="block hover:underline cursor-pointer">
+                    <div className="block">
                       <h3 className="font-bold">{todo.title}</h3>
                       <p className="text-sm">{todo.description}</p>
                       <p className="text-xs text-gray-400 mt-1">
@@ -131,7 +144,7 @@ const DashboardPage = () => {
                 )}
                 {dashboardData?.publicTodos.map((todo) => (
                   <li key={todo.todo_id} className="p-2 border rounded-md">
-                    <div className="block hover:underline cursor-pointer">
+                    <div className="block">
                       <h3 className="font-bold">{todo.title}</h3>
                       <p className="text-sm">{todo.description}</p>
                       <p className="text-xs text-gray-400 mt-1">

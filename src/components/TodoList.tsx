@@ -139,6 +139,7 @@ export default function TodoList({
                   {onToggleCompletion && (
                     <input
                       type="checkbox"
+                      aria-label={`${todo.title}を${todo.is_completed ? "未完了" : "完了"}にする`}
                       checked={todo.is_completed}
                       onChange={() => handleToggleCompletion(todo.todo_id)}
                       className="w-5 h-5 rounded border-gray-400 text-green-500 focus:ring-green-500"
