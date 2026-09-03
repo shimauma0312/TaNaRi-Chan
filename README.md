@@ -152,11 +152,11 @@ If you need to completely reset your development database:
 ```bash
 # Reset database, apply all migrations, and run seed
 docker compose run --rm -e ALLOW_DESTRUCTIVE_SEED=true app npx prisma migrate reset
-
-# Alternative: Manual reset
-docker compose run --rm app npx prisma db push --force-reset
-docker compose run --rm -e ALLOW_DESTRUCTIVE_SEED=true app npx prisma db seed
 ```
+
+Use `migrate reset` so the development database retains the same migration
+history as deployment environments. Do not use `db push --force-reset` for a
+database that will later run `migrate deploy`.
 
 The seed command is refused when `NODE_ENV=production` or when
 `ALLOW_DESTRUCTIVE_SEED=true` is not explicitly supplied. It clears all
