@@ -3,6 +3,7 @@
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
 import { Todo } from "@/types/todo"
+import { formatTodoDate, isTodoDateNear, isTodoDateOverdue } from "@/utils/todoDate"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 
@@ -118,18 +119,12 @@ const ToDoListPage = () => {
 
   // Highlight todos with nearby deadline (within 3 days)
   const isDeadlineNear = (deadline: string) => {
-    const deadlineDate = new Date(deadline)
-    const now = new Date()
-    const diffTime = deadlineDate.getTime() - now.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays <= 3 && diffDays >= 0
+    return isTodoDateNear(deadline)
   }
 
   // Check if overdue
   const isOverdue = (deadline: string) => {
-    const deadlineDate = new Date(deadline)
-    const now = new Date()
-    return deadlineDate < now
+    return isTodoDateOverdue(deadline)
   }
 
   if (loading || !user) {
@@ -261,7 +256,7 @@ const ToDoListPage = () => {
                                   : "text-gray-500"
                             }`}
                           >
-                            Due: {new Date(todo.todo_deadline).toLocaleDateString("en-US")}
+                            Due: {formatTodoDate(todo.todo_deadline)}
                             {isOverdue(todo.todo_deadline) && !todo.is_completed && " (Overdue)"}
                             {isDeadlineNear(todo.todo_deadline) &&
                               !todo.is_completed &&

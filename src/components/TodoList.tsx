@@ -1,4 +1,5 @@
 import { PublicTodo, Todo } from "@/types/todo"
+import { formatTodoDate, isTodoDateNear, isTodoDateOverdue } from "@/utils/todoDate"
 import { useState } from "react"
 
 interface TodoListProps {
@@ -28,18 +29,12 @@ export default function TodoList({
 
   // Highlight todos with nearby deadline (within 3 days)
   const isDeadlineNear = (deadline: string) => {
-    const deadlineDate = new Date(deadline)
-    const now = new Date()
-    const diffTime = deadlineDate.getTime() - now.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays <= 3 && diffDays >= 0
+    return isTodoDateNear(deadline)
   }
 
   // Check if overdue
   const isOverdue = (deadline: string) => {
-    const deadlineDate = new Date(deadline)
-    const now = new Date()
-    return deadlineDate < now
+    return isTodoDateOverdue(deadline)
   }
 
   // Statistics data
@@ -169,7 +164,7 @@ export default function TodoList({
                           : "text-gray-500"
                     }`}
                   >
-                    Due: {new Date(todo.todo_deadline).toLocaleDateString("en-US")}
+                    Due: {formatTodoDate(todo.todo_deadline)}
                     {isOverdue(todo.todo_deadline) && !todo.is_completed && " (Overdue)"}
                     {isDeadlineNear(todo.todo_deadline) &&
                       !todo.is_completed &&

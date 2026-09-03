@@ -42,6 +42,40 @@ export function getLocalToday(now: Date = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
+
+/**
+ * Compare a stored date-only deadline with the user's local calendar day.
+ * Calendar fields are selected before converting to UTC midnight, preventing
+ * time-zone offsets from turning a deadline on "today" into an overdue item.
+ */
+export function getTodoDaysFromLocalToday(
+  value: Date | string,
+  now: Date = new Date(),
+): number {
+  const deadline = parseTodoDate(formatTodoDate(value))
+  const today = parseTodoDate(getLocalToday(now))
+
+  if (!deadline || !today) {
+    return Number.NaN
+  }
+
+  return Math.round((deadline.getTime() - today.getTime()) / MILLISECONDS_PER_DAY)
+}
+
+export function isTodoDateOverdue(value: Date | string, now: Date = new Date()): boolean {
+  return getTodoDaysFromLocalToday(value, now) < 0
+}
+
+export function isTodoDateNear(
+  value: Date | string,
+  now: Date = new Date(),
+  thresholdDays = 3,
+): boolean {
+  const days = getTodoDaysFromLocalToday(value, now)
+  return days >= 0 && days <= thresholdDays
+}
+
 export function isTodoDateBeforeToday(value: Date, now: Date = new Date()): boolean {
   return normalizeTodoDate(value).getTime() < normalizeTodoDate(now).getTime()
 }

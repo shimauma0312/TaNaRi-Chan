@@ -4,6 +4,7 @@ import MinLoader from "@/components/MinLoader"
 import ShakeImage from "@/components/ShakeImage"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
+import { formatTodoDate } from "@/utils/todoDate"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 
@@ -129,7 +130,7 @@ const DashboardPage = () => {
                       <h3 className="font-bold">{todo.title}</h3>
                       <p className="text-sm">{todo.description}</p>
                       <p className="text-xs text-gray-400 mt-1">
-                        Deadline: {new Date(todo.todo_deadline).toLocaleDateString()}
+                        Deadline: {formatTodoDate(todo.todo_deadline)}
                       </p>
                     </div>
                   </li>
@@ -149,7 +150,7 @@ const DashboardPage = () => {
                       <p className="text-sm">{todo.description}</p>
                       <p className="text-xs text-gray-400 mt-1">
                         by {todo.user.user_name} &middot; Deadline:{" "}
-                        {new Date(todo.todo_deadline).toLocaleDateString()}
+                        {formatTodoDate(todo.todo_deadline)}
                       </p>
                     </div>
                   </li>

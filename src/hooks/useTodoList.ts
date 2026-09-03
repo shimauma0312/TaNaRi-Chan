@@ -1,4 +1,5 @@
 import { PublicTodo, Todo } from "@/types/todo"
+import { isTodoDateOverdue } from "@/utils/todoDate"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 interface UseTodoListOptions {
@@ -236,9 +237,7 @@ export const useTodoList = (options: UseTodoListOptions = {}) => {
     pending: todos.filter((todo) => !todo.is_completed).length,
     overdue: todos.filter((todo) => {
       if (todo.is_completed) return false
-      const deadline = new Date(todo.todo_deadline)
-      const now = new Date()
-      return deadline < now
+      return isTodoDateOverdue(todo.todo_deadline)
     }).length,
   }
 
