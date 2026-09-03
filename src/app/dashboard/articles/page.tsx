@@ -37,12 +37,12 @@ const ArticlesPage = () => {
 
   useEffect(() => {
     if (user) {
-      const fetchData = async (append = false) => {
+      const fetchData = async () => {
         setDataLoading(true)
         setError(null)
         try {
-          const page = await getArticles(append ? (nextCursor ?? undefined) : undefined)
-          setArticles((previous) => (append ? [...previous, ...page.articles] : page.articles))
+          const page = await getArticles()
+          setArticles(page.articles)
           setNextCursor(page.nextCursor)
         } catch (error) {
           setError(handleClientError(error, "記事の取得に失敗しました"))
