@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     const json = await readJsonRequest(req)
     if (!json.success) {
-      return NextResponse.json({ error: "リクエスト本文が不正です" }, { status: 400 })
+      return NextResponse.json({ error: json.error }, { status: json.status })
     }
 
     const parsed = loginRequestSchema.safeParse(json.data)

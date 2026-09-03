@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     const json = await readJsonRequest(req)
     if (!json.success) {
-      throw new AppError("Request body must be valid JSON", ErrorType.VALIDATION, 400)
+      throw new AppError(json.error, ErrorType.VALIDATION, json.status)
     }
 
     const parsed = registerRequestSchema.safeParse(json.data)
