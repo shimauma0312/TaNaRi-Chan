@@ -9,13 +9,16 @@ import { useCallback, useEffect, useState } from "react"
 /**
  * Get user's Todo list
  */
-const getTodoList = async (id: string): Promise<Todo[]> => {
-  const response = await fetch("/api/todoList/" + id)
+const getTodoList = async (
+  id: string,
+  cursor?: string,
+): Promise<{ todos: Todo[]; nextCursor: string | null }> => {
+  const response = await fetch(`/api/todoList/${id}?limit=20${cursor ? `&cursor=${cursor}` : ""}`)
   if (!response.ok) {
     throw new Error("Failed to fetch Todo list")
   }
   const data = await response.json()
-  return data
+  return { todos: data, nextCursor: response.headers.get("X-Next-Cursor") }
 }
 
 /**
@@ -49,23 +52,28 @@ const ToDoListPage = () => {
   const [todoList, setTodoList] = useState<Todo[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
 
   // Function to fetch Todo list
-  const fetchTodoList = useCallback(async () => {
-    if (!user) return
+  const fetchTodoList = useCallback(
+    async (cursor?: string) => {
+      if (!user) return
 
-    try {
-      setIsLoading(true)
-      setError(null)
-      const todos = await getTodoList(user.id)
-      setTodoList(todos)
-    } catch (error) {
-      console.error("ToDoリスト取得エラー:", error)
-      setError(error instanceof Error ? error.message : "ToDoリストの取得に失敗しました")
-    } finally {
-      setIsLoading(false)
-    }
-  }, [user])
+      try {
+        setIsLoading(true)
+        setError(null)
+        const page = await getTodoList(user.id, cursor)
+        setTodoList((previous) => (cursor ? [...previous, ...page.todos] : page.todos))
+        setNextCursor(page.nextCursor)
+      } catch (error) {
+        console.error("ToDoリスト取得エラー:", error)
+        setError(error instanceof Error ? error.message : "ToDoリストの取得に失敗しました")
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [user],
+  )
 
   useEffect(() => {
     if (user) {
@@ -129,9 +137,9 @@ const ToDoListPage = () => {
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
+    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
-      <div className="w-4/5 p-4 relative">
+      <div className="w-full md:w-4/5 p-4 relative">
         <div className="container mx-auto">
           {/* Header */}
           <div className="absolute top-4 right-4 flex space-x-2">
@@ -222,6 +230,7 @@ const ToDoListPage = () => {
                         <div className="flex items-center gap-3 mb-2">
                           <input
                             type="checkbox"
+                            aria-label={`${todo.title}を${todo.is_completed ? "未完了" : "完了"}にする`}
                             checked={todo.is_completed}
                             onChange={() => handleToggleCompletion(todo.todo_id)}
                             className="w-5 h-5 rounded border-gray-400 text-green-500 focus:ring-green-500"
@@ -282,6 +291,16 @@ const ToDoListPage = () => {
                   </li>
                 ))}
               </ul>
+              {nextCursor && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => fetchTodoList(nextCursor)}
+                    className="px-5 py-2 bg-indigo-500 rounded-md hover:bg-indigo-600"
+                  >
+                    Load more
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

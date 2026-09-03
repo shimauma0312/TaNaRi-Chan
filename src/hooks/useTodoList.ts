@@ -1,5 +1,5 @@
 import { PublicTodo, Todo } from "@/types/todo"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 interface UseTodoListOptions {
   userId?: string
@@ -16,6 +16,8 @@ export const useTodoList = (options: UseTodoListOptions = {}) => {
   const [todos, setTodos] = useState<(Todo | PublicTodo)[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const nextCursorRef = useRef<string | null>(null)
 
   /**
    * ToDoリストを取得
@@ -51,18 +53,22 @@ export const useTodoList = (options: UseTodoListOptions = {}) => {
   /**
    * 公開ToDoリストを取得
    */
-  const fetchPublicTodos = useCallback(async () => {
+  const fetchPublicTodos = useCallback(async (append = false) => {
     try {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch("/api/todoList")
+      const cursor = append ? nextCursorRef.current : null
+      const response = await fetch(`/api/todoList?limit=20${cursor ? `&cursor=${cursor}` : ""}`)
       if (!response.ok) {
         throw new Error("公開ToDoリストの取得に失敗しました")
       }
 
       const data = await response.json()
-      setTodos(data)
+      setTodos((previous) => (append ? [...previous, ...data] : data))
+      const newCursor = response.headers.get("X-Next-Cursor")
+      nextCursorRef.current = newCursor
+      setNextCursor(newCursor)
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "公開ToDoリストの取得に失敗しました"
@@ -248,6 +254,7 @@ export const useTodoList = (options: UseTodoListOptions = {}) => {
     // アクション
     fetchTodos,
     fetchPublicTodos,
+    hasMore: nextCursor !== null,
     createTodo,
     updateTodo,
     deleteTodo,
