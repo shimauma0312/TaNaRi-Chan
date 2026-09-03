@@ -51,11 +51,19 @@ This project requires environment variables to be set up. Follow these steps to 
 
    ```bash
    DATABASE_URL="postgresql://postgres:example_password@db:5432/app_db"
+   # Comma-separated externally visible origins, without paths or trailing slashes.
+   TRUSTED_ORIGINS="https://tanari.example.com"
    # Add other environment variables as needed for your application
    ```
 
    Note: Docker Compose supplies this value to containers, so a local `.env`
    value is only needed when commands run outside Compose.
+
+   State-changing browser requests are accepted only from the request's internal
+   origin or an exact origin in `TRUSTED_ORIGINS`. Docker Compose automatically
+   adds `localhost` and `127.0.0.1` with each service's published port. A reverse
+   proxy's public HTTPS origin must be listed explicitly; `X-Forwarded-*` headers
+   are not trusted for this decision.
 
 ## Docker Development and Debugging
 
@@ -97,6 +105,11 @@ The application, database, Studio, and inspector ports are bound to
 `127.0.0.1` by default and are not exposed to the local network. VS Code and
 Chrome-based debuggers can attach to `localhost:9229`.
 
+The bundled database is PostgreSQL 17 and uses the `pgdata17` volume. If data
+exists in the legacy PostgreSQL 13 volume, follow
+[`docs/database-operations.md`](docs/database-operations.md) instead of attaching
+the old volume directly.
+
 ## Prisma Database Setup
 
 > **Important**: Run Prisma commands through Docker Compose.
@@ -114,8 +127,8 @@ explicit operation so existing development data is not replaced unexpectedly:
 # Apply existing tracked migrations manually
 docker compose run --rm migrate
 
-# Seed initial data when required
-docker compose run --rm app npx prisma db seed
+# Seed initial data when required (destructively replaces application data)
+docker compose run --rm -e ALLOW_DESTRUCTIVE_SEED=true app npx prisma db seed
 ```
 
 ### Development Workflow
@@ -138,24 +151,34 @@ If you need to completely reset your development database:
 
 ```bash
 # Reset database, apply all migrations, and run seed
-docker compose run --rm app npx prisma migrate reset
+docker compose run --rm -e ALLOW_DESTRUCTIVE_SEED=true app npx prisma migrate reset
 
 # Alternative: Manual reset
 docker compose run --rm app npx prisma db push --force-reset
-docker compose run --rm app npx prisma db seed
+docker compose run --rm -e ALLOW_DESTRUCTIVE_SEED=true app npx prisma db seed
 ```
+
+The seed command is refused when `NODE_ENV=production` or when
+`ALLOW_DESTRUCTIVE_SEED=true` is not explicitly supplied. It clears all
+application tables in one transaction before creating the sample data.
 
 #### Production Deployment
 
-For production environments:
+The `production` profile above is a local production-image smoke environment.
+For a release connected to a managed PostgreSQL database, use the fail-closed
+release definition and supply secrets from the deployment platform:
 
 ```bash
-# Apply pending migrations without prompts
-docker compose run --rm migrate
+PRODUCTION_DATABASE_URL="postgresql://..." \
+TRUSTED_ORIGINS="https://tanari.example.com" \
+docker compose -f docker-compose.release.yml up --build -d
 
 # Build the non-root standalone production image
 docker build --target production -t tanari-chan:production .
 ```
+
+Backup, restore, retention, PostgreSQL upgrade, and Prisma baseline procedures
+are documented in [`docs/database-operations.md`](docs/database-operations.md).
 
 ### Useful Commands
 
