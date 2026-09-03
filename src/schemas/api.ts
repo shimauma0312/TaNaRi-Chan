@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { parseTodoDate } from "@/utils/todoDate"
 
 const trimmedString = (field: string, max: number) =>
   z
@@ -6,6 +7,17 @@ const trimmedString = (field: string, max: number) =>
     .trim()
     .min(1, `${field}は必須です`)
     .max(max, `${field}が長すぎます`)
+
+const todoDeadlineSchema = z
+  .string({ required_error: "期限は必須です" })
+  .refine((value) => parseTodoDate(value.slice(0, 10)) !== null, "期限の日付が不正です")
+  .refine(
+    (value) =>
+      /^\d{4}-\d{2}-\d{2}$/.test(value) ||
+      z.string().datetime({ offset: true }).safeParse(value).success,
+    "期限はYYYY-MM-DD形式で入力してください",
+  )
+  .transform((value) => parseTodoDate(value.slice(0, 10)) as Date)
 
 export const registerRequestSchema = z
   .object({
@@ -38,7 +50,7 @@ export const createTodoRequestSchema = z
   .object({
     title: trimmedString("タイトル", 200),
     description: trimmedString("詳細", 5_000),
-    todo_deadline: z.coerce.date({ required_error: "期限は必須です" }),
+    todo_deadline: todoDeadlineSchema,
     is_public: z.boolean().optional().default(false),
   })
   .strict()
@@ -48,7 +60,7 @@ export const updateTodoRequestSchema = z
     todo_id: z.coerce.number().int().positive(),
     title: trimmedString("タイトル", 200).optional(),
     description: z.string().trim().max(5_000, "詳細が長すぎます").optional(),
-    todo_deadline: z.coerce.date().optional(),
+    todo_deadline: todoDeadlineSchema.optional(),
     is_completed: z.boolean().optional(),
     is_public: z.boolean().optional(),
   })

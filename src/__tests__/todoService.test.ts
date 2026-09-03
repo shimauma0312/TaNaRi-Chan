@@ -244,7 +244,13 @@ describe("TodoService", () => {
         data: {
           title: todoData.title,
           description: todoData.description,
-          todo_deadline: todoData.todo_deadline,
+          todo_deadline: new Date(
+            Date.UTC(
+              todoData.todo_deadline.getUTCFullYear(),
+              todoData.todo_deadline.getUTCMonth(),
+              todoData.todo_deadline.getUTCDate(),
+            ),
+          ),
           is_public: todoData.is_public,
           id: userId,
         },
@@ -280,12 +286,46 @@ describe("TodoService", () => {
 
       // Act & Assert
       await expect(service.createTodo(userId, todoData)).rejects.toThrow(
-        "期限は現在時刻より後に設定してください",
+        "期限は今日以降に設定してください",
       )
+    })
+
+    it("当日の期限を時刻に関係なく受け付けること", async () => {
+      jest.useFakeTimers().setSystemTime(new Date("2026-09-03T21:00:00.000Z"))
+      const today = new Date("2026-09-03T00:00:00.000Z")
+      mockPrismaClient.todo.create.mockResolvedValue({ todo_id: 1 } as Todo)
+
+      await service.createTodo("test-user-id", {
+        title: "Today",
+        description: "Due today",
+        todo_deadline: today,
+      })
+
+      expect(mockPrismaClient.todo.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ todo_deadline: today }),
+      })
+      jest.useRealTimers()
     })
   })
 
   describe("updateTodo", () => {
+    it("期限を変更しない期限切れToDoの編集を許可すること", async () => {
+      const expiredTodo = {
+        todo_id: 1,
+        title: "Expired",
+        todo_deadline: new Date("2020-01-01T00:00:00.000Z"),
+      } as Todo
+      mockPrismaClient.todo.update.mockResolvedValue({ ...expiredTodo, title: "Updated" })
+
+      await expect(service.updateTodo(1, "test-user-id", { title: "Updated" })).resolves.toEqual(
+        expect.objectContaining({ title: "Updated" }),
+      )
+      expect(mockPrismaClient.todo.update).toHaveBeenCalledWith({
+        where: { todo_id: 1, id: "test-user-id" },
+        data: { title: "Updated" },
+      })
+    })
+
     it("ToDoを更新できること", async () => {
       // Arrange
       const todoId = 1

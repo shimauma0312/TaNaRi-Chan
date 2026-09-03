@@ -1,4 +1,5 @@
 import { Todo } from "@/types/todo"
+import { formatTodoDate, getLocalToday } from "@/utils/todoDate"
 import { useState } from "react"
 
 interface TodoFormProps {
@@ -6,7 +7,7 @@ interface TodoFormProps {
   onSubmit: (data: {
     title: string
     description: string
-    todo_deadline: string
+    todo_deadline?: string
     is_public: boolean
     is_completed?: boolean
   }) => Promise<void>
@@ -28,11 +29,8 @@ export default function TodoForm({
 }: TodoFormProps) {
   const [title, setTitle] = useState(initialData.title || "")
   const [description, setDescription] = useState(initialData.description || "")
-  const [dueDate, setDueDate] = useState(
-    initialData.todo_deadline
-      ? new Date(initialData.todo_deadline).toISOString().split("T")[0]
-      : "",
-  )
+  const initialDueDate = initialData.todo_deadline ? formatTodoDate(initialData.todo_deadline) : ""
+  const [dueDate, setDueDate] = useState(initialDueDate)
   const [visibility, setVisibility] = useState(initialData.is_public ? "public" : "private")
   const [isCompleted, setIsCompleted] = useState(initialData.is_completed || false)
   const [error, setError] = useState<string | null>(null)
@@ -55,10 +53,7 @@ export default function TodoForm({
 
       // 期限が過去でないかチェック（編集時は除く）
       if (!initialData.todo_id) {
-        const deadline = new Date(dueDate)
-        const now = new Date()
-        now.setHours(0, 0, 0, 0)
-        if (deadline < now) {
+        if (dueDate < getLocalToday()) {
           throw new Error("Due date must be today or later")
         }
       }
@@ -66,7 +61,7 @@ export default function TodoForm({
       const formData = {
         title: title.trim(),
         description: description.trim(),
-        todo_deadline: new Date(dueDate).toISOString(),
+        ...(!initialData.todo_id || dueDate !== initialDueDate ? { todo_deadline: dueDate } : {}),
         is_public: visibility === "public",
         ...(initialData.todo_id && { is_completed: isCompleted }),
       }
@@ -130,7 +125,7 @@ export default function TodoForm({
             className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
             required
             disabled={isSubmitting}
-            min={!initialData.todo_id ? new Date().toISOString().split("T")[0] : undefined}
+            min={!initialData.todo_id ? getLocalToday() : undefined}
           />
         </div>
 

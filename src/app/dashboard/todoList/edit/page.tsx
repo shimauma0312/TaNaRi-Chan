@@ -4,6 +4,7 @@ import MinLoader from "@/components/MinLoader"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
 import { Todo } from "@/types/todo"
+import { formatTodoDate } from "@/utils/todoDate"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useState } from "react"
 
@@ -26,6 +27,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [dueDate, setDueDate] = useState("")
+  const [initialDueDate, setInitialDueDate] = useState("")
   const [visibility, setVisibility] = useState("private")
   const [isCompleted, setIsCompleted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -66,7 +68,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
     todo_id: number
     title: string
     description: string
-    todo_deadline: string
+    todo_deadline?: string
     is_completed: boolean
     is_public: boolean
   }) => {
@@ -101,7 +103,9 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
         }
         setTitle(todo.title)
         setDescription(todo.description || "")
-        setDueDate(new Date(todo.todo_deadline).toISOString().split("T")[0])
+        const todoDate = formatTodoDate(todo.todo_deadline)
+        setDueDate(todoDate)
+        setInitialDueDate(todoDate)
         setVisibility(todo.is_public ? "public" : "private")
         setIsCompleted(todo.is_completed)
       } catch (error) {
@@ -139,7 +143,7 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
         todo_id: parseInt(todoId),
         title: title.trim(),
         description: description.trim(),
-        todo_deadline: new Date(dueDate).toISOString(),
+        ...(dueDate !== initialDueDate && { todo_deadline: dueDate }),
         is_completed: isCompleted,
         is_public: visibility === "public",
       }

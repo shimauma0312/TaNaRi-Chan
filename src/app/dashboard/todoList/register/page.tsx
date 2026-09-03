@@ -3,6 +3,7 @@
 import MinLoader from "@/components/MinLoader"
 import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
+import { getLocalToday } from "@/utils/todoDate"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -61,17 +62,14 @@ export default function RegisterForm() {
       }
 
       // 期限が過去でないかチェック
-      const deadline = new Date(dueDate)
-      const now = new Date()
-      now.setHours(0, 0, 0, 0) // 時刻を00:00:00にリセット
-      if (deadline < now) {
+      if (dueDate < getLocalToday()) {
         throw new Error("Due date must be today or later")
       }
 
       const todoData = {
         title: title.trim(),
         description: description.trim(),
-        todo_deadline: new Date(dueDate).toISOString(),
+        todo_deadline: dueDate,
         is_public: visibility === "public",
       }
 
@@ -152,7 +150,7 @@ export default function RegisterForm() {
                   className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
                   required
                   disabled={isSubmitting}
-                  min={new Date().toISOString().split("T")[0]} // 今日以降の日付のみ選択可能
+                  min={getLocalToday()} // 今日以降の日付のみ選択可能
                 />
               </div>
 
