@@ -45,18 +45,22 @@ model RateLimitBucket {
 }
 
 model Message {
-  message_id  Int      @id @default(autoincrement())
-  subject     String
-  body        String
-  createdAt   DateTime @default(now())
-  sender_id   String
-  receiver_id String
-  is_read     Boolean  @default(false)
-  sender      User     @relation("SentMessages", fields: [sender_id], references: [id])
-  receiver    User     @relation("ReceivedMessages", fields: [receiver_id], references: [id])
+  message_id        Int      @id @default(autoincrement())
+  subject           String
+  body              String
+  createdAt         DateTime @default(now())
+  sender_id         String
+  receiver_id       String
+  is_read           Boolean  @default(false)
+  deletedBySender   Boolean  @default(false)
+  deletedByReceiver Boolean  @default(false)
+  sender            User     @relation("SentMessages", fields: [sender_id], references: [id])
+  receiver          User     @relation("ReceivedMessages", fields: [receiver_id], references: [id])
 
   @@index([receiver_id, createdAt])
   @@index([sender_id, createdAt])
+  @@index([receiver_id, deletedByReceiver, createdAt])
+  @@index([sender_id, deletedBySender, createdAt])
 }
 
 model Todo {
