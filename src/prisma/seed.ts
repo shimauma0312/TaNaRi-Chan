@@ -74,6 +74,7 @@ async function main() {
     await prisma.todo.deleteMany({})
     await prisma.post.deleteMany({})
     await prisma.postTag.deleteMany({})
+    await prisma.rateLimitBucket.deleteMany({})
     await prisma.log.deleteMany({})
     await prisma.user.deleteMany({})
 
