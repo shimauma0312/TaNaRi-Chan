@@ -59,8 +59,8 @@ model Message {
 
   @@index([receiver_id, createdAt])
   @@index([sender_id, createdAt])
-  @@index([receiver_id, deletedByReceiver, createdAt])
-  @@index([sender_id, deletedBySender, createdAt])
+  @@index([receiver_id, deletedByReceiver, message_id])
+  @@index([sender_id, deletedBySender, message_id])
 }
 
 model Todo {
@@ -78,6 +78,8 @@ model Todo {
 
   @@index([is_public, createdAt])
   @@index([id, is_completed, todo_deadline])
+  @@index([id, todo_id])
+  @@index([is_public, todo_id])
 }
 
 model Post {
@@ -93,6 +95,7 @@ model Post {
 
   @@index([createdAt])
   @@index([author_id, createdAt])
+  @@index([author_id, post_id])
 }
 
 model PostTag {
