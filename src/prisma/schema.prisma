@@ -10,7 +10,7 @@ datasource db {
 model User {
   id               String        @id @unique
   user_name        String
-  user_email       String        @unique
+  user_email       String        @unique @db.Citext
   password         String
   icon_number      Int
   todos            Todo[]

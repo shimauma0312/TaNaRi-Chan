@@ -43,4 +43,24 @@ describe("shared password constraints", () => {
         .success,
     ).toBe(false)
   })
+
+  test.each([registerRequestSchema, registerValidation()])(
+    "normalizes registration email casing and surrounding space",
+    (schema) => {
+      const result = schema.parse({
+        ...registration,
+        email: "  User@Example.COM  ",
+        password: "password123",
+      })
+      expect(result.email).toBe("user@example.com")
+    },
+  )
+
+  test.each([loginRequestSchema, loginValidation()])(
+    "normalizes login email casing and surrounding space",
+    (schema) => {
+      const result = schema.parse({ email: "  User@Example.COM  ", password: "password123" })
+      expect(result.email).toBe("user@example.com")
+    },
+  )
 })
