@@ -1,5 +1,6 @@
 import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
 import { writeLogToDB } from "@/lib/dbLogger"
+import { readJsonRequest } from "@/schemas/api"
 import { LogLevel, LogSource } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
@@ -37,24 +38,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    const declaredLength = Number(request.headers.get("content-length"))
-    if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_BYTES) {
-      return NextResponse.json({ error: "Log payload is too large" }, { status: 413 })
+    const json = await readJsonRequest(request, MAX_REQUEST_BYTES)
+    if (!json.success) {
+      return NextResponse.json({ error: json.error }, { status: json.status })
     }
 
-    const rawBody = await request.text()
-    if (new TextEncoder().encode(rawBody).byteLength > MAX_REQUEST_BYTES) {
-      return NextResponse.json({ error: "Log payload is too large" }, { status: 413 })
-    }
-
-    let body: unknown
-    try {
-      body = JSON.parse(rawBody)
-    } catch {
-      return NextResponse.json({ error: "Request body must be valid JSON" }, { status: 400 })
-    }
-
-    const parsed = clientLogInput.safeParse(body)
+    const parsed = clientLogInput.safeParse(json.data)
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid log payload" }, { status: 400 })
     }
