@@ -4,6 +4,7 @@
 // Todoが存在する日はハイライト表示されます。
 
 import { useMemo } from "react"
+import { formatTodoDate, getLocalToday } from "@/utils/todoDate"
 
 // カレンダーで使用するTodoの型定義。
 // `todo_deadline` は ISO 形式の日付文字列である必要があります。
@@ -40,8 +41,8 @@ const Calendar = ({ currentDate, todos }: CalendarProps) => {
     // 各日に該当するTodoを追加
     for (let i = 1; i <= totalDays; i++) {
       const date = new Date(year, month, i)
-      const iso = date.toISOString().split("T")[0]
-      const dayTodos = todos.filter((t) => t.todo_deadline.startsWith(iso))
+      const dateKey = getLocalToday(date)
+      const dayTodos = todos.filter((todo) => formatTodoDate(todo.todo_deadline) === dateKey)
       items.push({ date, todos: dayTodos })
     }
 
