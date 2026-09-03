@@ -71,16 +71,20 @@ const MessageForm = ({ users }: MessageFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded-md text-red-300">
+        <div
+          role="alert"
+          className="p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded-md text-red-300"
+        >
           {error}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label htmlFor="message-receiver" className="block text-sm font-medium text-gray-300 mb-1">
           送信先
         </label>
         <select
+          id="message-receiver"
           value={receiverId}
           onChange={(e) => setReceiverId(e.target.value)}
           required
@@ -98,10 +102,11 @@ const MessageForm = ({ users }: MessageFormProps) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label htmlFor="message-subject" className="block text-sm font-medium text-gray-300 mb-1">
           件名
         </label>
         <input
+          id="message-subject"
           type="text"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
@@ -113,10 +118,11 @@ const MessageForm = ({ users }: MessageFormProps) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label htmlFor="message-body" className="block text-sm font-medium text-gray-300 mb-1">
           本文
         </label>
         <textarea
+          id="message-body"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           required

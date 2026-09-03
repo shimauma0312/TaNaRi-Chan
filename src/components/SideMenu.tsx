@@ -4,11 +4,14 @@ import { useLogout } from "@/hooks/useLogout"
 import Link from "next/link"
 
 const SideMenu = () => {
-  const { handleLogout } = useLogout()
+  const { handleLogout, error, isLoggingOut } = useLogout()
 
   return (
-    <div className="w-1/5 p-4">
-      <nav className="space-y-4">
+    <aside className="w-full md:w-1/5 p-4" aria-label="ダッシュボードメニュー">
+      <nav className="flex flex-wrap gap-4 md:block md:space-y-4">
+        <Link href="/dashboard" className="block text-lg text-indigo-400 hover:text-indigo-300">
+          Dashboard
+        </Link>
         <Link
           href="/dashboard/todoList"
           className="block text-lg text-indigo-400 hover:text-indigo-300"
@@ -33,12 +36,6 @@ const SideMenu = () => {
         >
           Messages
         </Link>
-        <Link
-          href="/dashboard/myPage"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          My Page
-        </Link>
         {/* <Link
           href="/dashboard/calendar"
           className="block text-lg text-indigo-400 hover:text-indigo-300"
@@ -48,11 +45,17 @@ const SideMenu = () => {
         <button
           className="block w-full bg-red-500 text-lg text-white py-1 px-3 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
           onClick={handleLogout}
+          disabled={isLoggingOut}
         >
-          Logout
+          {isLoggingOut ? "Logging out..." : "Logout"}
         </button>
       </nav>
-    </div>
+      {error && (
+        <p role="alert" className="mt-3 text-sm text-red-300">
+          {error}
+        </p>
+      )}
+    </aside>
   )
 }
 
