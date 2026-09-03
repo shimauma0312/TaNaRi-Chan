@@ -1,4 +1,5 @@
 const baseUrl = process.env.PRODUCTION_BASE_URL ?? "http://127.0.0.1:3002"
+const publicOrigin = new URL(baseUrl).origin
 const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`
 const password = "smoke-password-123"
 
@@ -7,6 +8,9 @@ async function request(path, { expected, cookie, ...options } = {}) {
     ...options,
     headers: {
       ...(options.body ? { "content-type": "application/json" } : {}),
+      ...(options.method && options.method !== "GET"
+        ? { origin: publicOrigin, "sec-fetch-site": "same-origin" }
+        : {}),
       ...(cookie ? { cookie } : {}),
       ...options.headers,
     },
@@ -42,6 +46,16 @@ async function login(email) {
 
 const emailA = `smoke-a-${suffix}@example.test`
 const emailB = `smoke-b-${suffix}@example.test`
+await request("/api/createUser", {
+  method: "POST",
+  expected: 403,
+  headers: { origin: "https://cross-site.example", "sec-fetch-site": "cross-site" },
+  body: JSON.stringify({
+    email: `blocked-${suffix}@example.test`,
+    password,
+    userName: "Blocked Origin",
+  }),
+})
 await register(emailA, "Smoke A")
 await register(emailB, "Smoke B")
 
