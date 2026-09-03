@@ -78,7 +78,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate Compose model
-        run: docker compose --profile debug --profile tools --profile production config --quiet
+        run: |
+          docker compose --profile debug --profile tools --profile production config --quiet
+          PRODUCTION_DATABASE_URL=postgresql://test:test@database.example/testdb \
+            TRUSTED_ORIGINS=https://tanari.example.test \
+            docker compose -f docker-compose.release.yml --profile maintenance config --quiet
 
       - name: Build development image and start stack
         run: docker compose up --build --wait app
