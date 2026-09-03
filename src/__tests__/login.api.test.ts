@@ -188,7 +188,7 @@ describe("/api/login", () => {
 
       // ログ出力の確認
       expect(mockLogger.error).toHaveBeenCalledWith("Login error occurred", {
-        email: "test@example.com",
+        accountProvided: true,
         error: "Database connection failed",
         stack: dbError.stack,
       })
@@ -236,7 +236,7 @@ describe("/api/login", () => {
       // Assert
       expect(mockLogger.error).toHaveBeenCalledTimes(1)
       expect(mockLogger.error).toHaveBeenCalledWith("Login error occurred", {
-        email: "user@example.com",
+        accountProvided: true,
         error: "Custom database error",
         stack: "Error: Custom database error\n    at someFunction...",
       })

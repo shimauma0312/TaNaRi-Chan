@@ -17,6 +17,15 @@ function jsonSize(value: unknown): number {
   return new TextEncoder().encode(JSON.stringify(value)).byteLength
 }
 
+function refererPath(value: string | null): string | null {
+  if (!value) return null
+  try {
+    return new URL(value).pathname.slice(0, 2_048)
+  } catch {
+    return null
+  }
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     if (!isSameOriginRequest(request)) {
@@ -58,7 +67,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       source: LogSource.CLIENT,
       // Never trust a userId supplied by client JSON.
       userId,
-      path: request.headers.get("referer")?.slice(0, 2_048) ?? null,
+      path: refererPath(request.headers.get("referer")),
     })
 
     return NextResponse.json({ ok: true }, { status: 201 })

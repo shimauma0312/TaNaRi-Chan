@@ -28,6 +28,12 @@ class ServerWinstonLogger implements ILogger {
   }
 
   private persist(level: LogLevel, message: string, context?: LogContext): void {
+    if (
+      process.env.NODE_ENV === "production" &&
+      (level === LogLevel.INFO || level === LogLevel.DEBUG)
+    ) {
+      return
+    }
     writeLogToDB({
       level,
       message,

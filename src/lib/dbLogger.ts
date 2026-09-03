@@ -38,5 +38,6 @@ export async function writeLogToDB(entry: LogEntry): Promise<void> {
     })
   } catch (err) {
     console.error("[dbLogger] DB へのログ書き込みに失敗しました:", err)
+    throw err
   }
 }
