@@ -90,9 +90,9 @@ export default function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
+    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
-      <div className="w-4/5 p-4">
+      <div className="w-full md:w-4/5 p-4">
         <div className="flex flex-col items-center justify-center min-h-full px-4">
           {/* My Todo Listへ戻るボタン */}
           <button

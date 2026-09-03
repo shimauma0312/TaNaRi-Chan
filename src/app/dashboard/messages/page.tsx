@@ -149,9 +149,9 @@ const MessagesPage = () => {
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
+    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
-      <div className="w-4/5 p-4">
+      <div className="w-full md:w-4/5 p-4">
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">メッセージ</h1>
