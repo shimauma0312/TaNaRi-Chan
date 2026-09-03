@@ -26,6 +26,27 @@ function request(body: unknown, headers: Record<string, string> = {}): NextReque
   })
 }
 
+function streamedRequest(chunks: string[]): NextRequest {
+  const encoder = new TextEncoder()
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(chunk))
+      }
+      controller.close()
+    },
+  })
+
+  const options = {
+    method: "POST",
+    body,
+    headers: { "content-type": "application/json" },
+    duplex: "half" as const,
+  }
+
+  return new NextRequest("http://localhost:3000/api/logs", options)
+}
+
 describe("POST /api/logs", () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -71,6 +92,19 @@ describe("POST /api/logs", () => {
   test("rejects oversized contexts", async () => {
     const response = await POST(
       request({ level: LogLevel.DEBUG, message: "debug", context: { value: "x".repeat(9_000) } }),
+    )
+
+    expect(response.status).toBe(413)
+    expect(mockWriteLogToDB).not.toHaveBeenCalled()
+  })
+
+  test("stops an oversized chunked body without a content-length header", async () => {
+    const response = await POST(
+      streamedRequest([
+        '{"level":"ERROR","message":"',
+        "x".repeat(16 * 1024),
+        '"}',
+      ]),
     )
 
     expect(response.status).toBe(413)
