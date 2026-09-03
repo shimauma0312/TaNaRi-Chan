@@ -6,7 +6,7 @@ import React from "react"
 
 const RegisterArticlePage: React.FC = () => {
   return (
-    <div className="min-h-screen text-white p-4 flex">
+    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
       <ArticleForm />
     </div>

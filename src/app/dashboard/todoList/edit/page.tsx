@@ -166,9 +166,9 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
 
   if (!todoId) {
     return (
-      <div className="min-h-screen text-white p-4 flex">
+      <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
         <SideMenu />
-        <div className="w-4/5 p-4">
+        <div className="w-full md:w-4/5 p-4">
           <div className="text-center">
             <div className="text-red-400 text-lg mb-4">ToDo ID is not specified</div>
             <button
@@ -188,9 +188,9 @@ function EditTodoPageContent({ todoId }: { todoId: string | null }) {
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
+    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
-      <div className="w-4/5 p-4">
+      <div className="w-full md:w-4/5 p-4">
         <div className="flex flex-col items-center justify-center min-h-full px-4">
           {/* My Todo Listへ戻るボタン */}
           <button
