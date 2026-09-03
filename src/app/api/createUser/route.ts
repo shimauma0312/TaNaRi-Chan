@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import * as userService from "@/service/userService"
 import { firstValidationMessage, readJsonRequest, registerRequestSchema } from "@/schemas/api"
 import { isSameOriginRequest } from "@/lib/auth"
+import { consumeRateLimit, getRateLimitClientId } from "@/lib/rateLimit"
 
 interface UserRequestBody {
   email: string
@@ -26,6 +27,19 @@ export async function POST(req: NextRequest) {
       throw new AppError(firstValidationMessage(parsed.error), ErrorType.VALIDATION, 400)
     }
     const body: UserRequestBody = parsed.data
+
+    const rateLimit = await consumeRateLimit({
+      scope: "registration-ip",
+      identifier: getRateLimitClientId(req),
+      limit: 5,
+      windowSeconds: 60 * 60,
+    })
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "登録試行回数が上限に達しました。しばらく待ってから再試行してください" },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfter) } },
+      )
+    }
 
     // サービス層を使用してユーザーを作成
     await userService.createUser({

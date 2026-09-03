@@ -8,17 +8,17 @@ datasource db {
 }
 
 model User {
-  id      String  @id @unique
-  user_name    String
-  user_email   String  @unique
-  password     String
-  icon_number  Int
-  todos        Todo[] 
-  posts        Post[]
-  postComments PostComment[]
-  todoComments TodoComment[]
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
+  id               String        @id @unique
+  user_name        String
+  user_email       String        @unique
+  password         String
+  icon_number      Int
+  todos            Todo[]
+  posts            Post[]
+  postComments     PostComment[]
+  todoComments     TodoComment[]
+  sentMessages     Message[]     @relation("SentMessages")
+  receivedMessages Message[]     @relation("ReceivedMessages")
   sessions         Session[]
 }
 
@@ -32,6 +32,15 @@ model Session {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([expiresAt])
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int      @default(1)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
   @@index([expiresAt])
 }
 
@@ -51,40 +60,40 @@ model Message {
 }
 
 model Todo {
-  todo_id      Int      @id @default(autoincrement())
-  title        String
-  description  String
+  todo_id       Int           @id @default(autoincrement())
+  title         String
+  description   String
   todo_deadline DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  id      String
-  user         User    @relation(fields: [id], references: [id])
-  is_completed Boolean  @default(false)
-  is_public    Boolean  @default(false)
-  comments     TodoComment[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  id            String
+  user          User          @relation(fields: [id], references: [id])
+  is_completed  Boolean       @default(false)
+  is_public     Boolean       @default(false)
+  comments      TodoComment[]
 
   @@index([is_public, createdAt])
   @@index([id, is_completed, todo_deadline])
 }
 
 model Post {
-  post_id      Int       @id @default(autoincrement())
-  title        String
-  content      String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  author_id    String
-  author       User     @relation(fields: [author_id], references: [id])
-  tags         PostTag[]    @relation()
-  comments     PostComment[]
+  post_id   Int           @id @default(autoincrement())
+  title     String
+  content   String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  author_id String
+  author    User          @relation(fields: [author_id], references: [id])
+  tags      PostTag[]     @relation()
+  comments  PostComment[]
 
   @@index([createdAt])
   @@index([author_id, createdAt])
 }
 
 model PostTag {
-  tag_id   Int     @id @default(autoincrement())
-  tag_name String  @unique
+  tag_id   Int    @id @default(autoincrement())
+  tag_name String @unique
   posts    Post[] @relation()
 }
 
@@ -94,8 +103,8 @@ model PostComment {
   createdAt  DateTime @default(now())
   author_id  String
   post_id    Int
-  author     User    @relation(fields: [author_id], references: [id])
-  post       Post    @relation(fields: [post_id], references: [post_id])
+  author     User     @relation(fields: [author_id], references: [id])
+  post       Post     @relation(fields: [post_id], references: [post_id])
 }
 
 model TodoComment {
@@ -104,8 +113,8 @@ model TodoComment {
   createdAt  DateTime @default(now())
   author_id  String
   todo_id    Int
-  author     User    @relation(fields: [author_id], references: [id])
-  todo       Todo   @relation(fields: [todo_id], references: [todo_id])
+  author     User     @relation(fields: [author_id], references: [id])
+  todo       Todo     @relation(fields: [todo_id], references: [todo_id])
 }
 
 /// アプリケーションのログ保持
