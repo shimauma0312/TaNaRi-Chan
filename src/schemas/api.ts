@@ -26,7 +26,8 @@ export const registerRequestSchema = z
       .string({ required_error: "メールアドレスは必須です" })
       .trim()
       .email("メールアドレスの形式が不正です")
-      .max(100),
+      .max(100)
+      .transform((value) => value.toLowerCase()),
     password: registrationPasswordSchema,
     userName: trimmedString("ユーザー名", 50),
   })
@@ -39,7 +40,8 @@ export const loginRequestSchema = z
       .trim()
       .min(1, "メールアドレスとパスワードは必須です")
       .email("メールアドレスの形式が不正です")
-      .max(100),
+      .max(100)
+      .transform((value) => value.toLowerCase()),
     password: loginPasswordSchema,
   })
   .strict()
