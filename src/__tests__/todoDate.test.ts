@@ -1,5 +1,6 @@
 import {
   formatTodoDate,
+  getDateInTimeZone,
   getLocalToday,
   getTodoDaysFromLocalToday,
   isTodoDateBeforeToday,
@@ -20,8 +21,32 @@ describe("Todo calendar date utilities", () => {
 
   test("compares deadlines by calendar day instead of wall-clock time", () => {
     const lateToday = new Date("2026-09-03T23:59:59.000Z")
-    expect(isTodoDateBeforeToday(new Date("2026-09-03T00:00:00.000Z"), lateToday)).toBe(false)
-    expect(isTodoDateBeforeToday(new Date("2026-09-02T00:00:00.000Z"), lateToday)).toBe(true)
+    expect(isTodoDateBeforeToday(new Date("2026-09-03T00:00:00.000Z"), lateToday, "UTC")).toBe(
+      false,
+    )
+    expect(isTodoDateBeforeToday(new Date("2026-09-02T00:00:00.000Z"), lateToday, "UTC")).toBe(
+      true,
+    )
+  })
+
+  test("uses the explicit business time zone at the UTC day boundary", () => {
+    const japanMorning = new Date("2026-09-02T15:30:00.000Z")
+
+    expect(getDateInTimeZone(japanMorning, "Asia/Tokyo")).toBe("2026-09-03")
+    expect(
+      isTodoDateBeforeToday(
+        new Date("2026-09-02T00:00:00.000Z"),
+        japanMorning,
+        "Asia/Tokyo",
+      ),
+    ).toBe(true)
+    expect(
+      isTodoDateBeforeToday(
+        new Date("2026-09-03T00:00:00.000Z"),
+        japanMorning,
+        "Asia/Tokyo",
+      ),
+    ).toBe(false)
   })
 
   test("formats database dates and local today for date inputs", () => {

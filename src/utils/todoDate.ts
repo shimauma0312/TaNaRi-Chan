@@ -1,4 +1,5 @@
 const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
+export const DEFAULT_TODO_BUSINESS_TIME_ZONE = "Asia/Tokyo"
 
 /**
  * Convert a date-only value to the canonical representation used by the database.
@@ -42,6 +43,20 @@ export function getLocalToday(now: Date = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
+export function getDateInTimeZone(
+  now: Date = new Date(),
+  timeZone = DEFAULT_TODO_BUSINESS_TIME_ZONE,
+): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now)
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
 /**
@@ -76,6 +91,10 @@ export function isTodoDateNear(
   return days >= 0 && days <= thresholdDays
 }
 
-export function isTodoDateBeforeToday(value: Date, now: Date = new Date()): boolean {
-  return normalizeTodoDate(value).getTime() < normalizeTodoDate(now).getTime()
+export function isTodoDateBeforeToday(
+  value: Date,
+  now: Date = new Date(),
+  timeZone = DEFAULT_TODO_BUSINESS_TIME_ZONE,
+): boolean {
+  return formatTodoDate(value) < getDateInTimeZone(now, timeZone)
 }
