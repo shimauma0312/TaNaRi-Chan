@@ -13,8 +13,10 @@ interface Article {
   createdAt: string
 }
 
-const getArticles = async () => {
-  const response = await fetch("/api/articles?mine=true")
+const getArticles = async (cursor?: string) => {
+  const response = await fetch(
+    `/api/articles?mine=true&limit=20${cursor ? `&cursor=${cursor}` : ""}`,
+  )
   const data = await response.json().catch(() => null)
   if (!response.ok) {
     throw new Error(data?.error || "記事の取得に失敗しました")
@@ -22,7 +24,7 @@ const getArticles = async () => {
   if (!Array.isArray(data)) {
     throw new Error("記事一覧の応答形式が不正です")
   }
-  return data as Article[]
+  return { articles: data as Article[], nextCursor: response.headers.get("X-Next-Cursor") }
 }
 
 const ArticlesPage = () => {
@@ -30,16 +32,18 @@ const ArticlesPage = () => {
   const [articles, setArticles] = useState<Article[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     if (user) {
-      const fetchData = async () => {
+      const fetchData = async (append = false) => {
         setDataLoading(true)
         setError(null)
         try {
-          const articlesData = await getArticles()
-          setArticles(articlesData)
+          const page = await getArticles(append ? (nextCursor ?? undefined) : undefined)
+          setArticles((previous) => (append ? [...previous, ...page.articles] : page.articles))
+          setNextCursor(page.nextCursor)
         } catch (error) {
           setError(handleClientError(error, "記事の取得に失敗しました"))
         } finally {
@@ -146,6 +150,25 @@ const ArticlesPage = () => {
                 </li>
               ))}
             </ul>
+          )}
+          {!dataLoading && nextCursor && (
+            <button
+              onClick={async () => {
+                setDataLoading(true)
+                try {
+                  const page = await getArticles(nextCursor)
+                  setArticles((previous) => [...previous, ...page.articles])
+                  setNextCursor(page.nextCursor)
+                } catch (error) {
+                  setError(handleClientError(error, "記事の取得に失敗しました"))
+                } finally {
+                  setDataLoading(false)
+                }
+              }}
+              className="mt-6 px-5 py-2 bg-indigo-500 rounded-md hover:bg-indigo-600"
+            >
+              さらに読み込む
+            </button>
           )}
         </div>
       </div>

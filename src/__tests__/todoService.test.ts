@@ -64,7 +64,7 @@ describe("TodoService", () => {
       // Assert
       expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith({
         where: { id: userId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { todo_id: "desc" },
         take: 100,
       })
       expect(result).toEqual(mockTodos)
@@ -101,7 +101,7 @@ describe("TodoService", () => {
       // Assert
       expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith({
         where: { is_public: true },
-        orderBy: { createdAt: "desc" },
+        orderBy: { todo_id: "desc" },
         take: 100,
         include: {
           user: {

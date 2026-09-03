@@ -3,6 +3,7 @@ import { todoService } from "@/service/todoService"
 import { createApiErrorResponse } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
 import { createTodoRequestSchema, firstValidationMessage, readJsonRequest } from "@/schemas/api"
+import { z } from "zod"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
@@ -11,10 +12,31 @@ export const dynamic = "force-dynamic"
  * ToDoリスト取得API
  * @returns 公開ToDoリストまたはエラーレスポンス
  */
-export async function GET(): Promise<NextResponse> {
+const paginationQuery = z.object({
+  cursor: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+})
+
+export async function GET(request?: NextRequest): Promise<NextResponse> {
   try {
-    const todos = await todoService.getPublicTodos()
-    return NextResponse.json(todos)
+    const url = request ? new URL(request.url) : null
+    const parsed = paginationQuery.safeParse({
+      cursor: url?.searchParams.get("cursor") ?? undefined,
+      limit: url?.searchParams.get("limit") ?? undefined,
+    })
+    if (!parsed.success)
+      return NextResponse.json({ error: "ページ指定が不正です" }, { status: 400 })
+
+    const currentUserId = request ? await getUserIdFromRequest(request) : null
+    const todos = await todoService.getPublicTodos({
+      ...parsed.data,
+      excludeUserId: currentUserId ?? undefined,
+    })
+    const response = NextResponse.json(todos)
+    if (parsed.data.limit && todos.length === parsed.data.limit) {
+      response.headers.set("X-Next-Cursor", String(todos.at(-1)?.todo_id))
+    }
+    return response
   } catch (error) {
     const errorResponse = createApiErrorResponse(error, "ToDoリストの取得に失敗しました")
     return NextResponse.json({ error: errorResponse.error }, { status: errorResponse.statusCode })

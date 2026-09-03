@@ -16,7 +16,7 @@ interface PublicUser {
 export default function OtherTodosPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
-  const { todos, isLoading, error, fetchPublicTodos, clearError } = useTodoList({
+  const { todos, isLoading, error, fetchPublicTodos, clearError, hasMore } = useTodoList({
     autoFetch: false,
   })
 
@@ -162,6 +162,17 @@ export default function OtherTodosPage() {
               allowEdit={false} // 他人のToDoは編集不可
               showPublicBadge={false} // すべて公開ToDoなので不要
             />
+          )}
+
+          {!isLoading && hasMore && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => fetchPublicTodos(true)}
+                className="px-5 py-2 bg-indigo-500 rounded-md hover:bg-indigo-600"
+              >
+                さらに読み込む
+              </button>
+            </div>
           )}
 
           {/* 空の状態 */}
