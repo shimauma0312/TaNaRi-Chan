@@ -69,6 +69,22 @@ describe("TodoService", () => {
       })
       expect(result).toEqual(mockTodos)
     })
+
+    it("filters a calendar range while retaining cursor pagination", async () => {
+      mockPrismaClient.todo.findMany.mockResolvedValue([])
+      const from = new Date("2026-09-01T00:00:00.000Z")
+      const to = new Date("2026-10-01T00:00:00.000Z")
+
+      await service.getUserTodos("test-user-id", { from, to, cursor: 200, limit: 50 })
+
+      expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith({
+        where: { id: "test-user-id", todo_deadline: { gte: from, lt: to } },
+        orderBy: { todo_id: "desc" },
+        take: 50,
+        cursor: { todo_id: 200 },
+        skip: 1,
+      })
+    })
   })
 
   describe("getPublicTodos", () => {
@@ -291,7 +307,7 @@ describe("TodoService", () => {
     })
 
     it("当日の期限を時刻に関係なく受け付けること", async () => {
-      jest.useFakeTimers().setSystemTime(new Date("2026-09-03T21:00:00.000Z"))
+      jest.useFakeTimers().setSystemTime(new Date("2026-09-03T12:00:00.000Z"))
       const today = new Date("2026-09-03T00:00:00.000Z")
       mockPrismaClient.todo.create.mockResolvedValue({ todo_id: 1 } as Todo)
 
