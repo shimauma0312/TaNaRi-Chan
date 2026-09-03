@@ -60,7 +60,7 @@ Inject the database URL from the deployment platform's secret manager. Set `TRUS
 Run cleanup daily from the scheduler in the deployment platform:
 
 ```powershell
-docker compose run --rm app npm run maintenance:cleanup
+docker compose -f docker-compose.release.yml run --rm maintenance
 ```
 
 The default retention is 30 days for application logs and seven days for revoked sessions; expired sessions and rate-limit buckets are removed immediately. Override `LOG_RETENTION_DAYS` and `REVOKED_SESSION_RETENTION_DAYS` with positive integer values. Record cleanup failures in the platform alerting system.
