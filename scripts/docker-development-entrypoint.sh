@@ -1,9 +1,9 @@
 #!/bin/sh
 set -eu
 
-# The source and node_modules are mounted independently in development.
-# Regenerate into the per-container .prisma tmpfs so a reused dependency
-# volume can never expose a client generated from an older schema.
+# Generate from the schema packaged in the image. The prisma-cli authoring
+# service may instead provide the host's Prisma directory through its narrow
+# bind mount.
 ./node_modules/.bin/prisma generate
 
 exec "$@"
