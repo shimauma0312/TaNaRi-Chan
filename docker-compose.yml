@@ -2,11 +2,16 @@ x-app-environment: &app-environment
   DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-example_password}@db:5432/${POSTGRES_DB:-app_db}
   NODE_OPTIONS: --max-old-space-size=4096
 
+x-development-image: &development-image tanari-chan-development
+
+x-development-build: &development-build
+  context: .
+  target: development
+
 services:
   app:
-    build:
-      context: .
-      target: development
+    image: *development-image
+    build: *development-build
     init: true
     tty: true
     stdin_open: true
@@ -35,9 +40,8 @@ services:
 
   debug:
     profiles: [debug]
-    build:
-      context: .
-      target: development
+    image: *development-image
+    build: *development-build
     init: true
     tty: true
     stdin_open: true
@@ -65,9 +69,8 @@ services:
         condition: service_completed_successfully
 
   migrate:
-    build:
-      context: .
-      target: development
+    image: *development-image
+    build: *development-build
     environment: *app-environment
     command: ["npx", "prisma", "migrate", "deploy"]
     depends_on:
@@ -76,9 +79,8 @@ services:
     restart: "no"
 
   seed:
-    build:
-      context: .
-      target: development
+    image: *development-image
+    build: *development-build
     environment:
       <<: *app-environment
       SEED_IF_EMPTY: "true"
@@ -90,11 +92,26 @@ services:
         condition: service_completed_successfully
     restart: "no"
 
+  prisma-cli:
+    profiles: [authoring]
+    image: *development-image
+    build: *development-build
+    init: true
+    environment: *app-environment
+    command: ["npx", "prisma", "--help"]
+    volumes:
+      - type: bind
+        source: ./src/prisma
+        target: /app/prisma
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   studio:
     profiles: [tools]
-    build:
-      context: .
-      target: development
+    image: *development-image
+    build: *development-build
     init: true
     environment: *app-environment
     command: ["npx", "prisma", "studio", "--hostname", "0.0.0.0", "--port", "5555"]
