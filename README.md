@@ -69,10 +69,12 @@ This project requires environment variables to be set up. Follow these steps to 
 
 ## Docker Development and Debugging
 
-The development image contains both source and dependencies. This avoids
+The shared development image contains both source and dependencies. This avoids
 platform-specific bind-mount I/O failures and makes startup reproducible.
 Container startup never runs `npm install`, changes source ownership, or
-requires `sudo`. Rebuild the image after changing source or dependencies:
+requires `sudo`. Rebuild the image after changing source or dependencies. The
+app, migration, seed, debug, Studio, and Prisma authoring services all use this
+same image tag:
 
 ```bash
 docker compose build app
@@ -112,11 +114,10 @@ the old volume directly.
 
 ## Prisma Database Setup
 
-> **Important**: Run Prisma commands through Docker Compose.
->
-> ```bash
-> docker compose run --rm app sh
-> ```
+> **Important**: Run Prisma authoring commands through the `prisma-cli`
+> service. It is the only application service that mounts host files, and its
+> writable mount is limited to `src/prisma`. Runtime services remain free of
+> source bind mounts.
 
 ### Initial Database Setup
 
@@ -140,11 +141,16 @@ When you modify the Prisma schema file (`prisma/schema.prisma`):
 
 ```bash
 # 1. Create and apply a new migration
-docker compose run --rm app npx prisma migrate dev --name describe_your_changes
+docker compose --profile authoring run --rm prisma-cli npx prisma migrate dev --name describe_your_changes
 
-# 2. Regenerate Prisma Client
-docker compose run --rm app npx prisma generate
+# 2. Rebuild the shared image; this regenerates Prisma Client from the new schema
+docker compose build app
+docker compose up -d app
 ```
+
+The narrow authoring mount preserves generated migrations and schema formatting
+on the host. Do not run authoring commands with the bind-free `app` service,
+because changes made inside a disposable container would be lost.
 
 #### Database Reset (Development Only)
 
@@ -152,16 +158,17 @@ If you need to completely reset your development database:
 
 ```bash
 # Reset database, apply all migrations, and run seed
-docker compose run --rm -e ALLOW_DESTRUCTIVE_SEED=true app npx prisma migrate reset
+docker compose --profile authoring run --rm -e ALLOW_DESTRUCTIVE_SEED=true prisma-cli npx prisma migrate reset
 ```
 
 Use `migrate reset` so the development database retains the same migration
 history as deployment environments. Do not use `db push --force-reset` for a
 database that will later run `migrate deploy`.
 
-The seed command is refused when `NODE_ENV=production` or when
-`ALLOW_DESTRUCTIVE_SEED=true` is not explicitly supplied. It clears all
-application tables in one transaction before creating the sample data.
+All seed modes are refused when `NODE_ENV=production`. Automatic startup uses
+`SEED_IF_EMPTY=true` and skips the seed when any user exists. Destructive
+replacement requires `ALLOW_DESTRUCTIVE_SEED=true`; it clears all application
+tables in one transaction before creating the sample data.
 
 The Compose definition in this repository is limited to development, debugging,
 and local tooling. It does not define a production deployment. Optimized build
@@ -178,14 +185,17 @@ documented in [`docs/database-operations.md`](docs/database-operations.md).
 docker compose --profile tools up studio
 
 # Check migration status
-docker compose run --rm app npx prisma migrate status
+docker compose --profile authoring run --rm prisma-cli npx prisma migrate status
 
 # View current database schema
-docker compose run --rm app npx prisma db pull
+docker compose --profile authoring run --rm prisma-cli npx prisma db pull
 
 # Format schema file
-docker compose run --rm app npx prisma format
+docker compose --profile authoring run --rm prisma-cli npx prisma format
 ```
+
+After `db pull`, `format`, or any other schema change, rebuild the shared app
+image before starting runtime or tooling services.
 
 ### Troubleshooting
 
@@ -217,9 +227,10 @@ This project includes comprehensive test coverage for error handling functionali
 # Run all tests once
 docker compose run --rm app npm test -- --runInBand
 
-# Run tests in watch mode
-docker compose run --rm app npm run test:watch
-
 # Run tests with coverage
 docker compose run --rm app npm run test:coverage -- --runInBand
 ```
+
+The bind-free development image is a source snapshot, so test watch mode cannot
+observe host edits. Rebuild the image and run the tests once after making
+changes.
