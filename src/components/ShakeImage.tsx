@@ -40,14 +40,14 @@ function getMessage(clickCount: number) {
 
 export default function ShakeImage() {
   const [clickCount, setClickCount] = useState(0)
-  const [position, setPosition] = useState({ top: "50%", left: "50%" })
+  const [position, setPosition] = useState({ top: 20, left: 20 })
   const isExploded = clickCount >= 70
 
   useEffect(() => {
     const animationFrame = window.requestAnimationFrame(() => {
       setPosition({
-        top: `${Math.floor(Math.random() * 60)}%`,
-        left: `${Math.floor(Math.random() * 60)}%`,
+        top: 5 + Math.floor(Math.random() * 31),
+        left: 5 + Math.floor(Math.random() * 56),
       })
     })
     return () => window.cancelAnimationFrame(animationFrame)
@@ -62,7 +62,16 @@ export default function ShakeImage() {
   }, [clickCount, isExploded])
 
   return (
-    <>
+    <Box
+      aria-label="Shake image playground"
+      sx={{
+        position: "relative",
+        width: "100%",
+        minHeight: { xs: 320, sm: 360, md: 420 },
+        overflow: "hidden",
+        borderRadius: 2,
+      }}
+    >
       <ButtonBase
         aria-label={`Shake image. ${clickCount} of 70 clicks${isExploded ? ". Exploded" : ""}`}
         aria-describedby={clickCount > 0 ? "shake-image-status" : undefined}
@@ -70,10 +79,10 @@ export default function ShakeImage() {
         onClick={() => setClickCount((count) => Math.min(count + 1, 70))}
         sx={{
           position: "absolute",
-          top: position.top,
-          left: position.left,
-          width: 200,
-          height: 200,
+          top: `${position.top}%`,
+          left: `${position.left}%`,
+          width: { xs: 128, sm: 160, md: 200 },
+          height: { xs: 128, sm: 160, md: 200 },
           borderRadius: 2,
           zIndex: 10,
           transition: "transform 0.2s",
@@ -117,7 +126,7 @@ export default function ShakeImage() {
               position: "absolute",
               top: "calc(100% + 8px)",
               width: "max-content",
-              maxWidth: 360,
+              maxWidth: { xs: 200, sm: 300, md: 360 },
               color: clickCount >= 60 ? "error.light" : "text.primary",
               animation: clickCount >= 60 ? `${blink} 0.5s infinite` : "none",
               "@media (prefers-reduced-motion: reduce)": { animation: "none" },
@@ -137,11 +146,11 @@ export default function ShakeImage() {
           color="error"
           startIcon={<ReplayRoundedIcon />}
           onClick={() => window.location.reload()}
-          sx={{ position: "fixed", top: 20, right: 20, zIndex: 100 }}
+          sx={{ position: "absolute", top: 16, right: 16, zIndex: 2 }}
         >
           Revive me
         </Button>
       )}
-    </>
+    </Box>
   )
 }

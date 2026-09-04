@@ -73,7 +73,7 @@ export default function TodoForm({
           required
           disabled={submitting}
           placeholder="e.g. Create project documentation"
-          slotProps={{ htmlInput: { maxLength: 100 } }}
+          slotProps={{ htmlInput: { maxLength: 200 } }}
         />
         <TextField
           label="Description"
@@ -84,7 +84,7 @@ export default function TodoForm({
           placeholder="Enter detailed description"
           multiline
           minRows={4}
-          slotProps={{ htmlInput: { maxLength: 1000 } }}
+          slotProps={{ htmlInput: { maxLength: 5_000 } }}
         />
         <TextField
           label="Due date"

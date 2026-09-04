@@ -9,6 +9,7 @@ import {
   CardContent,
   Checkbox,
   Chip,
+  Alert,
   Dialog,
   DialogActions,
   DialogContent,
@@ -54,6 +55,7 @@ export default function TodoList({
 }: TodoListProps) {
   const [deleteTarget, setDeleteTarget] = useState<Todo | PublicTodo | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const stats = {
     total: todos.length,
@@ -74,13 +76,27 @@ export default function TodoList({
 
     try {
       setIsDeleting(true)
+      setDeleteError(null)
       await onDelete(deleteTarget.todo_id)
       setDeleteTarget(null)
+      setDeleteError(null)
     } catch (error) {
       console.error("Todo deletion failed:", error)
+      setDeleteError(error instanceof Error ? error.message : "Failed to delete Todo")
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  const closeDeleteDialog = () => {
+    if (isDeleting) return
+    setDeleteTarget(null)
+    setDeleteError(null)
+  }
+
+  const openDeleteDialog = (todo: Todo | PublicTodo) => {
+    setDeleteError(null)
+    setDeleteTarget(todo)
   }
 
   const toggleCompletion = async (todoId: number) => {
@@ -237,7 +253,7 @@ export default function TodoList({
                             size="small"
                             color="error"
                             startIcon={<DeleteOutlineRoundedIcon />}
-                            onClick={() => setDeleteTarget(todo)}
+                            onClick={() => openDeleteDialog(todo)}
                           >
                             Delete
                           </Button>
@@ -254,7 +270,7 @@ export default function TodoList({
 
       <Dialog
         open={deleteTarget !== null}
-        onClose={isDeleting ? undefined : () => setDeleteTarget(null)}
+        onClose={isDeleting ? undefined : closeDeleteDialog}
         aria-labelledby="delete-todo-title"
       >
         <DialogTitle id="delete-todo-title">Delete Todo?</DialogTitle>
@@ -262,9 +278,14 @@ export default function TodoList({
           <DialogContentText>
             {deleteTarget ? `“${deleteTarget.title}” will be permanently deleted.` : ""}
           </DialogContentText>
+          {deleteError && (
+            <Alert role="alert" severity="error" sx={{ mt: 2 }}>
+              {deleteError}
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+          <Button onClick={closeDeleteDialog} disabled={isDeleting}>
             Cancel
           </Button>
           <Button onClick={() => void confirmDelete()} color="error" disabled={isDeleting}>
