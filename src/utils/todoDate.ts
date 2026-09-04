@@ -57,10 +57,15 @@ export function getDateInTimeZone(
   return `${values.year}-${values.month}-${values.day}`
 }
 
+/** Return the calendar day used by Todo validation in both browser and API. */
+export function getTodoBusinessToday(now: Date = new Date()): string {
+  return getDateInTimeZone(now, DEFAULT_TODO_BUSINESS_TIME_ZONE)
+}
+
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
 /**
- * Compare a stored date-only deadline with the user's local calendar day.
+ * Compare a stored date-only deadline with the application's business day.
  * Calendar fields are selected before converting to UTC midnight, preventing
  * time-zone offsets from turning a deadline on "today" into an overdue item.
  */
@@ -69,7 +74,7 @@ export function getTodoDaysFromLocalToday(
   now: Date = new Date(),
 ): number {
   const deadline = parseTodoDate(formatTodoDate(value))
-  const today = parseTodoDate(getLocalToday(now))
+  const today = parseTodoDate(getTodoBusinessToday(now))
 
   if (!deadline || !today) {
     return Number.NaN

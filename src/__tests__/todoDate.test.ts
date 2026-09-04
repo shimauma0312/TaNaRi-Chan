@@ -2,6 +2,7 @@ import {
   formatTodoDate,
   getDateInTimeZone,
   getLocalToday,
+  getTodoBusinessToday,
   getTodoDaysFromLocalToday,
   isTodoDateBeforeToday,
   isTodoDateNear,
@@ -33,6 +34,7 @@ describe("Todo calendar date utilities", () => {
     const japanMorning = new Date("2026-09-02T15:30:00.000Z")
 
     expect(getDateInTimeZone(japanMorning, "Asia/Tokyo")).toBe("2026-09-03")
+    expect(getTodoBusinessToday(japanMorning)).toBe("2026-09-03")
     expect(
       isTodoDateBeforeToday(
         new Date("2026-09-02T00:00:00.000Z"),
@@ -49,17 +51,25 @@ describe("Todo calendar date utilities", () => {
     ).toBe(false)
   })
 
+  test("uses the same business day for client deadline status outside Japan", () => {
+    const japanMorning = new Date("2026-09-02T15:30:00.000Z")
+
+    expect(getTodoDaysFromLocalToday("2026-09-02", japanMorning)).toBe(-1)
+    expect(isTodoDateOverdue("2026-09-02", japanMorning)).toBe(true)
+    expect(getTodoDaysFromLocalToday("2026-09-03", japanMorning)).toBe(0)
+  })
+
   test("formats database dates and local today for date inputs", () => {
     expect(formatTodoDate("2026-09-03T00:00:00.000Z")).toBe("2026-09-03")
     expect(getLocalToday(new Date(2026, 8, 3, 23, 0, 0))).toBe("2026-09-03")
   })
 
   test("does not mark today's date-only deadline overdue after midnight", () => {
-    const lateToday = new Date(2026, 8, 3, 23, 59, 59)
+    const lateBusinessDay = new Date("2026-09-03T14:59:59.000Z")
 
-    expect(getTodoDaysFromLocalToday("2026-09-03T00:00:00.000Z", lateToday)).toBe(0)
-    expect(isTodoDateOverdue("2026-09-03T00:00:00.000Z", lateToday)).toBe(false)
-    expect(isTodoDateNear("2026-09-03T00:00:00.000Z", lateToday)).toBe(true)
+    expect(getTodoDaysFromLocalToday("2026-09-03T00:00:00.000Z", lateBusinessDay)).toBe(0)
+    expect(isTodoDateOverdue("2026-09-03T00:00:00.000Z", lateBusinessDay)).toBe(false)
+    expect(isTodoDateNear("2026-09-03T00:00:00.000Z", lateBusinessDay)).toBe(true)
   })
 
   test("compares nearby deadlines as calendar days rather than instants", () => {
