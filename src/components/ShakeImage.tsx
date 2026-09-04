@@ -1,123 +1,147 @@
 "use client"
 
-import styles from "@/styles/shakeImage.module.css"
+import ReplayRoundedIcon from "@mui/icons-material/ReplayRounded"
+import { Box, Button, ButtonBase, Typography } from "@mui/material"
+import { keyframes } from "@mui/system"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
-const ShakeImage = () => {
+const shakes = [1, 2, 3, 5, 7, 10].map((distance) =>
+  keyframes({
+    "0%, 100%": { transform: "translate(0, 0) rotate(0deg)" },
+    "25%": { transform: `translate(${distance}px, ${distance}px) rotate(${distance / 2}deg)` },
+    "50%": { transform: `translate(-${distance}px, -${distance}px) rotate(-${distance / 2}deg)` },
+    "75%": { transform: `translate(${distance}px, -${distance}px) rotate(${distance / 2}deg)` },
+  }),
+)
+
+const explode = keyframes({
+  "0%": { transform: "scale(1)", opacity: 1 },
+  "20%": { transform: "scale(1.2)", opacity: 1 },
+  "50%": { transform: "scale(1.5)", opacity: 0.8, filter: "brightness(1.5) contrast(1.5)" },
+  "100%": { transform: "scale(2)", opacity: 0, filter: "brightness(2) contrast(2)" },
+})
+
+const blink = keyframes({
+  "0%, 100%": { opacity: 1 },
+  "50%": { opacity: 0.5 },
+})
+
+function getMessage(clickCount: number) {
+  if (clickCount >= 70) return "💥 KABOOM! Reload to resurrect 💥"
+  if (clickCount >= 60) return "brrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+  if (clickCount >= 50) return "brrrrrrrrrrrrrrrrrrr"
+  if (clickCount >= 40) return "brrrrrrrrrrrrrr"
+  if (clickCount >= 30) return "brrrrrrrrr"
+  if (clickCount >= 20) return "brrrrr"
+  if (clickCount >= 10) return "brrr"
+  return ""
+}
+
+export default function ShakeImage() {
   const [clickCount, setClickCount] = useState(0)
-  const [shakeClass, setShakeClass] = useState("")
-  const [isExploded, setIsExploded] = useState(false)
-  const [message, setMessage] = useState("")
   const [position, setPosition] = useState({ top: "50%", left: "50%" })
+  const isExploded = clickCount >= 70
 
-  // コンポーネントがマウントされたときにランダムな位置を設定
   useEffect(() => {
     const animationFrame = window.requestAnimationFrame(() => {
-      // ランダムな位置を生成
-      const randomTop = Math.floor(Math.random() * 60) // 15% ~ 75%
-      const randomLeft = Math.floor(Math.random() * 60) // 15% ~ 75%
-
       setPosition({
-        top: `${randomTop}%`,
-        left: `${randomLeft}%`,
+        top: `${Math.floor(Math.random() * 60)}%`,
+        left: `${Math.floor(Math.random() * 60)}%`,
       })
     })
-
     return () => window.cancelAnimationFrame(animationFrame)
   }, [])
 
-  const handleClick = () => {
-    if (isExploded) return
-
-    const newCount = clickCount + 1
-    setClickCount(newCount)
-
-    // クリック数に応じてシェイクのクラスを変更
-    if (newCount >= 70) {
-      setShakeClass(styles.explosion)
-      setIsExploded(true)
-      setMessage("💥 KABOOM! Reload to resurrect 💥")
-    } else if (newCount >= 60) {
-      setShakeClass(styles.shake6)
-      setMessage("brrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
-    } else if (newCount >= 50) {
-      setShakeClass(styles.shake5)
-      setMessage("brrrrrrrrrrrrrrrrrrr")
-    } else if (newCount >= 40) {
-      setShakeClass(styles.shake4)
-      setMessage("brrrrrrrrrrrrrr")
-    } else if (newCount >= 30) {
-      setShakeClass(styles.shake3)
-      setMessage("brrrrrrrrr")
-    } else if (newCount >= 20) {
-      setShakeClass(styles.shake2)
-      setMessage("brrrrr")
-    } else if (newCount >= 10) {
-      setShakeClass(styles.shake1)
-      setMessage("brrr")
-    }
-  }
-
-  const resetImage = () => {
-    window.location.reload()
-  }
-
-  // 危険度に応じてカウンターのスタイルを変更
-  const getCounterClass = () => {
-    if (clickCount >= 60) {
-      return `${styles.clickCounter} ${styles.danger}`
-    }
-    return styles.clickCounter
-  }
+  const animation = useMemo(() => {
+    if (isExploded) return `${explode} 1s forwards`
+    if (clickCount < 10) return "none"
+    const level = Math.min(Math.floor(clickCount / 10) - 1, shakes.length - 1)
+    const durations = [0.3, 0.25, 0.2, 0.15, 0.1, 0.08]
+    return `${shakes[level]} ${durations[level]}s infinite`
+  }, [clickCount, isExploded])
 
   return (
     <>
-      <div
-        className={styles.shakeContainer}
-        onClick={handleClick}
-        style={{ top: position.top, left: position.left }}
+      <ButtonBase
+        aria-label={`Shake image. ${clickCount} of 70 clicks${isExploded ? ". Exploded" : ""}`}
+        aria-describedby={clickCount > 0 ? "shake-image-status" : undefined}
+        disabled={isExploded}
+        onClick={() => setClickCount((count) => Math.min(count + 1, 70))}
+        sx={{
+          position: "absolute",
+          top: position.top,
+          left: position.left,
+          width: 200,
+          height: 200,
+          borderRadius: 2,
+          zIndex: 10,
+          transition: "transform 0.2s",
+          "&:focus-visible": {
+            outline: "3px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 3,
+          },
+          "@media (prefers-reduced-motion: reduce)": { transition: "none" },
+        }}
       >
-        <Image
-          src="/images/hc.jpg"
-          alt="Shake Me"
-          width={200}
-          height={200}
-          className={`${styles.image} ${shakeClass}`}
-          priority
-        />
-
-        {/* クリックカウンターとメッセージを画像の上に表示 */}
-        {clickCount > 0 && (
-          <div
-            className={getCounterClass()}
-            style={{ position: "absolute", bottom: "-40px", width: "100%" }}
-          >
-            CLICKS: {clickCount}/70
-            {message && <div className="text-sm mt-1">{message}</div>}
-          </div>
-        )}
-      </div>
-
-      {isExploded && (
-        <div
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            zIndex: 100,
+        <Box
+          sx={{
+            position: "relative",
+            width: "100%",
+            height: "100%",
+            animation,
+            borderRadius: 2,
+            overflow: "hidden",
+            "@media (prefers-reduced-motion: reduce)": {
+              animation: "none",
+              opacity: isExploded ? 0 : 1,
+            },
           }}
         >
-          <button
-            className={`${styles.resetButton} ${styles.resetButtonVisible}`}
-            onClick={resetImage}
+          <Image
+            src="/images/hc.jpg"
+            alt=""
+            fill
+            sizes="200px"
+            priority
+            style={{ objectFit: "cover" }}
+          />
+        </Box>
+
+        {clickCount > 0 && (
+          <Box
+            id="shake-image-status"
+            role="status"
+            sx={{
+              position: "absolute",
+              top: "calc(100% + 8px)",
+              width: "max-content",
+              maxWidth: 360,
+              color: clickCount >= 60 ? "error.light" : "text.primary",
+              animation: clickCount >= 60 ? `${blink} 0.5s infinite` : "none",
+              "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+            }}
           >
-            REVIVE ME PLZ
-          </button>
-        </div>
+            <Typography sx={{ fontWeight: 700 }}>CLICKS: {clickCount}/70</Typography>
+            {getMessage(clickCount) && (
+              <Typography variant="body2">{getMessage(clickCount)}</Typography>
+            )}
+          </Box>
+        )}
+      </ButtonBase>
+
+      {isExploded && (
+        <Button
+          variant="contained"
+          color="error"
+          startIcon={<ReplayRoundedIcon />}
+          onClick={() => window.location.reload()}
+          sx={{ position: "fixed", top: 20, right: 20, zIndex: 100 }}
+        >
+          Revive me
+        </Button>
       )}
     </>
   )
 }
-
-export default ShakeImage
