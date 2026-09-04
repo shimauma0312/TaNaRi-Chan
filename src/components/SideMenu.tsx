@@ -1,62 +1,98 @@
 "use client"
 
+import NextLink from "@/components/NextLink"
 import { useLogout } from "@/hooks/useLogout"
-import Link from "next/link"
+import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded"
+import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded"
+import ChecklistRoundedIcon from "@mui/icons-material/ChecklistRounded"
+import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded"
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded"
+import MailRoundedIcon from "@mui/icons-material/MailRounded"
+import PublicRoundedIcon from "@mui/icons-material/PublicRounded"
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Divider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material"
+import { usePathname } from "next/navigation"
+import type { ReactNode } from "react"
 
-const SideMenu = () => {
+interface SideMenuProps {
+  onNavigate?: () => void
+}
+
+interface NavigationItem {
+  href: string
+  label: string
+  icon: ReactNode
+  exact?: boolean
+}
+
+const navigationItems: NavigationItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: <DashboardRoundedIcon />, exact: true },
+  { href: "/dashboard/todoList", label: "My Todo List", icon: <ChecklistRoundedIcon /> },
+  { href: "/dashboard/otherTodos", label: "Other's Todo List", icon: <PublicRoundedIcon /> },
+  { href: "/dashboard/articles", label: "My Articles", icon: <ArticleRoundedIcon /> },
+  { href: "/dashboard/messages", label: "Messages", icon: <MailRoundedIcon /> },
+  { href: "/dashboard/calendar", label: "Calendar", icon: <CalendarMonthRoundedIcon /> },
+]
+
+export default function SideMenu({ onNavigate }: SideMenuProps) {
+  const pathname = usePathname()
   const { handleLogout, error, isLoggingOut } = useLogout()
 
   return (
-    <aside className="w-full md:w-1/5 p-4" aria-label="ダッシュボードメニュー">
-      <nav className="flex flex-wrap gap-4 md:block md:space-y-4">
-        <Link href="/dashboard" className="block text-lg text-indigo-400 hover:text-indigo-300">
-          Dashboard
-        </Link>
-        <Link
-          href="/dashboard/todoList"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          My Todo List
-        </Link>
-        <Link
-          href="/dashboard/otherTodos"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          Other&apos;s Todo List
-        </Link>
-        <Link
-          href="/dashboard/articles"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          My Articles
-        </Link>
-        <Link
-          href="/dashboard/messages"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          Messages
-        </Link>
-        <Link
-          href="/dashboard/calendar"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          Calendar
-        </Link>
-        <button
-          className="block w-full bg-red-500 text-lg text-white py-1 px-3 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-        >
-          {isLoggingOut ? "Logging out..." : "Logout"}
-        </button>
-      </nav>
+    <Box component="nav" aria-label="ダッシュボードナビゲーション" sx={{ p: 2 }}>
+      <List disablePadding>
+        {navigationItems.map(({ exact, href, icon, label }) => {
+          const selected = exact ? pathname === href : pathname.startsWith(href)
+
+          return (
+            <ListItem disablePadding key={href} sx={{ mb: 0.5 }}>
+              <ListItemButton
+                aria-current={selected ? "page" : undefined}
+                component={NextLink}
+                href={href}
+                onClick={onNavigate}
+                selected={selected}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>{icon}</ListItemIcon>
+                <ListItemText primary={label} />
+              </ListItemButton>
+            </ListItem>
+          )
+        })}
+      </List>
+      <Divider sx={{ my: 2 }} />
+      <List disablePadding>
+        <ListItem disablePadding>
+          <ListItemButton
+            disabled={isLoggingOut}
+            onClick={() => void handleLogout()}
+            sx={{ color: "error.light" }}
+          >
+            <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
+              {isLoggingOut ? (
+                <CircularProgress aria-hidden="true" color="inherit" size={20} />
+              ) : (
+                <LogoutRoundedIcon />
+              )}
+            </ListItemIcon>
+            <ListItemText primary={isLoggingOut ? "Logging out..." : "Logout"} />
+          </ListItemButton>
+        </ListItem>
+      </List>
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-300">
+        <Alert role="alert" severity="error" sx={{ mt: 2 }}>
           {error}
-        </p>
+        </Alert>
       )}
-    </aside>
+    </Box>
   )
 }
-
-export default SideMenu
