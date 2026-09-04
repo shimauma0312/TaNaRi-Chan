@@ -1,3 +1,25 @@
+"use client"
+
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
+import EditRoundedIcon from "@mui/icons-material/EditRounded"
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Grid,
+  List,
+  ListItem,
+  Stack,
+  Typography,
+} from "@mui/material"
 import { PublicTodo, Todo } from "@/types/todo"
 import { formatTodoDate, isTodoDateNear, isTodoDateOverdue } from "@/utils/todoDate"
 import { useState } from "react"
@@ -12,10 +34,15 @@ interface TodoListProps {
   showPublicBadge?: boolean
 }
 
-/**
- * Todo list display component
- * Includes list view, statistics, operation buttons
- */
+const statCards = [
+  { key: "total", label: "Total", color: "primary.main" },
+  { key: "completed", label: "Completed", color: "success.main" },
+  { key: "pending", label: "Pending", color: "warning.main" },
+  { key: "overdue", label: "Overdue", color: "error.main" },
+  { key: "nearDeadline", label: "Due Soon", color: "secondary.main" },
+] as const
+
+/** A shared, accessible Todo list for private and public Todo screens. */
 export default function TodoList({
   todos,
   onToggleCompletion,
@@ -25,195 +52,226 @@ export default function TodoList({
   allowEdit = true,
   showPublicBadge = true,
 }: TodoListProps) {
-  const [isDeleting, setIsDeleting] = useState<number | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Todo | PublicTodo | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  // Highlight todos with nearby deadline (within 3 days)
-  const isDeadlineNear = (deadline: string) => {
-    return isTodoDateNear(deadline)
-  }
-
-  // Check if overdue
-  const isOverdue = (deadline: string) => {
-    return isTodoDateOverdue(deadline)
-  }
-
-  // Statistics data
   const stats = {
     total: todos.length,
     completed: todos.filter((todo) => todo.is_completed).length,
     pending: todos.filter((todo) => !todo.is_completed).length,
-    overdue: todos.filter((todo) => !todo.is_completed && isOverdue(todo.todo_deadline)).length,
+    overdue: todos.filter((todo) => !todo.is_completed && isTodoDateOverdue(todo.todo_deadline))
+      .length,
     nearDeadline: todos.filter(
       (todo) =>
-        !todo.is_completed && isDeadlineNear(todo.todo_deadline) && !isOverdue(todo.todo_deadline),
+        !todo.is_completed &&
+        isTodoDateNear(todo.todo_deadline) &&
+        !isTodoDateOverdue(todo.todo_deadline),
     ).length,
   }
 
-  const handleDelete = async (todoId: number) => {
-    if (!onDelete) return
-
-    if (!confirm("このToDoを削除してもよろしいですか？")) {
-      return
-    }
+  const confirmDelete = async () => {
+    if (!deleteTarget || !onDelete) return
 
     try {
-      setIsDeleting(todoId)
-      await onDelete(todoId)
+      setIsDeleting(true)
+      await onDelete(deleteTarget.todo_id)
+      setDeleteTarget(null)
     } catch (error) {
-      console.error("削除エラー:", error)
+      console.error("Todo deletion failed:", error)
     } finally {
-      setIsDeleting(null)
+      setIsDeleting(false)
     }
   }
 
-  const handleToggleCompletion = async (todoId: number) => {
+  const toggleCompletion = async (todoId: number) => {
     if (!onToggleCompletion) return
-
     try {
       await onToggleCompletion(todoId)
     } catch (error) {
-      console.error("Toggle completion error:", error)
+      console.error("Todo completion update failed:", error)
     }
   }
 
   if (todos.length === 0) {
     return (
-      <div className="text-center py-8">
-        <div className="text-lg text-gray-400 mb-4">No Todos available</div>
-        <p className="text-gray-500">Create a new Todo to get started</p>
-      </div>
+      <Box sx={{ py: 6, textAlign: "center" }}>
+        <Typography variant="h6" color="text.secondary" gutterBottom>
+          No Todos available
+        </Typography>
+        <Typography color="text.secondary">Create a new Todo to get started.</Typography>
+      </Box>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Statistics */}
+    <Stack spacing={3}>
       {showStats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-3">
-            <div className="text-sm text-blue-300">Total</div>
-            <div className="text-xl font-bold">{stats.total}</div>
-          </div>
-          <div className="bg-green-500/20 border border-green-500 rounded-lg p-3">
-            <div className="text-sm text-green-300">Completed</div>
-            <div className="text-xl font-bold">{stats.completed}</div>
-          </div>
-          <div className="bg-yellow-500/20 border border-yellow-500 rounded-lg p-3">
-            <div className="text-sm text-yellow-300">Pending</div>
-            <div className="text-xl font-bold">{stats.pending}</div>
-          </div>
-          <div className="bg-red-500/20 border border-red-500 rounded-lg p-3">
-            <div className="text-sm text-red-300">Overdue</div>
-            <div className="text-xl font-bold">{stats.overdue}</div>
-          </div>
-          <div className="bg-orange-500/20 border border-orange-500 rounded-lg p-3">
-            <div className="text-sm text-orange-300">Due Soon</div>
-            <div className="text-xl font-bold">{stats.nearDeadline}</div>
-          </div>
-        </div>
+        <Grid container spacing={2} aria-label="Todo statistics">
+          {statCards.map((stat) => (
+            <Grid key={stat.key} size={{ xs: 6, md: "grow" }}>
+              <Card sx={{ height: "100%", borderColor: stat.color }}>
+                <CardContent sx={{ "&:last-child": { pb: 2 } }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {stat.label}
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    component="p"
+                    sx={{ color: stat.color, fontWeight: 700 }}
+                  >
+                    {stats[stat.key]}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       )}
 
-      {/* TODO List */}
-      <ul className="space-y-4">
-        {todos.map((todo) => (
-          <li
-            key={todo.todo_id}
-            className={`p-4 border rounded-lg shadow-md transition-all ${
-              todo.is_completed
-                ? "bg-gray-800/50 border-gray-600"
-                : isOverdue(todo.todo_deadline)
-                  ? "bg-red-900/30 border-red-500"
-                  : isDeadlineNear(todo.todo_deadline)
-                    ? "bg-yellow-900/30 border-yellow-500"
-                    : "bg-gray-900/50 border-gray-400"
-            }`}
-          >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="mb-2 flex flex-wrap items-center gap-3">
-                  {onToggleCompletion && (
-                    <input
-                      type="checkbox"
-                      aria-label={`${todo.title}を${todo.is_completed ? "未完了" : "完了"}にする`}
-                      checked={todo.is_completed}
-                      onChange={() => handleToggleCompletion(todo.todo_id)}
-                      className="w-5 h-5 rounded border-gray-400 text-green-500 focus:ring-green-500"
-                    />
-                  )}
-                  <h2
-                    className={`break-words text-xl font-semibold ${todo.is_completed ? "line-through text-gray-500" : ""}`}
-                  >
-                    {todo.title}
-                  </h2>
-                  {showPublicBadge && todo.is_public && (
-                    <span className="px-2 py-1 bg-blue-500/20 border border-blue-500 rounded text-xs text-blue-300">
-                      Public
-                    </span>
-                  )}
-                </div>
-                <p className={`text-gray-300 mb-2 ${todo.is_completed ? "line-through" : ""}`}>
-                  {todo.description}
-                </p>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                  <span
-                    className={`${
-                      isOverdue(todo.todo_deadline) && !todo.is_completed
-                        ? "text-red-400 font-bold"
-                        : isDeadlineNear(todo.todo_deadline) && !todo.is_completed
-                          ? "text-yellow-400 font-bold"
-                          : "text-gray-500"
-                    }`}
-                  >
-                    Due: {formatTodoDate(todo.todo_deadline)}
-                    {isOverdue(todo.todo_deadline) && !todo.is_completed && " (Overdue)"}
-                    {isDeadlineNear(todo.todo_deadline) &&
-                      !todo.is_completed &&
-                      !isOverdue(todo.todo_deadline) &&
-                      " (Due soon)"}
-                  </span>
-                  <span className="text-gray-500">
-                    Status: {todo.is_completed ? "Completed" : "Pending"}
-                  </span>
-                  {todo.createdAt && (
-                    <span className="text-gray-500">
-                      Created: {new Date(todo.createdAt).toLocaleDateString("en-US")}
-                    </span>
-                  )}
-                  {/* Display username for public todos */}
-                  {"user" in todo && (
-                    <span className="text-blue-400 font-medium">
-                      Author: {(todo as PublicTodo).user.user_name}
-                    </span>
-                  )}
-                </div>
-              </div>
+      <List disablePadding aria-label="Todo list">
+        {todos.map((todo) => {
+          const overdue = !todo.is_completed && isTodoDateOverdue(todo.todo_deadline)
+          const dueSoon = !todo.is_completed && !overdue && isTodoDateNear(todo.todo_deadline)
+          const accent = todo.is_completed
+            ? "divider"
+            : overdue
+              ? "error.main"
+              : dueSoon
+                ? "warning.main"
+                : "primary.main"
 
-              {/* 操作ボタン */}
-              {allowEdit && (onEdit || onDelete) && (
-                <div className="flex self-end gap-2 sm:ml-4">
-                  {onEdit && (
-                    <button
-                      onClick={() => onEdit(todo.todo_id)}
-                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm"
-                    >
-                      Edit
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button
-                      onClick={() => handleDelete(todo.todo_id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm disabled:bg-gray-500 disabled:cursor-not-allowed"
-                      disabled={isDeleting === todo.todo_id}
-                    >
-                      {isDeleting === todo.todo_id ? "Deleting..." : "Delete"}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+          return (
+            <ListItem key={todo.todo_id} disableGutters sx={{ pb: 2 }}>
+              <Card sx={{ width: "100%", borderLeft: 4, borderLeftColor: accent }}>
+                <CardContent>
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={2}
+                    sx={{ alignItems: { sm: "flex-start" }, justifyContent: "space-between" }}
+                  >
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
+                        {onToggleCompletion && (
+                          <Checkbox
+                            aria-label={`${todo.title}を${todo.is_completed ? "未完了" : "完了"}にする`}
+                            checked={todo.is_completed}
+                            onChange={() => void toggleCompletion(todo.todo_id)}
+                            color="success"
+                            sx={{ p: 0.5 }}
+                          />
+                        )}
+                        <Typography
+                          variant="h6"
+                          component="h2"
+                          sx={{
+                            overflowWrap: "anywhere",
+                            textDecoration: todo.is_completed ? "line-through" : "none",
+                            color: todo.is_completed ? "text.disabled" : "text.primary",
+                          }}
+                        >
+                          {todo.title}
+                        </Typography>
+                        {showPublicBadge && todo.is_public && (
+                          <Chip label="Public" color="info" size="small" variant="outlined" />
+                        )}
+                      </Stack>
+
+                      <Typography
+                        sx={{
+                          mb: 1.5,
+                          whiteSpace: "pre-wrap",
+                          textDecoration: todo.is_completed ? "line-through" : "none",
+                          color: todo.is_completed ? "text.disabled" : "text.secondary",
+                        }}
+                      >
+                        {todo.description}
+                      </Typography>
+
+                      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+                        <Chip
+                          label={`Due: ${formatTodoDate(todo.todo_deadline)}${overdue ? " · Overdue" : dueSoon ? " · Due soon" : ""}`}
+                          color={overdue ? "error" : dueSoon ? "warning" : "default"}
+                          size="small"
+                          variant="outlined"
+                        />
+                        <Chip
+                          label={todo.is_completed ? "Completed" : "Pending"}
+                          color={todo.is_completed ? "success" : "default"}
+                          size="small"
+                        />
+                        {todo.createdAt && (
+                          <Chip
+                            label={`Created: ${new Date(todo.createdAt).toLocaleDateString("en-US")}`}
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                        {"user" in todo && (
+                          <Chip
+                            label={`Author: ${(todo as PublicTodo).user.user_name}`}
+                            color="info"
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                      </Stack>
+                    </Box>
+
+                    {allowEdit && (onEdit || onDelete) && (
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ alignSelf: { xs: "flex-end", sm: "center" } }}
+                      >
+                        {onEdit && (
+                          <Button
+                            size="small"
+                            startIcon={<EditRoundedIcon />}
+                            onClick={() => onEdit(todo.todo_id)}
+                          >
+                            Edit
+                          </Button>
+                        )}
+                        {onDelete && (
+                          <Button
+                            size="small"
+                            color="error"
+                            startIcon={<DeleteOutlineRoundedIcon />}
+                            onClick={() => setDeleteTarget(todo)}
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </Stack>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </ListItem>
+          )
+        })}
+      </List>
+
+      <Dialog
+        open={deleteTarget !== null}
+        onClose={isDeleting ? undefined : () => setDeleteTarget(null)}
+        aria-labelledby="delete-todo-title"
+      >
+        <DialogTitle id="delete-todo-title">Delete Todo?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {deleteTarget ? `“${deleteTarget.title}” will be permanently deleted.` : ""}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button onClick={() => void confirmDelete()} color="error" disabled={isDeleting}>
+            {isDeleting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Stack>
   )
 }
