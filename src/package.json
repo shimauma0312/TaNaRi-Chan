@@ -16,7 +16,13 @@
     "maintenance:cleanup": "ts-node scripts/cleanup-data.ts"
   },
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^3.10.0",
+    "@mui/icons-material": "^9.4.0",
+    "@mui/material": "^9.4.0",
+    "@mui/material-nextjs": "^9.4.0",
     "@prisma/client": "^6.19.2",
     "bcryptjs": "^3.0.2",
     "next": "^16.1.7",
