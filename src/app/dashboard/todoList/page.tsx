@@ -134,26 +134,26 @@ const ToDoListPage = () => {
   return (
     <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
       <SideMenu />
-      <div className="w-full md:w-4/5 p-4 relative">
+      <div className="w-full p-2 sm:p-4 md:w-4/5">
         <div className="container mx-auto">
           {/* Header */}
-          <div className="absolute top-4 right-4 flex space-x-2">
-            <button
-              onClick={() => router.push("/dashboard/todoList/register")}
-              className="px-4 py-2 bg-green-500 text-lg text-white rounded-md shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              Add Todo
-            </button>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="px-4 py-2 bg-red-500 text-lg text-white rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              Back
-            </button>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-2xl font-bold">My Todo List</h1>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => router.push("/dashboard/todoList/register")}
+                className="px-4 py-2 bg-green-500 text-lg text-white rounded-md shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Add Todo
+              </button>
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="px-4 py-2 bg-red-500 text-lg text-white rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Back
+              </button>
+            </div>
           </div>
-
-          {/* Title */}
-          <h1 className="text-2xl font-bold mb-4">My Todo List</h1>
 
           {/* Error message */}
           {error && (
@@ -186,7 +186,7 @@ const ToDoListPage = () => {
           ) : (
             <>
               {/* Statistics */}
-              <div className="mb-6 flex gap-4">
+              <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-3">
                   <div className="text-sm text-blue-300">Total</div>
                   <div className="text-xl font-bold">{todoList.length}</div>
@@ -220,9 +220,9 @@ const ToDoListPage = () => {
                             : "bg-gray-900/50 border-gray-400"
                     }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-2 flex flex-wrap items-center gap-3">
                           <input
                             type="checkbox"
                             aria-label={`${todo.title}を${todo.is_completed ? "未完了" : "完了"}にする`}
@@ -231,7 +231,7 @@ const ToDoListPage = () => {
                             className="w-5 h-5 rounded border-gray-400 text-green-500 focus:ring-green-500"
                           />
                           <h2
-                            className={`text-xl font-semibold ${todo.is_completed ? "line-through text-gray-500" : ""}`}
+                            className={`break-words text-xl font-semibold ${todo.is_completed ? "line-through text-gray-500" : ""}`}
                           >
                             {todo.title}
                           </h2>
@@ -246,7 +246,7 @@ const ToDoListPage = () => {
                         >
                           {todo.description}
                         </p>
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                           <span
                             className={`${
                               isOverdue(todo.todo_deadline) && !todo.is_completed
@@ -268,7 +268,7 @@ const ToDoListPage = () => {
                           </span>
                         </div>
                       </div>
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex self-end gap-2 sm:ml-4">
                         <button
                           onClick={() => handleEditTodo(todo.todo_id)}
                           className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm"
