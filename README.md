@@ -170,12 +170,20 @@ release definition and supply secrets from the deployment platform:
 
 ```bash
 PRODUCTION_DATABASE_URL="postgresql://..." \
+MIGRATION_DATABASE_URL="postgresql://..." \
 TRUSTED_ORIGINS="https://tanari.example.com" \
+TRUST_PROXY=true \
 docker compose -f docker-compose.release.yml up --build -d
 
 # Build the non-root standalone production image
 docker build --target production -t tanari-chan:production .
 ```
+
+Use separate database roles: `MIGRATION_DATABASE_URL` needs schema migration
+privileges, while `PRODUCTION_DATABASE_URL` should be limited to the DML needed
+by the running application. `TRUST_PROXY` is deliberately required; set it to
+`true` only when a trusted reverse proxy overwrites forwarding headers, or to
+`false` for direct access.
 
 Backup, restore, retention, PostgreSQL upgrade, and Prisma baseline procedures
 are documented in [`docs/database-operations.md`](docs/database-operations.md).
