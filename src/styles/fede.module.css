@@ -48,3 +48,11 @@
     opacity: 0;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .fadein,
+  .fadeout,
+  .fadeinout {
+    animation: none;
+  }
+}
