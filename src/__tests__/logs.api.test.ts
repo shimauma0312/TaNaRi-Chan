@@ -5,12 +5,15 @@ jest.mock("@/lib/auth", () => ({
   getUserIdFromRequest: jest.fn(),
   isSameOriginRequest: jest.fn(),
 }))
+jest.mock("@/lib/writeRateLimit", () => ({ enforceWriteRateLimit: jest.fn() }))
 
 import { POST } from "@/app/api/logs/route"
 import { LogLevel, LogSource } from "@prisma/client"
 import { NextRequest } from "next/server"
 
 const mockWriteLogToDB = jest.requireMock("@/lib/dbLogger").writeLogToDB as jest.Mock
+const mockEnforceWriteRateLimit = jest.requireMock("@/lib/writeRateLimit")
+  .enforceWriteRateLimit as jest.Mock
 const mockAuth = jest.requireMock("@/lib/auth") as {
   getUserIdFromRequest: jest.Mock
   isSameOriginRequest: jest.Mock
@@ -53,6 +56,7 @@ describe("POST /api/logs", () => {
     mockIsSameOriginRequest.mockReturnValue(true)
     mockGetUserIdFromRequest.mockResolvedValue("session-user")
     mockWriteLogToDB.mockResolvedValue(undefined)
+    mockEnforceWriteRateLimit.mockResolvedValue(null)
   })
 
   test("uses session identity and ignores a client-supplied userId", async () => {
@@ -79,6 +83,21 @@ describe("POST /api/logs", () => {
     )
 
     expect(response.status).toBe(401)
+    expect(mockWriteLogToDB).not.toHaveBeenCalled()
+  })
+
+  test("returns the shared rate-limit response before persisting", async () => {
+    mockEnforceWriteRateLimit.mockResolvedValue(
+      new Response(JSON.stringify({ error: "limited" }), {
+        status: 429,
+        headers: { "Retry-After": "42" },
+      }),
+    )
+
+    const response = await POST(request({ level: LogLevel.INFO, message: "hello" }))
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("Retry-After")).toBe("42")
     expect(mockWriteLogToDB).not.toHaveBeenCalled()
   })
 

@@ -14,6 +14,7 @@ import { SendMessageUseCase } from "@/application/message/SendMessageUseCase"
 import { AppError, createApiErrorResponse } from "@/utils/errorHandler"
 import { createMessageRequestSchema, firstValidationMessage, readJsonRequest } from "@/schemas/api"
 import { z } from "zod"
+import { enforceWriteRateLimit } from "@/lib/writeRateLimit"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
@@ -79,6 +80,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!userId) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
+
+    const limited = await enforceWriteRateLimit(userId, {
+      scope: "message-create",
+      limit: 30,
+      windowSeconds: 60,
+    })
+    if (limited) return limited
 
     const json = await readJsonRequest(request)
     if (!json.success) {

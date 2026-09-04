@@ -37,6 +37,9 @@ jest.mock("@/lib/auth", () => ({
   getUserIdFromRequest: jest.fn().mockResolvedValue("user123"),
   isSameOriginRequest: jest.fn().mockReturnValue(true),
 }))
+jest.mock("@/lib/writeRateLimit", () => ({
+  enforceWriteRateLimit: jest.fn().mockResolvedValue(null),
+}))
 
 // Mock logger - need to match the correct import path
 jest.mock("@/logging/logging", () => ({

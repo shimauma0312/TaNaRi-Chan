@@ -4,6 +4,7 @@ import { readJsonRequest } from "@/schemas/api"
 import { LogLevel, LogSource } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import { enforceWriteRateLimit } from "@/lib/writeRateLimit"
 
 const MAX_REQUEST_BYTES = 16 * 1024
 const MAX_CONTEXT_BYTES = 8 * 1024
@@ -37,6 +38,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!userId) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
+
+    const limited = await enforceWriteRateLimit(userId, {
+      scope: "client-log-write",
+      limit: 60,
+      windowSeconds: 60,
+    })
+    if (limited) return limited
 
     const json = await readJsonRequest(request, MAX_REQUEST_BYTES)
     if (!json.success) {
