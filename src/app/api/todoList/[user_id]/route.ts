@@ -88,8 +88,18 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
     }
 
     // 他人のToDoリストの場合は公開されているもののみ
-    const publicTodos = await todoService.getPublicTodos({ userId: targetUserId, ...page.data })
-    return NextResponse.json(publicTodos)
+    const publicTodos = await todoService.getPublicTodos({
+      userId: targetUserId,
+      cursor: page.data.cursor,
+      limit: page.data.limit,
+      from: from ?? undefined,
+      to: to ?? undefined,
+    })
+    const response = NextResponse.json(publicTodos)
+    if (page.data.limit && publicTodos.length === page.data.limit) {
+      response.headers.set("X-Next-Cursor", String(publicTodos.at(-1)?.todo_id))
+    }
+    return response
   } catch (error) {
     const errorResponse = createApiErrorResponse(error, "ToDoリストの取得に失敗しました")
     return NextResponse.json({ error: errorResponse.error }, { status: errorResponse.statusCode })
