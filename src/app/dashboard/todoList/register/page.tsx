@@ -1,183 +1,85 @@
 "use client"
 
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded"
+import { Button, Stack } from "@mui/material"
 import MinLoader from "@/components/MinLoader"
-import SideMenu from "@/components/SideMenu"
+import TodoForm, { TodoFormValues } from "@/components/todo/TodoForm"
 import useAuth from "@/hooks/useAuth"
 import { getTodoBusinessToday } from "@/utils/todoDate"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-export default function RegisterForm() {
+const initialValues: TodoFormValues = {
+  title: "",
+  description: "",
+  dueDate: "",
+  visibility: "private",
+}
+
+export default function RegisterTodoPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
-
-  // フォームの状態管理
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [dueDate, setDueDate] = useState("")
-  const [visibility, setVisibility] = useState("private")
+  const [values, setValues] = useState(initialValues)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  /**
-   * ToDo作成APIを呼び出す
-   */
-  const createTodo = async (todoData: {
-    title: string
-    description: string
-    todo_deadline: string
-    is_public: boolean
-  }) => {
-    const response = await fetch("/api/todoList", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(todoData),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || "Failed to create ToDo")
-    }
-
-    return response.json()
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setIsSubmitting(true)
     setError(null)
 
     try {
-      // バリデーション
-      if (!title.trim()) {
-        throw new Error("Title is required")
-      }
-      if (!description.trim()) {
-        throw new Error("Description is required")
-      }
-      if (!dueDate) {
-        throw new Error("Due date is required")
-      }
-
-      // 期限が過去でないかチェック
-      if (dueDate < getTodoBusinessToday()) {
+      if (!values.title.trim()) throw new Error("Title is required")
+      if (!values.description.trim()) throw new Error("Description is required")
+      if (!values.dueDate) throw new Error("Due date is required")
+      if (values.dueDate < getTodoBusinessToday()) {
         throw new Error("Due date must be today or later")
       }
 
-      const todoData = {
-        title: title.trim(),
-        description: description.trim(),
-        todo_deadline: dueDate,
-        is_public: visibility === "public",
-      }
-
-      await createTodo(todoData)
-
-      // 成功時はToDo一覧ページにリダイレクト
+      const response = await fetch("/api/todoList", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: values.title.trim(),
+          description: values.description.trim(),
+          todo_deadline: values.dueDate,
+          is_public: values.visibility === "public",
+        }),
+      })
+      const responseBody = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(responseBody?.error || "Failed to create Todo")
       router.push("/dashboard/todoList")
-    } catch (error) {
-      console.error("ToDo作成エラー:", error)
-      setError(error instanceof Error ? error.message : "Failed to create ToDo")
+    } catch (cause) {
+      console.error("Todo creation failed:", cause)
+      setError(cause instanceof Error ? cause.message : "Failed to create Todo")
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  if (loading || !user) {
-    return <MinLoader />
-  }
+  if (loading || !user) return <MinLoader />
 
   return (
-    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
-      <SideMenu />
-      <div className="w-full md:w-4/5 p-4">
-        <div className="flex flex-col items-center justify-center min-h-full px-4">
-          {/* My Todo Listへ戻るボタン */}
-          <button
-            onClick={() => router.push("/dashboard/todoList")}
-            className="self-start mb-4 px-4 py-2 bg-red-500 text-lg text-white py-1 px-3 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            disabled={isSubmitting}
-          >
-            Back to My Todo List
-          </button>
-
-          {/* フォーム */}
-          <div className="w-full max-w-lg p-6 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-[var(--background)] text-[var(--foreground)]">
-            <h2 className="text-2xl font-bold mb-4">Register New ToDo</h2>
-
-            {/* エラーメッセージ */}
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-300">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block font-medium">ToDo Title</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
-                  required
-                  disabled={isSubmitting}
-                  placeholder="e.g. Create project documentation"
-                />
-              </div>
-
-              <div>
-                <label className="block font-medium">Description</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
-                  rows={3}
-                  required
-                  disabled={isSubmitting}
-                  placeholder="Enter detailed description"
-                />
-              </div>
-
-              <div>
-                <label className="block font-medium">Due Date</label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
-                  required
-                  disabled={isSubmitting}
-                  min={getTodoBusinessToday()} // APIと同じ日本時間の今日以降のみ選択可能
-                />
-              </div>
-
-              <div>
-                <label className="block font-medium">Visibility</label>
-                <select
-                  value={visibility}
-                  onChange={(e) => setVisibility(e.target.value)}
-                  className="w-full p-2 border rounded-lg bg-black text-white border-gray-400 focus:ring-2 focus:ring-blue-400"
-                  disabled={isSubmitting}
-                >
-                  <option value="private">Private</option>
-                  <option value="public">Public</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition disabled:bg-gray-500 disabled:cursor-not-allowed"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Registering..." : "Register"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Stack spacing={3} sx={{ alignItems: "center" }}>
+      <Button
+        startIcon={<ArrowBackRoundedIcon />}
+        onClick={() => router.push("/dashboard/todoList")}
+        disabled={isSubmitting}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        Back to My Todo List
+      </Button>
+      <TodoForm
+        heading="Register New Todo"
+        submitLabel="Register"
+        values={values}
+        error={error}
+        submitting={isSubmitting}
+        minimumDueDate={getTodoBusinessToday()}
+        onChange={setValues}
+        onSubmit={handleSubmit}
+        onCancel={() => router.push("/dashboard/todoList")}
+      />
+    </Stack>
   )
 }
