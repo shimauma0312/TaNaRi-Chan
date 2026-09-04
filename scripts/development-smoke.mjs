@@ -1,4 +1,4 @@
-const baseUrl = process.env.PRODUCTION_BASE_URL ?? "http://127.0.0.1:3002"
+const baseUrl = process.env.DEVELOPMENT_BASE_URL ?? "http://127.0.0.1:3000"
 const publicOrigin = new URL(baseUrl).origin
 const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`
 const password = "smoke-password-123"
@@ -73,7 +73,7 @@ const created = await request("/api/articles", {
   cookie: sessionA.cookie,
   body: JSON.stringify({
     title: `Smoke ${suffix}`,
-    content: "Production ownership smoke test",
+    content: "Development ownership smoke test",
     author_id: sessionB.user.id,
   }),
 })
@@ -107,4 +107,4 @@ await request("/api/logout", {
 await request("/api/me", { expected: 401, cookie: sessionA.cookie })
 await request("/api/health/ready", { expected: 200 })
 
-console.log("Production authentication and ownership smoke test passed")
+console.log("Development authentication and ownership smoke test passed")

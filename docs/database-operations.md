@@ -38,7 +38,7 @@ For data that must be retained:
 1. Run the old PostgreSQL image against the legacy volume without exposing it publicly.
 2. Create and verify a custom-format `pg_dump`.
 3. Start PostgreSQL 17 with an empty `pgdata17` volume and restore the full dump into an isolated database.
-4. Point the matching application release at that restored copy and run `prisma migrate deploy` to apply migrations created after the dump.
+4. Point the matching application version at that restored copy and run `prisma migrate deploy` to apply migrations created after the dump.
 5. Compare row counts, run application smoke tests, and only then schedule the production cutover.
 6. Keep the old volume and pre-cutover dump until the retention window expires.
 
@@ -50,30 +50,16 @@ would replace it with the schema and migration history captured from PostgreSQL 
 
 Before introducing tracked migrations to an existing database, compare its schema with every migration under `src/prisma/migrations`. Take a verified backup, test the procedure on a copy, and only then mark matching migrations with `prisma migrate resolve --applied`. Do not guess the baseline on the production database.
 
-## Release Compose
+## Local retention maintenance
 
-`docker-compose.release.yml` intentionally has no bundled database and fails closed unless the production database URL and public origin are supplied:
-
-```powershell
-$env:PRODUCTION_DATABASE_URL = "postgresql://runtime-role:..."
-$env:MIGRATION_DATABASE_URL = "postgresql://migration-role:..."
-$env:TRUSTED_ORIGINS = "https://tanari.example.com"
-$env:TRUST_PROXY = "true"
-docker compose -f docker-compose.release.yml up --build -d
-```
-
-Inject both database URLs from the deployment platform's secret manager. The
-migration role owns schema changes; the runtime role should have only required
-DML privileges. Set `TRUST_PROXY=true` only when direct access to the
-application port is blocked and a trusted reverse proxy overwrites forwarding
-headers. Set it explicitly to `false` otherwise.
-
-## Retention maintenance
-
-Run cleanup daily from the scheduler in the deployment platform:
+Cleanup can be exercised against the local development database through the
+application image:
 
 ```powershell
-docker compose -f docker-compose.release.yml run --rm maintenance
+docker compose run --rm `
+  -e LOG_RETENTION_DAYS=30 `
+  -e REVOKED_SESSION_RETENTION_DAYS=7 `
+  app npm run maintenance:cleanup
 ```
 
 The default retention is 30 days for application logs and seven days for revoked sessions; expired sessions and rate-limit buckets are removed immediately. Override `LOG_RETENTION_DAYS` and `REVOKED_SESSION_RETENTION_DAYS` with positive integer values. Record cleanup failures in the platform alerting system.
