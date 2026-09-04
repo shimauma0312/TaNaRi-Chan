@@ -59,12 +59,16 @@ export const updateTodoRequestSchema = z
   .object({
     todo_id: z.coerce.number().int().positive(),
     title: trimmedString("タイトル", 200).optional(),
-    description: z.string().trim().max(5_000, "詳細が長すぎます").optional(),
+    description: trimmedString("詳細", 5_000).optional(),
     todo_deadline: todoDeadlineSchema.optional(),
     is_completed: z.boolean().optional(),
     is_public: z.boolean().optional(),
   })
   .strict()
+  .refine(
+    ({ todo_id: _todoId, ...updates }) => Object.values(updates).some((value) => value !== undefined),
+    { message: "更新する項目を1つ以上指定してください" },
+  )
 
 export const todoIdSchema = z.coerce.number().int().positive()
 
