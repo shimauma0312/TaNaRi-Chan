@@ -1,16 +1,6 @@
 x-app-environment: &app-environment
   DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-example_password}@db:5432/${POSTGRES_DB:-app_db}
-  WATCHPACK_POLLING: "true"
   NODE_OPTIONS: --max-old-space-size=4096
-
-x-app-volumes: &app-volumes
-  - ./src:/app
-  - /app/node_modules
-  - /app/.next
-
-x-app-tmpfs: &app-tmpfs
-  # Prisma loads a native query engine from this mount, so it must permit exec.
-  - /app/node_modules/.prisma:rw,exec,size=64m,mode=1777
 
 services:
   app:
@@ -23,8 +13,6 @@ services:
     environment:
       <<: *app-environment
       TRUSTED_ORIGINS: http://localhost:${APP_PORT:-3000},http://127.0.0.1:${APP_PORT:-3000},${TRUSTED_ORIGINS:-}
-    volumes: *app-volumes
-    tmpfs: *app-tmpfs
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000"
     depends_on:
@@ -56,8 +44,6 @@ services:
     environment:
       <<: *app-environment
       TRUSTED_ORIGINS: http://localhost:${DEBUG_APP_PORT:-3001},http://127.0.0.1:${DEBUG_APP_PORT:-3001},${TRUSTED_ORIGINS:-}
-    volumes: *app-volumes
-    tmpfs: *app-tmpfs
     command:
       - node_modules/.bin/next
       - dev
@@ -111,8 +97,6 @@ services:
       target: development
     init: true
     environment: *app-environment
-    volumes: *app-volumes
-    tmpfs: *app-tmpfs
     command: ["npx", "prisma", "studio", "--hostname", "0.0.0.0", "--port", "5555"]
     ports:
       - "127.0.0.1:${PRISMA_STUDIO_PORT:-5555}:5555"
