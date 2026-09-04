@@ -264,14 +264,16 @@ describe('Integration Tests', () => {
 
 ```bash
 # Run all tests
-docker compose exec app bash -c "cd /app && npm test"
+docker compose run --rm app npm test -- --runInBand
 
 # Run tests with coverage
-docker compose exec app bash -c "cd /app && npm run test:coverage"
-
-# Run tests in watch mode
-docker compose exec app bash -c "cd /app && npm run test:watch"
+docker compose run --rm app npm run test:coverage -- --runInBand
 ```
+
+The bind-free development image contains a source snapshot. Rebuild it after
+host edits before running tests. Watch mode is not supported in the Docker
+workflow because host source changes are intentionally not mounted into the
+runtime container.
 
 ### 2. Local Environment
 
