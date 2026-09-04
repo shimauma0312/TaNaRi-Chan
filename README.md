@@ -69,13 +69,14 @@ This project requires environment variables to be set up. Follow these steps to 
 
 ## Docker Development and Debugging
 
-The image contains its dependencies. Container startup never runs `npm install`,
-changes source ownership, or requires `sudo`. After changing `package-lock.json`,
-rebuild and renew the anonymous dependency volume:
+The development image contains both source and dependencies. This avoids
+platform-specific bind-mount I/O failures and makes startup reproducible.
+Container startup never runs `npm install`, changes source ownership, or
+requires `sudo`. Rebuild the image after changing source or dependencies:
 
 ```bash
 docker compose build app
-docker compose up -d --renew-anon-volumes app
+docker compose up -d app
 ```
 
 Useful commands:
