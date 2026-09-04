@@ -3,8 +3,7 @@
 import SideMenu from "@/components/SideMenu"
 import TodoList from "@/components/TodoList"
 import useAuth from "@/hooks/useAuth"
-import { useTodoList } from "@/hooks/useTodoList"
-import { PublicTodo } from "@/types/todo"
+import { usePublicTodos } from "@/hooks/usePublicTodos"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 
@@ -16,9 +15,7 @@ interface PublicUser {
 export default function OtherTodosPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
-  const { todos, isLoading, error, fetchPublicTodos, clearError, hasMore } = useTodoList({
-    autoFetch: false,
-  })
+  const { todos, isLoading, error, fetchPublicTodos, clearError, hasMore } = usePublicTodos()
 
   const [selectedUser, setSelectedUser] = useState<string>("")
 
@@ -34,14 +31,11 @@ export default function OtherTodosPage() {
     const userMap = new Map<string, PublicUser>()
     todos.forEach((todo) => {
       // PublicTodoかどうかをチェック
-      if ("user" in todo) {
-        const publicTodo = todo as PublicTodo
-        if (publicTodo.user.id !== user?.id && !userMap.has(publicTodo.user.id)) {
-          userMap.set(publicTodo.user.id, {
-            id: publicTodo.user.id,
-            user_name: publicTodo.user.user_name,
-          })
-        }
+      if (todo.user.id !== user?.id && !userMap.has(todo.user.id)) {
+        userMap.set(todo.user.id, {
+          id: todo.user.id,
+          user_name: todo.user.user_name,
+        })
       }
     })
     return Array.from(userMap.values())
@@ -50,10 +44,8 @@ export default function OtherTodosPage() {
   // 選択中のユーザーに応じた一覧を導出
   const filteredTodos = useMemo(() => {
     return todos.filter((todo) => {
-      if (!("user" in todo)) return false
-      const publicTodo = todo as PublicTodo
-      if (publicTodo.user.id === user?.id) return false
-      return !selectedUser || publicTodo.user.id === selectedUser
+      if (todo.user.id === user?.id) return false
+      return !selectedUser || todo.user.id === selectedUser
     })
   }, [todos, selectedUser, user?.id])
 
