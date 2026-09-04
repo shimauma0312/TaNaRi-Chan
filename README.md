@@ -96,11 +96,8 @@ docker compose --profile tools up studio
 # Start Next.js with the Node inspector on localhost:9229 (app on port 3001)
 docker compose --profile debug up debug
 
-# Build the production runtime image
-docker build --target production -t tanari-chan:production .
-
-# Run the standalone production image locally at http://localhost:3002
-docker compose --profile production up --build production
+# Verify that the optimized Next.js application build succeeds
+docker compose run --rm -e NODE_ENV=production app npm run build
 ```
 
 The application, database, Studio, and inspector ports are bound to
@@ -165,31 +162,13 @@ The seed command is refused when `NODE_ENV=production` or when
 `ALLOW_DESTRUCTIVE_SEED=true` is not explicitly supplied. It clears all
 application tables in one transaction before creating the sample data.
 
-#### Production Deployment
+The Compose definition in this repository is limited to development, debugging,
+and local tooling. It does not define a production deployment. Optimized build
+validation remains available through `npm run build` in the development image
+with `NODE_ENV=production` supplied as shown above.
 
-The `production` profile above is a local production-image smoke environment.
-For a release connected to a managed PostgreSQL database, use the fail-closed
-release definition and supply secrets from the deployment platform:
-
-```bash
-PRODUCTION_DATABASE_URL="postgresql://..." \
-MIGRATION_DATABASE_URL="postgresql://..." \
-TRUSTED_ORIGINS="https://tanari.example.com" \
-TRUST_PROXY=true \
-docker compose -f docker-compose.release.yml up --build -d
-
-# Build the non-root standalone production image
-docker build --target production -t tanari-chan:production .
-```
-
-Use separate database roles: `MIGRATION_DATABASE_URL` needs schema migration
-privileges, while `PRODUCTION_DATABASE_URL` should be limited to the DML needed
-by the running application. `TRUST_PROXY` is deliberately required; set it to
-`true` only when a trusted reverse proxy overwrites forwarding headers, or to
-`false` for direct access.
-
-Backup, restore, retention, PostgreSQL upgrade, and Prisma baseline procedures
-are documented in [`docs/database-operations.md`](docs/database-operations.md).
+Backup, restore, cleanup, PostgreSQL upgrade, and Prisma baseline procedures are
+documented in [`docs/database-operations.md`](docs/database-operations.md).
 
 ### Useful Commands
 
