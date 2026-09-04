@@ -1,9 +1,26 @@
 "use client"
 
 import MinLoader from "@/components/MinLoader"
-import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
 import { handleClientError } from "@/utils/errorHandler.client"
+import AddIcon from "@mui/icons-material/Add"
+import DeleteIcon from "@mui/icons-material/Delete"
+import EditIcon from "@mui/icons-material/Edit"
+import Alert from "@mui/material/Alert"
+import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
+import Card from "@mui/material/Card"
+import CardActions from "@mui/material/CardActions"
+import CardContent from "@mui/material/CardContent"
+import Container from "@mui/material/Container"
+import Dialog from "@mui/material/Dialog"
+import DialogActions from "@mui/material/DialogActions"
+import DialogContent from "@mui/material/DialogContent"
+import DialogContentText from "@mui/material/DialogContentText"
+import DialogTitle from "@mui/material/DialogTitle"
+import Snackbar from "@mui/material/Snackbar"
+import Stack from "@mui/material/Stack"
+import Typography from "@mui/material/Typography"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -18,161 +35,191 @@ const getArticles = async (cursor?: string) => {
     `/api/articles?mine=true&limit=20${cursor ? `&cursor=${cursor}` : ""}`,
   )
   const data = await response.json().catch(() => null)
-  if (!response.ok) {
-    throw new Error(data?.error || "記事の取得に失敗しました")
-  }
-  if (!Array.isArray(data)) {
-    throw new Error("記事一覧の応答形式が不正です")
-  }
+  if (!response.ok) throw new Error(data?.error || "記事の取得に失敗しました")
+  if (!Array.isArray(data)) throw new Error("記事一覧の応答形式が不正です")
   return { articles: data as Article[], nextCursor: response.headers.get("X-Next-Cursor") }
 }
 
 const ArticlesPage = () => {
   const { user, loading } = useAuth()
+  const router = useRouter()
   const [articles, setArticles] = useState<Article[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
-  const router = useRouter()
+  const [articleToDelete, setArticleToDelete] = useState<Article | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => {
-    if (user) {
-      const fetchData = async () => {
-        setDataLoading(true)
-        setError(null)
-        try {
-          const page = await getArticles()
-          setArticles(page.articles)
-          setNextCursor(page.nextCursor)
-        } catch (error) {
-          setError(handleClientError(error, "記事の取得に失敗しました"))
-        } finally {
-          setDataLoading(false)
-        }
-      }
+    if (!user) return
 
-      fetchData()
+    const fetchData = async () => {
+      setDataLoading(true)
+      setError(null)
+      try {
+        const page = await getArticles()
+        setArticles(page.articles)
+        setNextCursor(page.nextCursor)
+      } catch (error) {
+        setError(handleClientError(error, "記事の取得に失敗しました"))
+      } finally {
+        setDataLoading(false)
+      }
     }
+
+    void fetchData()
   }, [user])
 
-  if (loading || !user) {
-    return <MinLoader />
-  }
+  if (loading || !user) return <MinLoader />
 
-  /**
-   * 記事を編集する
-   * @param postId : number
-   */
-  const handleEdit = (postId: number) => {
-    router.push(`/dashboard/articles/edit?post_id=${postId}`)
-  }
+  const handleDelete = async () => {
+    if (!articleToDelete || deleting) return
 
-  /**
-   * 記事を削除する
-   * @param postId : number
-   */
-  const handleDelete = async (postId: number) => {
-    if (!confirm("Are you sure you want to delete this article?")) {
-      return
-    }
-
+    setDeleting(true)
     try {
-      const response = await fetch(`/api/articles`, {
+      const response = await fetch("/api/articles", {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ post_id: postId }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: articleToDelete.post_id }),
       })
 
-      if (response.ok) {
-        setArticles(articles.filter((article) => article.post_id !== postId))
-      } else {
-        const errorData = await response.json()
-        const errorMessage = errorData.error || "Failed to delete article"
-        alert(errorMessage)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.error || "Failed to delete article")
       }
+
+      setArticles((previous) =>
+        previous.filter((article) => article.post_id !== articleToDelete.post_id),
+      )
+      setArticleToDelete(null)
+      setNotice("記事を削除しました")
     } catch (error) {
-      const errorMessage = handleClientError(error, "An error occurred while deleting the article")
-      alert(errorMessage)
+      setNotice(handleClientError(error, "An error occurred while deleting the article"))
+    } finally {
+      setDeleting(false)
     }
   }
 
-  if (!user) {
-    return <MinLoader />
+  const loadMore = async () => {
+    if (!nextCursor || dataLoading) return
+    setDataLoading(true)
+    setError(null)
+    try {
+      const page = await getArticles(nextCursor)
+      setArticles((previous) => [...previous, ...page.articles])
+      setNextCursor(page.nextCursor)
+    } catch (error) {
+      setError(handleClientError(error, "記事の取得に失敗しました"))
+    } finally {
+      setDataLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
-      <SideMenu />
-      <div className="w-full md:w-4/5 p-4">
-        <div className="container mx-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold">Articles</h1>
-            <button
-              onClick={() => router.push("/dashboard/articles/register")}
-              className="inline-block px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700"
-            >
-              New Article
-            </button>
-          </div>
-          {error && (
-            <p role="alert" className="mb-4 text-red-300">
-              {error}
-            </p>
-          )}
-          {dataLoading ? (
-            <MinLoader />
-          ) : articles.length === 0 && !error ? (
-            <p>記事が見つかりません</p>
-          ) : (
-            <ul className="space-y-4">
-              {articles.map((article) => (
-                <li key={article.post_id} className="p-4 border rounded-lg shadow-md">
-                  <h2 className="text-xl font-semibold">{article.title}</h2>
-                  <p className="text-white">
-                    Published: {new Date(article.createdAt).toLocaleDateString()}
-                  </p>
-                  <div className="flex space-x-2 mt-2">
-                    <button
-                      onClick={() => handleEdit(article.post_id)}
-                      className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-700"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(article.post_id)}
-                      className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-          {!dataLoading && nextCursor && (
-            <button
-              onClick={async () => {
-                setDataLoading(true)
-                try {
-                  const page = await getArticles(nextCursor)
-                  setArticles((previous) => [...previous, ...page.articles])
-                  setNextCursor(page.nextCursor)
-                } catch (error) {
-                  setError(handleClientError(error, "記事の取得に失敗しました"))
-                } finally {
-                  setDataLoading(false)
-                }
-              }}
-              className="mt-6 px-5 py-2 bg-indigo-500 rounded-md hover:bg-indigo-600"
-            >
-              さらに読み込む
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+    <Container maxWidth="lg">
+      <Stack spacing={3}>
+        <Box
+          sx={{
+            alignItems: { sm: "center" },
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography component="h1" variant="h4">
+            Articles
+          </Typography>
+          <Button
+            startIcon={<AddIcon />}
+            variant="contained"
+            onClick={() => router.push("/dashboard/articles/register")}
+          >
+            New Article
+          </Button>
+        </Box>
+
+        {error && <Alert severity="error">{error}</Alert>}
+
+        {dataLoading && articles.length === 0 ? (
+          <MinLoader />
+        ) : articles.length === 0 && !error ? (
+          <Typography color="text.secondary">記事が見つかりません</Typography>
+        ) : (
+          <Stack component="ul" spacing={2} sx={{ listStyle: "none", m: 0, p: 0 }}>
+            {articles.map((article) => (
+              <Card component="li" key={article.post_id}>
+                <CardContent>
+                  <Typography component="h2" variant="h6">
+                    {article.title}
+                  </Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Published: {new Date(article.createdAt).toLocaleDateString("ja-JP")}
+                  </Typography>
+                </CardContent>
+                <CardActions>
+                  <Button
+                    startIcon={<EditIcon />}
+                    onClick={() =>
+                      router.push(`/dashboard/articles/edit?post_id=${article.post_id}`)
+                    }
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={() => setArticleToDelete(article)}
+                  >
+                    Delete
+                  </Button>
+                </CardActions>
+              </Card>
+            ))}
+          </Stack>
+        )}
+
+        {nextCursor && (
+          <Box sx={{ textAlign: "center" }}>
+            <Button disabled={dataLoading} variant="outlined" onClick={() => void loadMore()}>
+              {dataLoading ? "読み込み中..." : "さらに読み込む"}
+            </Button>
+          </Box>
+        )}
+      </Stack>
+
+      <Dialog open={articleToDelete !== null} onClose={() => !deleting && setArticleToDelete(null)}>
+        <DialogTitle>記事を削除しますか？</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            「{articleToDelete?.title}」を削除します。この操作は取り消せません。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={deleting} onClick={() => setArticleToDelete(null)}>
+            キャンセル
+          </Button>
+          <Button
+            color="error"
+            disabled={deleting}
+            variant="contained"
+            onClick={() => void handleDelete()}
+          >
+            {deleting ? "削除中..." : "削除"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={notice !== null} autoHideDuration={5000} onClose={() => setNotice(null)}>
+        <Alert
+          severity={notice === "記事を削除しました" ? "success" : "error"}
+          onClose={() => setNotice(null)}
+        >
+          {notice}
+        </Alert>
+      </Snackbar>
+    </Container>
   )
 }
 

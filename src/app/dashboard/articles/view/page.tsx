@@ -1,18 +1,19 @@
 "use client"
 
 import MinLoader from "@/components/MinLoader"
-import SideMenu from "@/components/SideMenu"
+import NextLink from "@/components/NextLink"
 import MarkdownPreview from "@/components/markdown/markdownPreveiw"
 import useAuth from "@/hooks/useAuth"
-import Link from "next/link"
+import Alert from "@mui/material/Alert"
+import Container from "@mui/material/Container"
+import Link from "@mui/material/Link"
+import Paper from "@mui/material/Paper"
+import Stack from "@mui/material/Stack"
+import Typography from "@mui/material/Typography"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 
-type Article = {
-  title: string
-  content: string
-  createdAt: string
-}
+type Article = { title: string; content: string; createdAt: string }
 
 function ArticleViewContent() {
   const { user, loading: authLoading } = useAuth()
@@ -43,33 +44,32 @@ function ArticleViewContent() {
       }
     }
 
-    load()
+    void load()
   }, [postId])
 
   if (authLoading || !user || loading) return <MinLoader />
 
   return (
-    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
-      <SideMenu />
-      <main className="w-full md:w-4/5 p-4">
-        <Link href="/dashboard" className="text-indigo-300 underline">
+    <Container maxWidth="md">
+      <Stack spacing={3}>
+        <Link component={NextLink} href="/dashboard">
           ダッシュボードへ戻る
         </Link>
         {error ? (
-          <p role="alert" className="mt-6 text-red-300">
-            {error}
-          </p>
+          <Alert severity="error">{error}</Alert>
         ) : article ? (
-          <article className="mt-6">
-            <h1 className="text-3xl font-bold mb-2">{article.title}</h1>
-            <p className="text-sm text-gray-400 mb-6">
-              {new Date(article.createdAt).toLocaleDateString()}
-            </p>
+          <Paper component="article" sx={{ p: { xs: 2, sm: 4 } }}>
+            <Typography component="h1" variant="h3" sx={{ mb: 1 }}>
+              {article.title}
+            </Typography>
+            <Typography color="text.secondary" sx={{ mb: 4 }} variant="body2">
+              {new Date(article.createdAt).toLocaleDateString("ja-JP")}
+            </Typography>
             <MarkdownPreview markdown={article.content} />
-          </article>
+          </Paper>
         ) : null}
-      </main>
-    </div>
+      </Stack>
+    </Container>
   )
 }
 
