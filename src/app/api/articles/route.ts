@@ -1,5 +1,5 @@
 import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
-import logger from "@/logging/logging"
+import logger from "@/utils/logger"
 import * as articleService from "@/service/articleService"
 import { AppError, createApiErrorResponse, ErrorType } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
