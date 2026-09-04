@@ -21,8 +21,12 @@ const Loader: React.FC<LoaderProps> = ({ onTimeout, timeout }) => {
   }, [onTimeout, timeout])
 
   return (
-    <section className={(loader.container, fede.fadeinout)}>
-      <div className={loader.loader}> </div>
+    <section
+      className={`${loader.container} ${fede.fadeinout}`}
+      role="status"
+      aria-label="読み込み中"
+    >
+      <div className={loader.loader} aria-hidden="true"> </div>
       <div className={noise.glitch} data-text="Loading...">
         Loading
       </div>

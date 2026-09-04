@@ -1,14 +1,8 @@
 "use client"
 
-import "easymde/dist/easymde.min.css"
-import "github-markdown-css/github-markdown.css"
-
 import React, { useState } from "react"
 
-import styles from "@/styles/markdown.module.css"
-import ReactMarkdown from "react-markdown"
-import breaks from "remark-breaks"
-import remarkGfm from "remark-gfm"
+import MarkdownPreview from "@/components/markdown/markdownPreveiw"
 
 /**
  * MarkdownEditorコンポーネント
@@ -83,7 +77,7 @@ const MarkdownEditor: React.FC<{
           />
         ) : (
           // --- プレビュタブ ---
-          <div className={`p-4 text-white min-h-96 ${styles.markdownPreview}`}>
+          <div className="p-4 text-white min-h-96">
             {/*
               ReactMarkdown:
               - remarkGfm: GFM拡張（テーブル・チェックボックス等）を有効化
@@ -91,7 +85,7 @@ const MarkdownEditor: React.FC<{
               - children: 現在のmarkdownテキスト
             */}
             {markdown.trim() ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm, breaks]}>{markdown}</ReactMarkdown>
+              <MarkdownPreview markdown={markdown} />
             ) : (
               <div className="text-slate-400 italic text-center py-20">
                 Editタブでマークダウンを入力してください
