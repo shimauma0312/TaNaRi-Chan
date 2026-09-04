@@ -19,8 +19,6 @@
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "^6.19.2",
     "bcryptjs": "^3.0.2",
-    "easymde": "^2.18.0",
-    "github-markdown-css": "^5.8.1",
     "next": "^16.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
