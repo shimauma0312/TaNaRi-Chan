@@ -63,7 +63,7 @@ export default function OtherTodosPage() {
       <div className="w-full md:w-4/5 p-4">
         <div className="container mx-auto">
           {/* ヘッダー */}
-          <div className="flex justify-between items-center mb-6">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-3xl font-bold">Public Todos</h1>
             <button
               onClick={() => router.push("/dashboard")}

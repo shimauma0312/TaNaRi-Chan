@@ -128,9 +128,9 @@ export default function TodoList({
                     : "bg-gray-900/50 border-gray-400"
             }`}
           >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex flex-wrap items-center gap-3">
                   {onToggleCompletion && (
                     <input
                       type="checkbox"
@@ -141,7 +141,7 @@ export default function TodoList({
                     />
                   )}
                   <h2
-                    className={`text-xl font-semibold ${todo.is_completed ? "line-through text-gray-500" : ""}`}
+                    className={`break-words text-xl font-semibold ${todo.is_completed ? "line-through text-gray-500" : ""}`}
                   >
                     {todo.title}
                   </h2>
@@ -154,7 +154,7 @@ export default function TodoList({
                 <p className={`text-gray-300 mb-2 ${todo.is_completed ? "line-through" : ""}`}>
                   {todo.description}
                 </p>
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                   <span
                     className={`${
                       isOverdue(todo.todo_deadline) && !todo.is_completed
@@ -190,7 +190,7 @@ export default function TodoList({
 
               {/* 操作ボタン */}
               {allowEdit && (onEdit || onDelete) && (
-                <div className="flex gap-2 ml-4">
+                <div className="flex self-end gap-2 sm:ml-4">
                   {onEdit && (
                     <button
                       onClick={() => onEdit(todo.todo_id)}
