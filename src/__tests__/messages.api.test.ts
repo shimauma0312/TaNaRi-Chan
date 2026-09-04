@@ -45,6 +45,9 @@ jest.mock('@/lib/auth', () => ({
   getUserIdFromRequest: jest.fn(),
   isSameOriginRequest: jest.fn().mockReturnValue(true),
 }));
+jest.mock('@/lib/writeRateLimit', () => ({
+  enforceWriteRateLimit: jest.fn().mockResolvedValue(null),
+}));
 
 import { getUserIdFromRequest } from '@/lib/auth';
 import { GET as getInbox, POST as postMessage } from '@/app/api/messages/route';

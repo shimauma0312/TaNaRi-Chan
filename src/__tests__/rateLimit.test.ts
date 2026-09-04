@@ -1,22 +1,16 @@
 jest.mock("@/lib/prisma", () => ({
   __esModule: true,
-  default: { $transaction: jest.fn() },
+  default: { rateLimitBucket: { upsert: jest.fn() } },
 }))
 
 import prisma from "@/lib/prisma"
 import { consumeRateLimit, getRateLimitClientId } from "@/lib/rateLimit"
 
-const mockDeleteMany = jest.fn()
-const mockUpsert = jest.fn()
-const mockTransaction = prisma.$transaction as jest.Mock
+const mockUpsert = prisma.rateLimitBucket.upsert as jest.Mock
 
 describe("shared rate limiting", () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockDeleteMany.mockResolvedValue({ count: 0 })
-    mockTransaction.mockImplementation(async (callback) =>
-      callback({ rateLimitBucket: { deleteMany: mockDeleteMany, upsert: mockUpsert } }),
-    )
     delete process.env.TRUST_PROXY
   })
 
@@ -44,6 +38,14 @@ describe("shared rate limiting", () => {
     })
     const key = mockUpsert.mock.calls[0][0].create.key as string
     expect(key).not.toContain("private@example.com")
+  })
+
+  test("does not perform retention cleanup on the request path", async () => {
+    mockUpsert.mockResolvedValue({ count: 1 })
+
+    await consumeRateLimit({ scope: "login", identifier: "user", limit: 3, windowSeconds: 60 })
+
+    expect(prisma).not.toHaveProperty("rateLimitBucket.deleteMany")
   })
 
   test("trusts forwarded addresses only when explicitly configured", () => {
