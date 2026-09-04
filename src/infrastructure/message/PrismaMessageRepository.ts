@@ -3,6 +3,22 @@ import { CreateMessageData, Message, MessageWithUsers } from "@/domain/message/M
 import { IMessageRepository, MessagePageOptions } from "@/domain/message/MessageRepository"
 import { AppError, ErrorType } from "@/utils/errorHandler"
 
+const messageSelect = {
+  message_id: true,
+  subject: true,
+  body: true,
+  sender_id: true,
+  receiver_id: true,
+  is_read: true,
+  createdAt: true,
+} as const
+
+const messageWithUsersSelect = {
+  ...messageSelect,
+  sender: { select: { id: true, user_name: true } },
+  receiver: { select: { id: true, user_name: true } },
+} as const
+
 /**
  * Prismaを使ったメッセージリポジトリ実装クラス
  */
@@ -27,14 +43,7 @@ export class PrismaMessageRepository implements IMessageRepository {
           sender_id: data.sender_id,
           receiver_id: data.receiver_id,
         },
-        include: {
-          sender: {
-            select: { id: true, user_name: true },
-          },
-          receiver: {
-            select: { id: true, user_name: true },
-          },
-        },
+        select: messageWithUsersSelect,
       })
     } catch (error: any) {
       if (error?.code === "P2003") {
@@ -57,14 +66,7 @@ export class PrismaMessageRepository implements IMessageRepository {
     const limit = Math.min(Math.max(options.limit ?? 100, 1), 100)
     return this.prisma.message.findMany({
       where: { receiver_id: userId, deletedByReceiver: false },
-      include: {
-        sender: {
-          select: { id: true, user_name: true },
-        },
-        receiver: {
-          select: { id: true, user_name: true },
-        },
-      },
+      select: messageWithUsersSelect,
       orderBy: { message_id: "desc" },
       take: limit,
       ...(options.cursor ? { cursor: { message_id: options.cursor }, skip: 1 } : {}),
@@ -84,14 +86,7 @@ export class PrismaMessageRepository implements IMessageRepository {
     const limit = Math.min(Math.max(options.limit ?? 100, 1), 100)
     return this.prisma.message.findMany({
       where: { sender_id: userId, deletedBySender: false },
-      include: {
-        sender: {
-          select: { id: true, user_name: true },
-        },
-        receiver: {
-          select: { id: true, user_name: true },
-        },
-      },
+      select: messageWithUsersSelect,
       orderBy: { message_id: "desc" },
       take: limit,
       ...(options.cursor ? { cursor: { message_id: options.cursor }, skip: 1 } : {}),
@@ -107,14 +102,7 @@ export class PrismaMessageRepository implements IMessageRepository {
   async findById(messageId: number): Promise<MessageWithUsers | null> {
     return this.prisma.message.findUnique({
       where: { message_id: messageId },
-      include: {
-        sender: {
-          select: { id: true, user_name: true },
-        },
-        receiver: {
-          select: { id: true, user_name: true },
-        },
-      },
+      select: messageWithUsersSelect,
     })
   }
 
@@ -129,8 +117,9 @@ export class PrismaMessageRepository implements IMessageRepository {
   async markAsRead(messageId: number, userId: string): Promise<Message> {
     try {
       return await this.prisma.message.update({
-        where: { message_id: messageId, receiver_id: userId },
+        where: { message_id: messageId, receiver_id: userId, deletedByReceiver: false },
         data: { is_read: true },
+        select: messageSelect,
       })
     } catch (error: any) {
       if (error?.code === "P2025") {
