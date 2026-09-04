@@ -5,6 +5,7 @@ import { AppError, createApiErrorResponse, ErrorType } from "@/utils/errorHandle
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { readJsonRequest } from "@/schemas/api"
+import { enforceWriteRateLimit } from "@/lib/writeRateLimit"
 
 const articleFields = z.object({
   title: z.string().trim().min(1).max(200),
@@ -100,6 +101,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const userId = await requireUserId(req)
+    const limited = await enforceWriteRateLimit(userId, {
+      scope: "article-create",
+      limit: 20,
+      windowSeconds: 60,
+    })
+    if (limited) return limited
     const parsed = articleFields.safeParse(await readJson(req))
     if (!parsed.success) {
       throw new AppError("Title and content are required", ErrorType.VALIDATION, 400)

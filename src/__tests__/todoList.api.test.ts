@@ -6,6 +6,9 @@ import { todoService } from "../service/todoService"
 // モック設定
 jest.mock("../service/todoService")
 jest.mock("../lib/auth")
+jest.mock("../lib/writeRateLimit", () => ({
+  enforceWriteRateLimit: jest.fn().mockResolvedValue(null),
+}))
 jest.mock("../utils/errorHandler", () => ({
   createApiErrorResponse: jest.fn((error, message) => ({
     error: message,

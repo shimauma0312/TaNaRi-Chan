@@ -32,14 +32,11 @@ export async function consumeRateLimit(rule: RateLimitRule): Promise<RateLimitRe
   const key = `${rule.scope}:${windowNumber}:${hashIdentifier(rule.identifier)}`
   const expiresAt = new Date((windowNumber + 1) * windowMs)
 
-  const bucket = await prisma.$transaction(async (database) => {
-    await database.rateLimitBucket.deleteMany({ where: { expiresAt: { lt: now } } })
-    return database.rateLimitBucket.upsert({
-      where: { key },
-      create: { key, count: 1, expiresAt },
-      update: { count: { increment: 1 } },
-      select: { count: true },
-    })
+  const bucket = await prisma.rateLimitBucket.upsert({
+    where: { key },
+    create: { key, count: 1, expiresAt },
+    update: { count: { increment: 1 } },
+    select: { count: true },
   })
 
   return {
