@@ -6,7 +6,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { handleClientError } from "@/utils/errorHandler.client"
 
@@ -37,6 +37,12 @@ const MessageForm = ({ users }: MessageFormProps) => {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    if (receiverId && !users.some((user) => user.id === receiverId)) {
+      setReceiverId("")
+    }
+  }, [receiverId, users])
 
   /**
    * フォーム送信ハンドラー
