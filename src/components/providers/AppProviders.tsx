@@ -7,7 +7,7 @@ import type { ReactNode } from "react"
 
 export default function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+    <AppRouterCacheProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline enableColorScheme />
         {children}

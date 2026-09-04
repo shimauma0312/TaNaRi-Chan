@@ -476,9 +476,9 @@ async function main() {
     })
     await prisma.post.create({
       data: {
-        title: "Tailwind CSS 設計アーキテクチャ",
+        title: "Material UI 設計アーキテクチャ",
         content:
-          "# Tailwind CSS 設計アーキテクチャ\n\n同じユーティリティが 3 箇所以上現れたら @apply でコンポーネント化を検討し、tailwind.config.ts でテーマを一元管理しましょう。",
+          "# Material UI 設計アーキテクチャ\n\n共通の色・余白・コンポーネント既定値はテーマへ集約し、画面固有のスタイル指定を最小限に保ちましょう。",
         author_id: "4",
       },
     })
