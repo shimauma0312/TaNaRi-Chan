@@ -29,17 +29,6 @@ jest.mock('@prisma/client', () => {
   };
 });
 
-// ロガーモック
-jest.mock('@/logging/logging', () => ({
-  __esModule: true,
-  default: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-  },
-}));
-
 // 認証モック
 jest.mock('@/lib/auth', () => ({
   getUserIdFromRequest: jest.fn(),
@@ -47,6 +36,15 @@ jest.mock('@/lib/auth', () => ({
 }));
 jest.mock('@/lib/writeRateLimit', () => ({
   enforceWriteRateLimit: jest.fn().mockResolvedValue(null),
+}));
+jest.mock('@/utils/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
 }));
 
 import { getUserIdFromRequest } from '@/lib/auth';
