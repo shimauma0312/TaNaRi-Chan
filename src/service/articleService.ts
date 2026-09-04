@@ -1,4 +1,4 @@
-import logger from "@/logging/logging"
+import logger from "@/utils/logger"
 import prisma from "@/lib/prisma"
 import { AppError, ErrorType } from "@/utils/errorHandler"
 

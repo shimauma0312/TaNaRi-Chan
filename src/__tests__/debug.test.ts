@@ -18,7 +18,7 @@ jest.mock("@prisma/client", () => ({
 }))
 
 // Mock logger - need to match the correct import path
-jest.mock("@/logging/logging", () => ({
+jest.mock("@/utils/logger", () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

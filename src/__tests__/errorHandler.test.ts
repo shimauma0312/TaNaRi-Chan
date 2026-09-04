@@ -22,10 +22,13 @@ import {
 
 // Mock logger to avoid actual file operations during tests
 jest.mock("../utils/logger", () => ({
-  error: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
+  __esModule: true,
+  default: {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
 }))
 
 describe("AppError Class", () => {
