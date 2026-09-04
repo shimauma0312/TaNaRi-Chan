@@ -75,6 +75,8 @@ export class TodoService {
       excludeUserId?: string
       limit?: number
       cursor?: number
+      from?: Date
+      to?: Date
     } = {},
   ): Promise<(Todo & { user: { id: string; user_name: string } })[]> {
     const limit = Math.min(Math.max(options.limit ?? DEFAULT_QUERY_LIMIT, 1), DEFAULT_QUERY_LIMIT)
@@ -84,6 +86,9 @@ export class TodoService {
         is_public: true,
         ...(options.userId ? { id: options.userId } : {}),
         ...(options.excludeUserId ? { id: { not: options.excludeUserId } } : {}),
+        ...(options.from && options.to
+          ? { todo_deadline: { gte: options.from, lt: options.to } }
+          : {}),
       },
       include: {
         user: {

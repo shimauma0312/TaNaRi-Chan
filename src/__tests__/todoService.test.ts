@@ -131,6 +131,25 @@ describe("TodoService", () => {
 
       expect(result).toEqual(mockPublicTodos)
     })
+
+    test("applies a half-open deadline range", async () => {
+      mockPrismaClient.todo.findMany.mockResolvedValue([])
+      const from = new Date("2026-09-01T00:00:00.000Z")
+      const to = new Date("2026-10-01T00:00:00.000Z")
+
+      await service.getPublicTodos({ userId: "owner", from, to, limit: 20 })
+
+      expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            is_public: true,
+            id: "owner",
+            todo_deadline: { gte: from, lt: to },
+          },
+          take: 20,
+        }),
+      )
+    })
   })
 
   describe("getTodoById", () => {

@@ -80,6 +80,28 @@ describe("GET /api/todoList/[user_id]", () => {
     })
   })
 
+  test("applies the validated calendar range and pagination to public todos", async () => {
+    mockAuth.mockResolvedValue("viewer")
+    mockService.getPublicTodos.mockResolvedValue([
+      { ...todo, is_public: true, user: { id: "owner", user_name: "Owner" } },
+    ])
+
+    const response = await callGet(
+      "?from=2026-09-01&to=2026-10-01&limit=1&cursor=200",
+      "owner",
+    )
+
+    expect(response.status).toBe(200)
+    expect(mockService.getPublicTodos).toHaveBeenCalledWith({
+      userId: "owner",
+      cursor: 200,
+      limit: 1,
+      from: new Date("2026-09-01T00:00:00.000Z"),
+      to: new Date("2026-10-01T00:00:00.000Z"),
+    })
+    expect(response.headers.get("X-Next-Cursor")).toBe("101")
+  })
+
   test("rejects incomplete or reversed date ranges", async () => {
     expect((await callGet("?from=2026-09-01")).status).toBe(400)
     expect((await callGet("?from=2026-10-01&to=2026-09-01")).status).toBe(400)
