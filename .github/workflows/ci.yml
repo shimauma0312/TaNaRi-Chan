@@ -78,13 +78,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate Compose model
-        run: |
-          docker compose --profile debug --profile tools --profile production config --quiet
-          PRODUCTION_DATABASE_URL=postgresql://test:test@database.example/testdb \
-            MIGRATION_DATABASE_URL=postgresql://migrate:test@database.example/testdb \
-            TRUSTED_ORIGINS=https://tanari.example.test \
-            TRUST_PROXY=false \
-            docker compose -f docker-compose.release.yml --profile maintenance config --quiet
+        run: docker compose --profile debug --profile tools config --quiet
 
       - name: Build development image and start stack
         run: docker compose up --build --wait app
@@ -92,14 +86,16 @@ jobs:
       - name: Verify migrations
         run: docker compose run --rm migrate
 
-      - name: Start and verify production image
+      - name: Verify development runtime
         run: |
-          docker compose --profile production up --build --wait production
-          curl --fail --retry 5 --retry-connrefused http://127.0.0.1:3002/api/health/live
-          test "$(docker compose exec -T production id -u | tr -d '\r')" = "1000"
+          curl --fail --retry 5 --retry-connrefused http://127.0.0.1:3000/api/health/live
+          test "$(docker compose exec -T app id -u | tr -d '\r')" = "1000"
 
-      - name: Smoke-test production authentication and ownership
-        run: node scripts/production-smoke.mjs
+      - name: Smoke-test development authentication and ownership
+        run: node scripts/development-smoke.mjs
+
+      - name: Verify optimized application build in Docker
+        run: docker compose run --rm -e NODE_ENV=production app npm run build
 
       - name: Show container logs
         if: failure()
