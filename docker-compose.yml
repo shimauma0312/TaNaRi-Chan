@@ -8,6 +8,10 @@ x-app-volumes: &app-volumes
   - /app/node_modules
   - /app/.next
 
+x-app-tmpfs: &app-tmpfs
+  # Prisma loads a native query engine from this mount, so it must permit exec.
+  - /app/node_modules/.prisma:rw,exec,size=64m,mode=1777
+
 services:
   app:
     build:
@@ -20,6 +24,7 @@ services:
       <<: *app-environment
       TRUSTED_ORIGINS: http://localhost:${APP_PORT:-3000},http://127.0.0.1:${APP_PORT:-3000},${TRUSTED_ORIGINS:-}
     volumes: *app-volumes
+    tmpfs: *app-tmpfs
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000"
     depends_on:
@@ -50,6 +55,7 @@ services:
       <<: *app-environment
       TRUSTED_ORIGINS: http://localhost:${DEBUG_APP_PORT:-3001},http://127.0.0.1:${DEBUG_APP_PORT:-3001},${TRUSTED_ORIGINS:-}
     volumes: *app-volumes
+    tmpfs: *app-tmpfs
     command:
       - node_modules/.bin/next
       - dev
@@ -104,6 +110,7 @@ services:
     init: true
     environment: *app-environment
     volumes: *app-volumes
+    tmpfs: *app-tmpfs
     command: ["npx", "prisma", "studio", "--hostname", "0.0.0.0", "--port", "5555"]
     ports:
       - "127.0.0.1:${PRISMA_STUDIO_PORT:-5555}:5555"
