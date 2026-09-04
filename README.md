@@ -23,8 +23,10 @@
    docker compose build
    ```
 
-3. Start the application. PostgreSQL must pass its health check and all tracked
-   migrations are applied before Next.js starts:
+3. Start the application. PostgreSQL must pass its health check, all tracked
+   migrations are applied, and an empty development database is seeded before
+   Next.js starts. If at least one user already exists, seeding is skipped and
+   existing data is left unchanged:
 
    ```bash
    docker compose up -d
@@ -120,8 +122,9 @@ the old volume directly.
 
 ### Initial Database Setup
 
-`docker compose up` applies all tracked migrations automatically. Seeding is an
-explicit operation so existing development data is not replaced unexpectedly:
+`docker compose up` applies all tracked migrations automatically. It inserts
+the sample data only when the `User` table is empty; an existing database is
+left unchanged. Destructive replacement remains an explicit operation:
 
 ```bash
 # Apply existing tracked migrations manually

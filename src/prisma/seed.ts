@@ -41,20 +41,28 @@ const seedUsers = [
   },
 ] as const
 
-function assertDestructiveSeedIsAllowed() {
+type SeedMode = "destructive" | "if-empty"
+
+function resolveSeedMode(): SeedMode {
   if (process.env.NODE_ENV === "production") {
     throw new Error("Refusing to seed because NODE_ENV is production.")
   }
 
-  if (process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
-    throw new Error(
-      "This seed replaces all application data. Set ALLOW_DESTRUCTIVE_SEED=true to continue.",
-    )
+  if (process.env.ALLOW_DESTRUCTIVE_SEED === "true") {
+    return "destructive"
   }
+
+  if (process.env.SEED_IF_EMPTY === "true") {
+    return "if-empty"
+  }
+
+  throw new Error(
+    "Set SEED_IF_EMPTY=true to seed an empty database or ALLOW_DESTRUCTIVE_SEED=true to replace development data.",
+  )
 }
 
 async function main() {
-  assertDestructiveSeedIsAllowed()
+  const seedMode = resolveSeedMode()
 
   const users = await Promise.all(
     seedUsers.map(async ({ password, ...user }) => ({
@@ -63,20 +71,32 @@ async function main() {
     })),
   )
 
-  await database.$transaction(async (prisma) => {
-    console.log("Clearing existing data...")
-    // Delete every model in dependency order so the reset is complete even when
-    // development data includes comments, messages, sessions, tags, or logs.
-    await prisma.postComment.deleteMany({})
-    await prisma.todoComment.deleteMany({})
-    await prisma.message.deleteMany({})
-    await prisma.session.deleteMany({})
-    await prisma.todo.deleteMany({})
-    await prisma.post.deleteMany({})
-    await prisma.postTag.deleteMany({})
-    await prisma.rateLimitBucket.deleteMany({})
-    await prisma.log.deleteMany({})
-    await prisma.user.deleteMany({})
+  const seeded = await database.$transaction(async (prisma) => {
+    // Serialize automatic and manual seed attempts so two Compose processes
+    // cannot both observe an empty User table and insert the same fixtures.
+    await prisma.$queryRaw`SELECT pg_advisory_xact_lock(1413566034)::text AS lock`
+
+    if (seedMode === "if-empty") {
+      const existingUser = await prisma.user.findFirst({ select: { id: true } })
+      if (existingUser) {
+        return false
+      }
+      console.log("No users found. Creating development seed data...")
+    } else {
+      console.log("Clearing existing data...")
+      // Delete every model in dependency order so the reset is complete even when
+      // development data includes comments, messages, sessions, tags, or logs.
+      await prisma.postComment.deleteMany({})
+      await prisma.todoComment.deleteMany({})
+      await prisma.message.deleteMany({})
+      await prisma.session.deleteMany({})
+      await prisma.todo.deleteMany({})
+      await prisma.post.deleteMany({})
+      await prisma.postTag.deleteMany({})
+      await prisma.rateLimitBucket.deleteMany({})
+      await prisma.log.deleteMany({})
+      await prisma.user.deleteMany({})
+    }
 
     console.log("Creating users...")
     await prisma.user.createMany({ data: users })
@@ -494,7 +514,14 @@ async function main() {
         author_id: "3",
       },
     })
+
+    return true
   })
+
+  if (!seeded) {
+    console.log("Existing users found. Skipping automatic development seed.")
+    return
+  }
 
   console.log("Seed data created successfully!")
   console.log("Users: 5, Todos: 30, Articles: 12")

@@ -32,6 +32,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
     healthcheck:
       test:
         - CMD
@@ -73,6 +75,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
 
   production:
     profiles: [production]
@@ -102,6 +106,21 @@ services:
         condition: service_healthy
     restart: "no"
 
+  seed:
+    build:
+      context: .
+      target: development
+    environment:
+      <<: *app-environment
+      SEED_IF_EMPTY: "true"
+    command: ["npx", "prisma", "db", "seed"]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   studio:
     profiles: [tools]
     build:
@@ -118,6 +137,8 @@ services:
       db:
         condition: service_healthy
       migrate:
+        condition: service_completed_successfully
+      seed:
         condition: service_completed_successfully
 
   db:
