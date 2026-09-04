@@ -1,5 +1,5 @@
 import { Todo } from "@/types/todo"
-import { formatTodoDate, getLocalToday } from "@/utils/todoDate"
+import { formatTodoDate, getTodoBusinessToday } from "@/utils/todoDate"
 import { useState } from "react"
 
 interface TodoFormProps {
@@ -53,7 +53,7 @@ export default function TodoForm({
 
       // 期限が過去でないかチェック（編集時は除く）
       if (!initialData.todo_id) {
-        if (dueDate < getLocalToday()) {
+        if (dueDate < getTodoBusinessToday()) {
           throw new Error("Due date must be today or later")
         }
       }
@@ -125,7 +125,7 @@ export default function TodoForm({
             className="w-full p-2 border rounded-lg bg-transparent border-gray-400 focus:ring-2 focus:ring-blue-400"
             required
             disabled={isSubmitting}
-            min={!initialData.todo_id ? getLocalToday() : undefined}
+            min={!initialData.todo_id ? getTodoBusinessToday() : undefined}
           />
         </div>
 

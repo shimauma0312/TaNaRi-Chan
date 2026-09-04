@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import { formatTodoDate, getLocalToday } from "@/utils/todoDate"
+import { formatTodoDate, getTodoBusinessToday } from "@/utils/todoDate"
 
 interface TodoFormData {
   title: string
@@ -73,7 +73,7 @@ export const useTodoForm = (options: UseTodoFormOptions = {}) => {
       newErrors.todo_deadline = "期限は必須です"
     } else {
       // 新規作成時は過去日不可、編集時は許可
-      if (!initialData.todo_deadline && formData.todo_deadline < getLocalToday()) {
+      if (!initialData.todo_deadline && formData.todo_deadline < getTodoBusinessToday()) {
         newErrors.todo_deadline = "期限は今日以降に設定してください"
       }
     }
