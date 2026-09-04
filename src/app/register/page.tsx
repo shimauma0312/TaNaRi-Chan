@@ -19,6 +19,7 @@ const RegisterPage = () => {
     userName,
     setUserName,
     error,
+    isSubmitting,
     handleSubmit: registerUser, // ユーザー登録関数
   } = useUserRegister()
 
@@ -52,7 +53,7 @@ const RegisterPage = () => {
     <div className="flex flex-col items-center justify-center min-h-screen">
       <div className="bg-transparent p-8 rounded-lg shadow-md w-full max-w-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
         <h1 className="text-2xl font-bold mb-6 text-center text-white">Register Page</h1>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} aria-busy={isSubmitting}>
           <div className="mb-4">
             <label htmlFor="username" className="block text-sm font-medium text-gray-300">
               Username:
@@ -103,8 +104,9 @@ const RegisterPage = () => {
           <button
             className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             type="submit"
+            disabled={isSubmitting}
           >
-            Register
+            {isSubmitting ? "Registering..." : "Register"}
           </button>
         </form>
         <p className="mt-4 text-center text-gray-300">

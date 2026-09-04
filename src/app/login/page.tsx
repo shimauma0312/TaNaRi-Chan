@@ -11,7 +11,7 @@ const LoginPage = () => {
   const schema = loginValidation()
 
   // カスタムフックから状態と関数を取得
-  const { email, setEmail, password, setPassword, error, login } = useLogin()
+  const { email, setEmail, password, setPassword, error, loading, login } = useLogin()
 
   // react-hook-form の設定
   const {
@@ -42,7 +42,7 @@ const LoginPage = () => {
     <div className="flex flex-col items-center justify-center min-h-screen">
       <div className="bg-transparent p-8 rounded-lg shadow-md w-full max-w-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
         <h1 className="text-2xl font-bold mb-6 text-center text-white">Login Page</h1>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} aria-busy={loading}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-300">
               Email:
@@ -77,8 +77,9 @@ const LoginPage = () => {
           <button
             className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             type="submit"
+            disabled={loading}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
         <p className="mt-4 text-center text-gray-300">
