@@ -39,23 +39,26 @@ const ComposeMessagePage = () => {
   useEffect(() => {
     if (user) {
       const controller = new AbortController()
+      setUsersLoading(true)
+      setError(null)
       const fetchUsers = async () => {
         try {
-          setUsersLoading(true)
           const response = await fetch(`/api/users?limit=50&q=${encodeURIComponent(query)}`, {
             signal: controller.signal,
           })
           if (response.ok) {
             const data = await response.json()
+            if (controller.signal.aborted) return
             setUsers(data)
+            setError(null)
           } else {
             setError("ユーザー一覧の取得に失敗しました")
           }
         } catch (err) {
-          if (err instanceof DOMException && err.name === "AbortError") return
+          if (controller.signal.aborted) return
           setError(handleClientError(err, "ユーザー一覧の取得に失敗しました"))
         } finally {
-          setUsersLoading(false)
+          if (!controller.signal.aborted) setUsersLoading(false)
         }
       }
 
