@@ -1,100 +1,122 @@
 "use client"
 
-import React, { useState } from "react"
-
 import MarkdownPreview from "@/components/markdown/markdownPreveiw"
+import Box from "@mui/material/Box"
+import Paper from "@mui/material/Paper"
+import Tab from "@mui/material/Tab"
+import Tabs from "@mui/material/Tabs"
+import TextField from "@mui/material/TextField"
+import Typography from "@mui/material/Typography"
+import { useEffect, useState } from "react"
 
-/**
- * MarkdownEditorコンポーネント
- *
- * - Markdownの編集とプレビューをタブで切り替え
- * - 親コンポーネントから初期値とonChangeハンドラを受け取る
- *
- * Props:
- *   - initialMarkdown: 初期表示するMarkdownテキスト（省略可、デフォルト空文字）
- *   - onChange: Markdownテキストが変更されたときに呼ばれるコールバック
- */
-const MarkdownEditor: React.FC<{
+interface MarkdownEditorProps {
+  disabled?: boolean
+  id?: string
   initialMarkdown?: string
+  labelledBy?: string
   onChange: (value: string) => void
-}> = ({ initialMarkdown = "", onChange }) => {
-  // markdown: 現在編集中のMarkdownテキスト
-  const [markdown, setMarkdown] = useState(initialMarkdown)
+  required?: boolean
+}
 
-  React.useEffect(() => {
+type EditorTab = "edit" | "preview"
+
+const MarkdownEditor = ({
+  disabled = false,
+  id = "article-content",
+  initialMarkdown = "",
+  labelledBy,
+  onChange,
+  required = false,
+}: MarkdownEditorProps) => {
+  const [markdown, setMarkdown] = useState(initialMarkdown)
+  const [activeTab, setActiveTab] = useState<EditorTab>("edit")
+
+  useEffect(() => {
     setMarkdown(initialMarkdown)
   }, [initialMarkdown])
 
-  /**
-   * テキストエリアの内容が変更されたときのハンドラ
-   * - ローカルstateを更新し、親コンポーネントにも通知する
-   * @param event テキストエリアのonChangeイベント
-   */
-  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMarkdown(event.target.value)
-    onChange(event.target.value)
-  }
+  const editTabId = `${id}-edit-tab`
+  const previewTabId = `${id}-preview-tab`
+  const editPanelId = `${id}-edit-panel`
+  const previewPanelId = `${id}-preview-panel`
 
-  // activeTab: 1=編集タブ, 0=プレビュタブ。デフォルトは編集タブ。
-  const [activeTab, setActiveTab] = useState<1 | 0>(1)
-
-  // --- UIレンダリング ---
   return (
-    <div className="w-full">
-      {/* タブ切り替えボタン（Edit/Preview） */}
-      <div className="flex mb-4 bg-slate-800 rounded-t border border-slate-600">
-        {/* 編集タブボタン */}
-        <button
-          type="button"
-          onClick={() => setActiveTab(1)}
-          className={`flex-1 px-4 py-2 font-medium ${
-            activeTab === 1 ? "bg-blue-600 text-white" : "text-slate-300 bg-slate-700"
-          }`}
-        >
-          Edit
-        </button>
-        {/* プレビュタブボタン */}
-        <button
-          type="button"
-          onClick={() => setActiveTab(0)}
-          className={`flex-1 px-4 py-2 font-medium ${
-            activeTab === 0 ? "bg-blue-600 text-white" : "text-slate-300 bg-slate-700"
-          }`}
-        >
-          Preview
-        </button>
-      </div>
+    <Paper variant="outlined" sx={{ overflow: "hidden", width: "100%" }}>
+      <Tabs
+        aria-label="記事本文の編集モード"
+        onChange={(_event, value: EditorTab) => setActiveTab(value)}
+        value={activeTab}
+        variant="fullWidth"
+      >
+        <Tab
+          aria-controls={editPanelId}
+          disabled={disabled}
+          id={editTabId}
+          label="Edit"
+          value="edit"
+        />
+        <Tab
+          aria-controls={previewPanelId}
+          disabled={disabled}
+          id={previewTabId}
+          label="Preview"
+          value="preview"
+        />
+      </Tabs>
 
-      {/* 編集 or プレビュー */}
-      <div className="border border-slate-600 rounded-b bg-slate-800">
-        {activeTab === 1 ? (
-          // --- 編集タブ ---
-          <textarea
+      <Box
+        aria-labelledby={editTabId}
+        hidden={activeTab !== "edit"}
+        id={editPanelId}
+        role="tabpanel"
+        sx={{ p: 2 }}
+      >
+        {activeTab === "edit" && (
+          <TextField
+            id={id}
+            disabled={disabled}
+            multiline
+            minRows={16}
+            required={required}
             value={markdown}
-            onChange={handleChange}
-            className="w-full h-96 p-4 bg-transparent text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+            onChange={(event) => {
+              setMarkdown(event.target.value)
+              onChange(event.target.value)
+            }}
             placeholder="マークダウンで記事を書いてください..."
+            slotProps={{
+              htmlInput: {
+                "aria-labelledby": labelledBy,
+                "aria-required": required,
+              },
+            }}
+            sx={{
+              "& textarea": {
+                fontFamily: "var(--font-geist-mono), monospace",
+                fontSize: "0.875rem",
+              },
+            }}
           />
-        ) : (
-          // --- プレビュタブ ---
-          <div className="p-4 text-white min-h-96">
-            {/*
-              ReactMarkdown:
-              - remarkGfm: GFM拡張（テーブル・チェックボックス等）を有効化
-              - breaks: 改行を<br>に変換
-              - children: 現在のmarkdownテキスト
-            */}
-            {markdown.trim() ? (
-              <MarkdownPreview markdown={markdown} />
-            ) : (
-              <div className="text-slate-400 italic text-center py-20">
-                Editタブでマークダウンを入力してください
-              </div>
-            )}
-          </div>
         )}
-      </div>
-    </div>
+      </Box>
+
+      <Box
+        aria-labelledby={previewTabId}
+        hidden={activeTab !== "preview"}
+        id={previewPanelId}
+        role="tabpanel"
+        sx={{ minHeight: 420, p: 3 }}
+      >
+        {activeTab === "preview" &&
+          (markdown.trim() ? (
+            <MarkdownPreview markdown={markdown} />
+          ) : (
+            <Typography align="center" color="text.secondary" sx={{ fontStyle: "italic", py: 10 }}>
+              Editタブでマークダウンを入力してください
+            </Typography>
+          ))}
+      </Box>
+    </Paper>
   )
 }
 
