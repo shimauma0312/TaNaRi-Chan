@@ -133,7 +133,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
 
   return (
     <div className="w-full p-8">
-      <div className="max-w-8xl p-8 rounded-lg bg-slate-800 border border-slate-600">
+      <div className="max-w-7xl p-8 rounded-lg bg-slate-800 border border-slate-600">
         <h1 className="text-2xl font-bold mb-6 text-white">{formTitle}</h1>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
