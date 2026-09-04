@@ -40,7 +40,7 @@ jobs:
 
       - name: Audit production dependencies
         # Prisma 6 exposes its development CLI as an optional peer of the runtime client.
-        # Audit the dependencies shipped in the standalone production image.
+        # Audit the runtime dependency set independently from development tooling.
         run: npm audit --omit=dev --omit=optional --audit-level=high
 
       - name: Type-check
@@ -78,7 +78,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate Compose model
-        run: docker compose --profile debug --profile tools config --quiet
+        run: |
+          docker compose --profile debug --profile tools --profile authoring config --quiet
+          images="$(docker compose --profile debug --profile tools --profile authoring config --images)"
+          test "$(printf '%s\n' "$images" | wc -l | tr -d ' ')" = "7"
+          test "$(printf '%s\n' "$images" | grep -c '^tanari-chan-development$')" = "6"
 
       - name: Build development image and start stack
         run: docker compose up --build --wait app
@@ -93,6 +97,38 @@ jobs:
 
       - name: Smoke-test development authentication and ownership
         run: node scripts/development-smoke.mjs
+
+      - name: Verify repeated seed preserves existing users
+        run: |
+          before="$(docker compose exec -T db psql -U postgres -d app_db -Atc 'SELECT count(*) FROM "User";' | tr -d '\r')"
+          docker compose exec -T db psql -U postgres -d app_db -v ON_ERROR_STOP=1 -c "UPDATE \"User\" SET user_name = 'ci-seed-sentinel' WHERE id = '1';"
+          docker compose run --rm seed
+          after="$(docker compose exec -T db psql -U postgres -d app_db -Atc 'SELECT count(*) FROM "User";' | tr -d '\r')"
+          sentinel="$(docker compose exec -T db psql -U postgres -d app_db -Atc 'SELECT user_name FROM "User" WHERE id = '\''1'\'';' | tr -d '\r')"
+          test "$before" = "$after"
+          test "$sentinel" = "ci-seed-sentinel"
+
+      - name: Verify Prisma authoring service
+        run: docker compose --profile authoring run --rm prisma-cli npx prisma migrate status
+
+      - name: Verify debug and Studio services
+        run: |
+          docker compose --profile debug --profile tools up -d debug studio
+          curl --fail --retry 15 --retry-delay 1 --retry-connrefused http://127.0.0.1:3001/api/health/live
+          curl --fail --retry 15 --retry-delay 1 --retry-connrefused http://127.0.0.1:9229/json/list
+          curl --fail --retry 15 --retry-delay 1 --retry-connrefused http://127.0.0.1:5555/
+
+      - name: Verify shared image and bind-free runtime
+        run: |
+          expected_image="$(docker image inspect tanari-chan-development --format '{{.Id}}')"
+          for service in app migrate seed debug studio; do
+            container_id="$(docker compose --profile debug --profile tools ps -aq "$service")"
+            test -n "$container_id"
+            test "$(docker inspect "$container_id" --format '{{.Image}}')" = "$expected_image"
+          done
+          app_container="$(docker compose ps -q app)"
+          test "$(docker inspect "$app_container" --format '{{len .Mounts}}')" = "0"
+          docker compose --profile debug --profile tools stop debug studio
 
       - name: Verify optimized application build in Docker
         run: docker compose run --rm -e NODE_ENV=production app npm run build
