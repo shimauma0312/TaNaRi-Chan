@@ -81,7 +81,9 @@ jobs:
         run: |
           docker compose --profile debug --profile tools --profile production config --quiet
           PRODUCTION_DATABASE_URL=postgresql://test:test@database.example/testdb \
+            MIGRATION_DATABASE_URL=postgresql://migrate:test@database.example/testdb \
             TRUSTED_ORIGINS=https://tanari.example.test \
+            TRUST_PROXY=false \
             docker compose -f docker-compose.release.yml --profile maintenance config --quiet
 
       - name: Build development image and start stack

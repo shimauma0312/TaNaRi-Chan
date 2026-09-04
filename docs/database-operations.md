@@ -55,12 +55,18 @@ Before introducing tracked migrations to an existing database, compare its schem
 `docker-compose.release.yml` intentionally has no bundled database and fails closed unless the production database URL and public origin are supplied:
 
 ```powershell
-$env:PRODUCTION_DATABASE_URL = "postgresql://..."
+$env:PRODUCTION_DATABASE_URL = "postgresql://runtime-role:..."
+$env:MIGRATION_DATABASE_URL = "postgresql://migration-role:..."
 $env:TRUSTED_ORIGINS = "https://tanari.example.com"
+$env:TRUST_PROXY = "true"
 docker compose -f docker-compose.release.yml up --build -d
 ```
 
-Inject the database URL from the deployment platform's secret manager. Set `TRUST_PROXY=true` only when direct access to the application port is blocked and a trusted reverse proxy overwrites forwarding headers.
+Inject both database URLs from the deployment platform's secret manager. The
+migration role owns schema changes; the runtime role should have only required
+DML privileges. Set `TRUST_PROXY=true` only when direct access to the
+application port is blocked and a trusted reverse proxy overwrites forwarding
+headers. Set it explicitly to `false` otherwise.
 
 ## Retention maintenance
 
