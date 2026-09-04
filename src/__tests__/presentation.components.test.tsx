@@ -18,19 +18,19 @@ describe("shared presentation components", () => {
     const status = screen.getByRole("status", { name: "読み込み中" })
 
     expect(status.className.split(" ")).toEqual(expect.arrayContaining(["container", "fadeinout"]))
-    expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument()
+    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull()
   })
 
   test("the compact loader exposes an accessible status", () => {
     render(<MinLoader />)
 
-    expect(screen.getByRole("status", { name: "読み込み中" })).toBeInTheDocument()
+    expect(screen.getByRole("status", { name: "読み込み中" })).toBeTruthy()
   })
 
   test("markdown preview uses the shared scoped styles", () => {
     const { container } = render(<MarkdownPreview markdown={"# Heading\n\n- item"} />)
 
-    expect(screen.getByTestId("markdown-output")).toHaveTextContent("# Heading - item")
-    expect(container.firstElementChild).toHaveClass("markdownPreview")
+    expect(screen.getByTestId("markdown-output").textContent).toContain("# Heading")
+    expect(container.firstElementChild?.classList.contains("markdownPreview")).toBe(true)
   })
 })

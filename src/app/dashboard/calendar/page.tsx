@@ -7,7 +7,7 @@ import useAuth from "@/hooks/useAuth"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-const getTodoList = async (id: string, currentDate: Date) => {
+const getTodoList = async (id: string, currentDate: Date, signal: AbortSignal) => {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
   const from = `${year}-${String(month + 1).padStart(2, "0")}-01`
@@ -19,7 +19,7 @@ const getTodoList = async (id: string, currentDate: Date) => {
   do {
     const query = new URLSearchParams({ from, to, limit: "100" })
     if (cursor) query.set("cursor", cursor)
-    const response = await fetch(`/api/todoList/${id}?${query}`)
+    const response = await fetch(`/api/todoList/${id}?${query}`, { signal })
     if (!response.ok) {
       throw new Error(`Failed to fetch todos: ${response.status}`)
     }
@@ -46,27 +46,32 @@ const CalendarPage = () => {
   useEffect(() => {
     if (user.loading) return
 
+    const controller = new AbortController()
+
     const fetchData = async () => {
       try {
         setLoading(true)
         if (!user.user) {
           throw new Error("User is not authenticated")
         }
-        const data = await getTodoList(user.user.id, currentDate)
+        const data = await getTodoList(user.user.id, currentDate, controller.signal)
+        if (controller.signal.aborted) return
         setTodos(data)
         setError(null)
       } catch (err) {
+        if (controller.signal.aborted) return
         console.error("Error fetching user todos:", err)
         setError("Failed to load todos. Please try again later.")
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       }
     }
 
     fetchData()
+    return () => controller.abort()
   }, [user.user?.id, user.user, user.loading, currentDate])
 
-  if (!user || loading) {
+  if (user.loading || !user.user || loading) {
     return <MinLoader />
   }
 
