@@ -7,6 +7,8 @@ import prisma from "@/lib/prisma"
 export const AUTH_COOKIE_NAME = "auth-session"
 const LEGACY_AUTH_COOKIE_NAME = "auth-user-id"
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
+// Keep the password verification cost comparable when an account does not exist.
+const DUMMY_PASSWORD_HASH = "$2b$12$hjWbtJVE4XUN2M8Ia1V.AeAv6uIzgf6MFOqKdytUpu7Hoply3Qg46"
 
 export interface AuthUser {
   id: string
@@ -72,7 +74,8 @@ export async function authenticateUser(email: string, password: string): Promise
     },
   })
 
-  if (!user || !(await verifyPassword(password, user.password))) {
+  const passwordMatches = await verifyPassword(password, user?.password ?? DUMMY_PASSWORD_HASH)
+  if (!user || !passwordMatches) {
     return null
   }
 

@@ -96,7 +96,10 @@ describe("authenticateUser", () => {
 
       // Assert
       expect(result).toBeNull()
-      expect(mockBcryptCompare).not.toHaveBeenCalled()
+      expect(mockBcryptCompare).toHaveBeenCalledWith(
+        password,
+        "$2b$12$hjWbtJVE4XUN2M8Ia1V.AeAv6uIzgf6MFOqKdytUpu7Hoply3Qg46",
+      )
     })
 
     it("パスワードが間違っている場合はnullを返す", async () => {
