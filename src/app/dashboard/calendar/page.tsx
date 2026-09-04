@@ -1,10 +1,12 @@
 "use client"
 
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
+import TodayRoundedIcon from "@mui/icons-material/TodayRounded"
+import { Alert, Box, IconButton, LinearProgress, Stack, Typography } from "@mui/material"
 import MinLoader from "@/components/MinLoader"
-import SideMenu from "@/components/SideMenu"
 import Calendar, { TodoItem } from "@/components/calendar/Calendar"
 import useAuth from "@/hooks/useAuth"
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 const getTodoList = async (id: string, currentDate: Date, signal: AbortSignal) => {
@@ -20,109 +22,92 @@ const getTodoList = async (id: string, currentDate: Date, signal: AbortSignal) =
     const query = new URLSearchParams({ from, to, limit: "100" })
     if (cursor) query.set("cursor", cursor)
     const response = await fetch(`/api/todoList/${id}?${query}`, { signal })
-    if (!response.ok) {
-      throw new Error(`Failed to fetch todos: ${response.status}`)
-    }
-    const page = (await response.json()) as TodoItem[]
-    todos.push(...page)
+    if (!response.ok) throw new Error(`Failed to fetch Todos: ${response.status}`)
+    todos.push(...((await response.json()) as TodoItem[]))
     const nextCursor = response.headers.get("X-Next-Cursor")
-    if (nextCursor === cursor) {
-      throw new Error("Todo pagination did not advance")
-    }
+    if (nextCursor === cursor) throw new Error("Todo pagination did not advance")
     cursor = nextCursor
   } while (cursor)
 
   return todos
 }
 
-const CalendarPage = () => {
-  const user = useAuth()
-  const [currentDate, setCurrentDate] = useState(new Date())
+export default function CalendarPage() {
+  const { user, loading: authLoading } = useAuth()
+  const [currentDate, setCurrentDate] = useState(() => new Date())
   const [todos, setTodos] = useState<TodoItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
   useEffect(() => {
-    if (user.loading) return
-
+    if (authLoading || !user?.id) return
     const controller = new AbortController()
 
     const fetchData = async () => {
       try {
         setLoading(true)
-        if (!user.user) {
-          throw new Error("User is not authenticated")
-        }
-        const data = await getTodoList(user.user.id, currentDate, controller.signal)
+        const data = await getTodoList(user.id, currentDate, controller.signal)
         if (controller.signal.aborted) return
         setTodos(data)
         setError(null)
-      } catch (err) {
+      } catch (cause) {
         if (controller.signal.aborted) return
-        console.error("Error fetching user todos:", err)
-        setError("Failed to load todos. Please try again later.")
+        console.error("Calendar Todo request failed:", cause)
+        setError("Failed to load Todos. Please try again later.")
       } finally {
         if (!controller.signal.aborted) setLoading(false)
       }
     }
 
-    fetchData()
+    void fetchData()
     return () => controller.abort()
-  }, [user.user?.id, user.user, user.loading, currentDate])
+  }, [user?.id, authLoading, currentDate])
 
-  if (user.loading || !user.user || loading) {
-    return <MinLoader />
-  }
+  if (authLoading || !user) return <MinLoader />
+
+  const monthLabel = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })
 
   return (
-    <div className="min-h-screen text-white p-4 flex flex-col md:flex-row">
-      <SideMenu />
-      <div className="w-full md:w-4/5 p-4">
-        <div className="container mx-auto">
-          <div className="flex justify-between items-center mb-4">
-            <button
-              className="px-3 py-1 bg-blue-500 text-white rounded-md"
-              onClick={() =>
-                setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
-              }
-            >
-              Prev
-            </button>
-            <h1 className="text-2xl font-bold">
-              {currentDate.getFullYear()} / {currentDate.getMonth() + 1}
-            </h1>
-            <button
-              className="px-3 py-1 bg-blue-500 text-white rounded-md"
-              onClick={() =>
-                setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
-              }
-            >
-              Next
-            </button>
-          </div>
+    <Stack spacing={3}>
+      <Box>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Todo Calendar
+        </Typography>
+        <Typography color="text.secondary">Review deadlines across the month.</Typography>
+      </Box>
 
-          {error && (
-            <p className="text-red-500 mb-2" role="alert">
-              {error}
-            </p>
-          )}
+      <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "center" }}>
+        <IconButton
+          aria-label="Show previous month"
+          onClick={() =>
+            setCurrentDate(
+              (previous) => new Date(previous.getFullYear(), previous.getMonth() - 1, 1),
+            )
+          }
+        >
+          <ChevronLeftRoundedIcon />
+        </IconButton>
+        <TodayRoundedIcon color="primary" />
+        <Typography variant="h5" component="h2" sx={{ minWidth: { sm: 220 }, textAlign: "center" }}>
+          {monthLabel}
+        </Typography>
+        <IconButton
+          aria-label="Show next month"
+          onClick={() =>
+            setCurrentDate(
+              (previous) => new Date(previous.getFullYear(), previous.getMonth() + 1, 1),
+            )
+          }
+        >
+          <ChevronRightRoundedIcon />
+        </IconButton>
+      </Stack>
 
-          <Calendar currentDate={currentDate} todos={todos} />
-
-          <div className="mt-4">
-            {/* ダッシュボードへ戻るボタン */}
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="px-4 py-2 bg-red-500 text-white rounded-md"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+      {error && <Alert severity="error">{error}</Alert>}
+      {loading && <LinearProgress aria-label="Loading calendar Todos" />}
+      <Box sx={{ overflowX: "auto", pb: 1 }}>
+        <Calendar currentDate={currentDate} todos={todos} />
+      </Box>
+    </Stack>
   )
 }
-
-export default CalendarPage
