@@ -1,48 +1,70 @@
 "use client"
-// pages/index.tsx
-import Link from "next/link"
+
+import Loader from "@/components/Loader"
+import NextLink from "@/components/NextLink"
+import { Box, Button, Fade, Link, Paper, Stack, Typography, useMediaQuery } from "@mui/material"
 import { useState } from "react"
-import Loader from "../components/Loader"
-import fede from "../styles/fede.module.css"
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-
-  // ロード画面が表示される時間（ミリ秒）
-  const handleTimeout = () => {
-    setIsLoading(false)
-  }
+  const [isLoading, setIsLoading] = useState(true)
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)")
 
   return (
-    <main className="min-h-screen">
+    <Box component="main" sx={{ minHeight: "100dvh" }}>
       {isLoading ? (
-        <div className="h-screen w-screen flex justify-center items-center">
-          <Loader onTimeout={handleTimeout} timeout={1300} />
-        </div>
+        <Loader onTimeout={() => setIsLoading(false)} timeout={1300} />
       ) : (
-        <div
-          className={`${fede.fadein} min-h-screen flex flex-col items-center justify-center p-4`}
-        >
-          <div className="relative w-full max-w-4xl mx-auto text-center">
-            <div className="backdrop-blur-sm bg-black/40 p-8 rounded-2xl shadow-2xl border border-white/20">
-              <h1 className="text-5xl font-bold mb-2 text-white">TaNaRi-Chan</h1>
-              <Link
-                href="/login"
-                className="inline-block px-8 py-4 text-lg font-medium text-white bg-black/60 border border-white/30 rounded-lg shadow-lg hover:bg-black/80 transform hover:scale-105 transition-all duration-300"
-              >
-                Log in to start
-              </Link>
-              <p className="mt-6 text-white/70">
-                Don&apos;t have an account? You can{" "}
-                <Link href="/register" className="text-white hover:text-white/90 underline">
-                  sign up here
-                </Link>{" "}
-                to get started.
-              </p>
-            </div>
-          </div>
-        </div>
+        <Fade appear in timeout={reduceMotion ? 0 : 500}>
+          <Box
+            sx={{
+              alignItems: "center",
+              display: "flex",
+              justifyContent: "center",
+              minHeight: "100dvh",
+              px: 2,
+              py: 4,
+            }}
+          >
+            <Paper
+              component="section"
+              aria-labelledby="home-title"
+              elevation={16}
+              sx={{
+                backdropFilter: "blur(12px)",
+                backgroundColor: "rgba(0, 0, 0, 0.54)",
+                border: 1,
+                borderColor: "rgba(255, 255, 255, 0.2)",
+                maxWidth: 896,
+                p: { xs: 4, sm: 6 },
+                textAlign: "center",
+                width: "100%",
+              }}
+            >
+              <Stack spacing={3} sx={{ alignItems: "center" }}>
+                <Typography component="h1" id="home-title" variant="h2">
+                  TaNaRi-Chan
+                </Typography>
+                <Button
+                  component={NextLink}
+                  href="/login"
+                  size="large"
+                  sx={{ px: 4, py: 1.5 }}
+                  variant="contained"
+                >
+                  Log in to start
+                </Button>
+                <Typography color="text.secondary">
+                  Don&apos;t have an account? You can{" "}
+                  <Link component={NextLink} href="/register">
+                    sign up here
+                  </Link>{" "}
+                  to get started.
+                </Typography>
+              </Stack>
+            </Paper>
+          </Box>
+        </Fade>
       )}
-    </main>
+    </Box>
   )
 }

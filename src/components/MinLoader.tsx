@@ -1,21 +1,25 @@
 "use client"
 
-// components/MinLoader.tsx
-import React from "react"
+import { Box, CircularProgress } from "@mui/material"
 
-const MinLoader: React.FC = () => {
+export default function MinLoader() {
   return (
-    <div
-      className="flex items-center justify-center min-h-screen"
+    <Box
       role="status"
       aria-label="読み込み中"
+      sx={{
+        alignItems: "center",
+        display: "flex",
+        justifyContent: "center",
+        minHeight: { xs: "calc(100dvh - 56px)", sm: "calc(100dvh - 64px)" },
+        width: "100%",
+      }}
     >
-      <div
-        className="w-12 h-12 border-2 border-t-2 border-t-transparent border-white rounded-full animate-spin motion-reduce:animate-none"
+      <CircularProgress
         aria-hidden="true"
+        size={48}
+        sx={{ "@media (prefers-reduced-motion: reduce)": { animation: "none" } }}
       />
-    </div>
+    </Box>
   )
 }
-
-export default MinLoader

@@ -1,37 +1,43 @@
 "use client"
 
-// components/Loader.tsx
-import React, { useEffect } from "react"
-import loader from "../styles/loader.module.css"
-import fede from "../styles/fede.module.css"
-import noise from "../styles/noise.module.css"
+import { Box, CircularProgress, Stack, Typography } from "@mui/material"
+import { useEffect } from "react"
 
 interface LoaderProps {
   onTimeout: () => void
   timeout: number
 }
 
-const Loader: React.FC<LoaderProps> = ({ onTimeout, timeout }) => {
+export default function Loader({ onTimeout, timeout }: LoaderProps) {
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onTimeout()
-    }, timeout)
-
-    return () => clearTimeout(timer)
+    const timer = window.setTimeout(onTimeout, timeout)
+    return () => window.clearTimeout(timer)
   }, [onTimeout, timeout])
 
   return (
-    <section
-      className={`${loader.container} ${fede.fadeinout}`}
+    <Box
+      component="section"
       role="status"
       aria-label="読み込み中"
+      sx={{
+        alignItems: "center",
+        display: "flex",
+        justifyContent: "center",
+        minHeight: "100dvh",
+        width: "100%",
+      }}
     >
-      <div className={loader.loader} aria-hidden="true"> </div>
-      <div className={noise.glitch} data-text="Loading...">
-        Loading
-      </div>
-    </section>
+      <Stack spacing={2} sx={{ alignItems: "center" }}>
+        <CircularProgress
+          aria-hidden="true"
+          size={96}
+          sx={{ "@media (prefers-reduced-motion: reduce)": { animation: "none" } }}
+          thickness={2}
+        />
+        <Typography color="text.secondary" variant="h6">
+          Loading...
+        </Typography>
+      </Stack>
+    </Box>
   )
 }
-
-export default Loader

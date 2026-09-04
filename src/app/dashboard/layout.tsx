@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/components/auth/AuthProvider"
+import DashboardShell from "@/components/DashboardShell"
 import { getCurrentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
@@ -12,5 +13,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     redirect("/login")
   }
 
-  return <AuthProvider user={user}>{children}</AuthProvider>
+  return (
+    <AuthProvider user={user}>
+      <DashboardShell>{children}</DashboardShell>
+    </AuthProvider>
+  )
 }
