@@ -14,6 +14,7 @@ jest.mock("@prisma/client", () => {
   const mockPrisma = {
     user: {
       findUnique: jest.fn(),
+      create: jest.fn(),
     },
   }
   return {
@@ -27,7 +28,7 @@ jest.mock("bcryptjs", () => ({
 }))
 
 // userServiceをモック後にインポート
-import { authenticateUser } from "@/service/userService"
+import { authenticateUser, createUser } from "@/service/userService"
 import bcrypt from "bcryptjs"
 
 const mockBcryptCompare = bcrypt.compare as jest.MockedFunction<typeof bcrypt.compare>
@@ -191,5 +192,20 @@ describe("authenticateUser", () => {
       expect(result).not.toHaveProperty("password")
       expect(Object.keys(result!)).toEqual(["id", "user_name", "user_email", "icon_number"])
     })
+  })
+})
+
+describe("createUser", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it("returns a consistent conflict status when the email already exists", async () => {
+    mockPrisma.user.findUnique = jest.fn().mockResolvedValue({ id: "existing-user" })
+
+    await expect(
+      createUser({ email: "test@example.com", password: "Password123!", userName: "Test" }),
+    ).rejects.toMatchObject({ statusCode: 409 })
+    expect(mockPrisma.user.create).not.toHaveBeenCalled()
   })
 })

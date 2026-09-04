@@ -47,7 +47,7 @@ export async function findUserById(userId: string) {
 export async function createUser(userData: CreateUserData) {
   try {
     if (await findUserByEmail(userData.email)) {
-      throw new AppError("Email address is already registered", ErrorType.VALIDATION, 400)
+      throw new AppError("Email address is already registered", ErrorType.VALIDATION, 409)
     }
 
     return await prisma.user.create({
