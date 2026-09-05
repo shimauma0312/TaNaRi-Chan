@@ -56,11 +56,6 @@ const theme = createTheme({
         disableElevation: true,
       },
     },
-    MuiCard: {
-      defaultProps: {
-        variant: "outlined",
-      },
-    },
     MuiPaper: {
       defaultProps: {
         elevation: 0,

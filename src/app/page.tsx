@@ -2,7 +2,7 @@
 
 import Loader from "@/components/Loader"
 import NextLink from "@/components/NextLink"
-import { Box, Button, Link, Paper, Stack, Typography } from "@mui/material"
+import { Box, Button, Link, Stack, Typography } from "@mui/material"
 import { useState } from "react"
 
 export default function Home() {
@@ -23,22 +23,17 @@ export default function Home() {
             py: 4,
           }}
         >
-          <Paper
+          <Box
             component="section"
             aria-labelledby="home-title"
-            variant="outlined"
             sx={{
               maxWidth: 640,
-              p: { xs: 3, sm: 5 },
               width: "100%",
             }}
           >
             <Stack spacing={3}>
               <Typography component="h1" id="home-title" variant="h2">
                 TaNaRi-Chan
-              </Typography>
-              <Typography color="text.secondary">
-                A simple place for todos, articles, and messages.
               </Typography>
               <Box>
                 <Button component={NextLink} href="/login" variant="contained">
@@ -52,7 +47,7 @@ export default function Home() {
                 </Link>
               </Typography>
             </Stack>
-          </Paper>
+          </Box>
         </Box>
       )}
     </Box>
