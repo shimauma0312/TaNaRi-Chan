@@ -9,7 +9,6 @@ import Button from "@mui/material/Button"
 import CircularProgress from "@mui/material/CircularProgress"
 import FormControl from "@mui/material/FormControl"
 import FormLabel from "@mui/material/FormLabel"
-import Paper from "@mui/material/Paper"
 import Stack from "@mui/material/Stack"
 import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
@@ -109,7 +108,7 @@ const ArticleForm = ({
 
   return (
     <Box sx={{ mx: "auto", p: { xs: 0, sm: 2 }, width: "100%" }}>
-      <Paper component="section" sx={{ mx: "auto", maxWidth: 960, p: { xs: 2, sm: 4 } }}>
+      <Box component="section" sx={{ mx: "auto", maxWidth: 960, p: { xs: 2, sm: 4 } }}>
         <Typography component="h1" variant="h4" sx={{ mb: 3 }}>
           {formTitle}
         </Typography>
@@ -148,13 +147,12 @@ const ArticleForm = ({
               variant="contained"
               size="large"
               disabled={isSubmitting || !title.trim() || !content.trim()}
-              startIcon={isSubmitting ? <CircularProgress color="inherit" size={18} /> : undefined}
             >
               {isSubmitting ? "Processing..." : buttonText}
             </Button>
           </Stack>
         </Box>
-      </Paper>
+      </Box>
     </Box>
   )
 }
