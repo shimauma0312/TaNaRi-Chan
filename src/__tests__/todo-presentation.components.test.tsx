@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { getTodoList } from "@/app/dashboard/calendar/page"
 import ShakeImage from "@/components/ShakeImage"
 import TodoList from "@/components/TodoList"
 import Calendar from "@/components/calendar/Calendar"
@@ -30,6 +31,82 @@ const formValues: TodoFormValues = {
 }
 
 describe("Todo presentation components", () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test("calendar pagination accepts a missing next cursor as the final page", async () => {
+    const responseTodos = [
+      {
+        todo_id: 10,
+        title: "Review the release",
+        todo_deadline: "2026-09-05",
+      },
+    ]
+    const fetchMock = jest.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => responseTodos,
+      headers: new Headers(),
+    } as Response)
+
+    await expect(
+      getTodoList("user-1", new Date(2026, 8, 1), new AbortController().signal),
+    ).resolves.toEqual(responseTodos)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock.mock.calls[0][0]).toContain(
+      "/api/todoList/user-1?from=2026-09-01&to=2026-10-01&limit=100",
+    )
+
+    fetchMock.mockRestore()
+  })
+
+  test("calendar pagination follows a cursor and combines the final page", async () => {
+    const firstPage = [{ todo_id: 10, title: "First", todo_deadline: "2026-09-05" }]
+    const finalPage = [{ todo_id: 11, title: "Second", todo_deadline: "2026-09-06" }]
+    const fetchMock = jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => firstPage,
+        headers: new Headers({ "X-Next-Cursor": "10" }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => finalPage,
+        headers: new Headers(),
+      } as Response)
+
+    await expect(
+      getTodoList("user-1", new Date(2026, 8, 1), new AbortController().signal),
+    ).resolves.toEqual([...firstPage, ...finalPage])
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[1][0]).toContain("cursor=10")
+  })
+
+  test("calendar pagination rejects a repeated non-empty cursor", async () => {
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => [],
+        headers: new Headers({ "X-Next-Cursor": "10" }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => [],
+        headers: new Headers({ "X-Next-Cursor": "10" }),
+      } as Response)
+
+    await expect(
+      getTodoList("user-1", new Date(2026, 8, 1), new AbortController().signal),
+    ).rejects.toThrow("Todo pagination did not advance")
+  })
+
   test("calendar exposes weekday headings, dated cells, and their Todos", () => {
     render(
       <Calendar

@@ -6,7 +6,7 @@ import Calendar, { TodoItem } from "@/components/calendar/Calendar"
 import useAuth from "@/hooks/useAuth"
 import { useEffect, useState } from "react"
 
-const getTodoList = async (id: string, currentDate: Date, signal: AbortSignal) => {
+export const getTodoList = async (id: string, currentDate: Date, signal: AbortSignal) => {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
   const from = `${year}-${String(month + 1).padStart(2, "0")}-01`
@@ -22,9 +22,10 @@ const getTodoList = async (id: string, currentDate: Date, signal: AbortSignal) =
     if (!response.ok) throw new Error(`Failed to fetch Todos: ${response.status}`)
     todos.push(...((await response.json()) as TodoItem[]))
     const nextCursor = response.headers.get("X-Next-Cursor")
+    if (!nextCursor) break
     if (nextCursor === cursor) throw new Error("Todo pagination did not advance")
     cursor = nextCursor
-  } while (cursor)
+  } while (true)
 
   return todos
 }
