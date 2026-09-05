@@ -3,21 +3,17 @@
 import MinLoader from "@/components/MinLoader"
 import useAuth from "@/hooks/useAuth"
 import { handleClientError } from "@/utils/errorHandler.client"
-import AddIcon from "@mui/icons-material/Add"
-import DeleteIcon from "@mui/icons-material/Delete"
-import EditIcon from "@mui/icons-material/Edit"
 import Alert from "@mui/material/Alert"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
-import Card from "@mui/material/Card"
-import CardActions from "@mui/material/CardActions"
-import CardContent from "@mui/material/CardContent"
 import Container from "@mui/material/Container"
 import Dialog from "@mui/material/Dialog"
 import DialogActions from "@mui/material/DialogActions"
 import DialogContent from "@mui/material/DialogContent"
 import DialogContentText from "@mui/material/DialogContentText"
 import DialogTitle from "@mui/material/DialogTitle"
+import List from "@mui/material/List"
+import ListItem from "@mui/material/ListItem"
 import Snackbar from "@mui/material/Snackbar"
 import Stack from "@mui/material/Stack"
 import Typography from "@mui/material/Typography"
@@ -131,11 +127,7 @@ const ArticlesPage = () => {
           <Typography component="h1" variant="h4">
             Articles
           </Typography>
-          <Button
-            startIcon={<AddIcon />}
-            variant="contained"
-            onClick={() => router.push("/dashboard/articles/register")}
-          >
+          <Button variant="contained" onClick={() => router.push("/dashboard/articles/register")}>
             New Article
           </Button>
         </Box>
@@ -147,37 +139,36 @@ const ArticlesPage = () => {
         ) : articles.length === 0 && !error ? (
           <Typography color="text.secondary">記事が見つかりません</Typography>
         ) : (
-          <Stack component="ul" spacing={2} sx={{ listStyle: "none", m: 0, p: 0 }}>
-            {articles.map((article) => (
-              <Card component="li" key={article.post_id}>
-                <CardContent>
+          <List disablePadding>
+            {articles.map((article, index) => (
+              <ListItem
+                divider={index < articles.length - 1}
+                key={article.post_id}
+                sx={{ alignItems: { xs: "flex-start", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, gap: 2, py: 2 }}
+              >
+                <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography component="h2" variant="h6">
                     {article.title}
                   </Typography>
                   <Typography color="text.secondary" variant="body2">
                     Published: {new Date(article.createdAt).toLocaleDateString("ja-JP")}
                   </Typography>
-                </CardContent>
-                <CardActions>
+                </Box>
+                <Stack direction="row" spacing={1}>
                   <Button
-                    startIcon={<EditIcon />}
                     onClick={() =>
                       router.push(`/dashboard/articles/edit?post_id=${article.post_id}`)
                     }
                   >
                     Edit
                   </Button>
-                  <Button
-                    color="error"
-                    startIcon={<DeleteIcon />}
-                    onClick={() => setArticleToDelete(article)}
-                  >
+                  <Button color="error" onClick={() => setArticleToDelete(article)}>
                     Delete
                   </Button>
-                </CardActions>
-              </Card>
+                </Stack>
+              </ListItem>
             ))}
-          </Stack>
+          </List>
         )}
 
         {nextCursor && (
