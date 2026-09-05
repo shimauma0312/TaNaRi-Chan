@@ -1,9 +1,16 @@
 /** @jest-environment jsdom */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import ShakeImage from "@/components/ShakeImage"
 import TodoList from "@/components/TodoList"
+import Calendar from "@/components/calendar/Calendar"
 import TodoForm, { TodoFormValues } from "@/components/todo/TodoForm"
 import type { Todo } from "@/types/todo"
+
+jest.mock("next/image", () => ({
+  __esModule: true,
+  default: () => <span data-testid="shake-image" />,
+}))
 
 const todo: Todo = {
   todo_id: 1,
@@ -23,6 +30,46 @@ const formValues: TodoFormValues = {
 }
 
 describe("Todo presentation components", () => {
+  test("calendar exposes weekday headings, dated cells, and their Todos", () => {
+    render(
+      <Calendar
+        currentDate={new Date(2026, 8, 1)}
+        todos={[
+          {
+            todo_id: 10,
+            title: "Review the release",
+            todo_deadline: "2026-09-05",
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByRole("grid", { name: "September 2026 Todo calendar" })).toBeTruthy()
+    expect(screen.getByRole("columnheader", { name: "Sunday" }).textContent).toBe("Sun")
+
+    const datedCell = screen.getByRole("gridcell", {
+      name: "Saturday, September 5, 2026. 1 Todo: Review the release",
+    })
+    expect(within(datedCell).getByText("5")).toBeTruthy()
+    expect(within(datedCell).getByText("Review the release")).toBeTruthy()
+  })
+
+  test("shake interaction keeps status outside its phrasing-only button", () => {
+    render(<ShakeImage />)
+
+    const button = screen.getByRole("button", { name: "Shake image. 0 of 70 clicks" })
+    expect(button.querySelector("div")).toBeNull()
+    expect(within(button).getByTestId("shake-image")).toBeTruthy()
+
+    fireEvent.click(button)
+
+    expect(screen.getByRole("button", { name: "Shake image. 1 of 70 clicks" })).toBeTruthy()
+    const status = screen.getByRole("status")
+    expect(status.textContent).toContain("CLICKS: 1/70")
+    expect(button.contains(status)).toBe(false)
+    expect(button.parentElement?.nextElementSibling).toBe(status)
+  })
+
   test("Todo form length limits match the API contract", () => {
     render(
       <TodoForm
