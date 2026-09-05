@@ -1,6 +1,5 @@
 "use client"
 
-import ReplayRoundedIcon from "@mui/icons-material/ReplayRounded"
 import { Box, Button, ButtonBase, Typography } from "@mui/material"
 import { keyframes } from "@mui/system"
 import Image from "next/image"
@@ -20,11 +19,6 @@ const explode = keyframes({
   "20%": { transform: "scale(1.2)", opacity: 1 },
   "50%": { transform: "scale(1.5)", opacity: 0.8, filter: "brightness(1.5) contrast(1.5)" },
   "100%": { transform: "scale(2)", opacity: 0, filter: "brightness(2) contrast(2)" },
-})
-
-const blink = keyframes({
-  "0%, 100%": { opacity: 1 },
-  "50%": { opacity: 0.5 },
 })
 
 function getMessage(clickCount: number) {
@@ -69,7 +63,6 @@ export default function ShakeImage() {
         width: "100%",
         minHeight: { xs: 320, sm: 360, md: 420 },
         overflow: "hidden",
-        borderRadius: 2,
       }}
     >
       <ButtonBase
@@ -83,7 +76,6 @@ export default function ShakeImage() {
           left: `${position.left}%`,
           width: { xs: 128, sm: 160, md: 200 },
           height: { xs: 128, sm: 160, md: 200 },
-          borderRadius: 2,
           zIndex: 10,
           transition: "transform 0.2s",
           "&:focus-visible": {
@@ -100,7 +92,6 @@ export default function ShakeImage() {
             width: "100%",
             height: "100%",
             animation,
-            borderRadius: 2,
             overflow: "hidden",
             "@media (prefers-reduced-motion: reduce)": {
               animation: "none",
@@ -127,9 +118,7 @@ export default function ShakeImage() {
               top: "calc(100% + 8px)",
               width: "max-content",
               maxWidth: { xs: 200, sm: 300, md: 360 },
-              color: clickCount >= 60 ? "error.light" : "text.primary",
-              animation: clickCount >= 60 ? `${blink} 0.5s infinite` : "none",
-              "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+              color: "text.primary",
             }}
           >
             <Typography sx={{ fontWeight: 700 }}>CLICKS: {clickCount}/70</Typography>
@@ -142,9 +131,7 @@ export default function ShakeImage() {
 
       {isExploded && (
         <Button
-          variant="contained"
-          color="error"
-          startIcon={<ReplayRoundedIcon />}
+          variant="outlined"
           onClick={() => window.location.reload()}
           sx={{ position: "absolute", top: 16, right: 16, zIndex: 2 }}
         >
