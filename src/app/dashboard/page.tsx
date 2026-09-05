@@ -1,23 +1,10 @@
 "use client"
 
-import NextLink from "@/components/NextLink"
 import MinLoader from "@/components/MinLoader"
-import ShakeImage from "@/components/ShakeImage"
+import NextLink from "@/components/NextLink"
 import useAuth from "@/hooks/useAuth"
 import { formatTodoDate } from "@/utils/todoDate"
-import {
-  Alert,
-  Box,
-  Card,
-  CardActionArea,
-  CardContent,
-  Chip,
-  Grid,
-  List,
-  ListItem,
-  Stack,
-  Typography,
-} from "@mui/material"
+import { Alert, Box, Divider, Link, List, ListItem, Paper, Stack, Typography } from "@mui/material"
 import { useEffect, useState } from "react"
 
 type DashboardArticle = {
@@ -77,113 +64,113 @@ const DashboardPage = () => {
   if (loading || !user || dataLoading) return <MinLoader />
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={4}>
       <Box>
-        <Typography variant="h4" component="h1" gutterBottom>
+        <Typography variant="h4" component="h1">
           Dashboard
         </Typography>
-        <Typography variant="h6">Welcome, {user.user_email}</Typography>
-        <Typography color="text.secondary">
+        <Typography sx={{ mt: 1 }}>Welcome, {user.user_email}</Typography>
+        <Typography color="text.secondary" variant="body2">
           Today&apos;s date: {new Date().toLocaleDateString()}
         </Typography>
       </Box>
 
-      <ShakeImage />
+      <Divider />
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent>
-              <Typography variant="h6" component="h2" gutterBottom>
-                Random timeline articles
-              </Typography>
-              {!dashboardData?.articles.length ? (
-                <Typography color="text.secondary">No articles yet.</Typography>
-              ) : (
-                <List disablePadding>
-                  {dashboardData.articles.map((article) => (
-                    <ListItem key={article.post_id} disableGutters>
-                      <CardActionArea
-                        component={NextLink}
-                        href={`/dashboard/articles/view?post_id=${article.post_id}`}
-                        sx={{ borderRadius: 1, p: 1.5 }}
-                      >
-                        <Typography sx={{ fontWeight: 700 }}>{article.title}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {article.content.replace(/[#*`[\]]/g, "").slice(0, 100)}
-                          {article.content.length > 100 ? "..." : ""}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          by {article.author.user_name} ·{" "}
-                          {new Date(article.createdAt).toLocaleDateString()}
-                        </Typography>
-                      </CardActionArea>
-                    </ListItem>
-                  ))}
-                </List>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+      <Box
+        sx={{
+          display: "grid",
+          gap: 2,
+          gridTemplateColumns: { xs: "1fr", lg: "repeat(3, minmax(0, 1fr))" },
+        }}
+      >
+        <Paper component="section" variant="outlined" sx={{ p: 2 }}>
+          <Typography variant="h6" component="h2">
+            Random timeline articles
+          </Typography>
+          {!dashboardData?.articles.length ? (
+            <Typography color="text.secondary" sx={{ mt: 2 }}>
+              No articles yet.
+            </Typography>
+          ) : (
+            <List disablePadding sx={{ mt: 1 }}>
+              {dashboardData.articles.map((article) => (
+                <ListItem key={article.post_id} divider disableGutters>
+                  <Box sx={{ py: 1, width: "100%" }}>
+                    <Link
+                      component={NextLink}
+                      href={`/dashboard/articles/view?post_id=${article.post_id}`}
+                    >
+                      {article.title}
+                    </Link>
+                    <Typography variant="body2" color="text.secondary">
+                      {article.content.replace(/[#*`[\]]/g, "").slice(0, 100)}
+                      {article.content.length > 100 ? "..." : ""}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      by {article.author.user_name}, {new Date(article.createdAt).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Paper>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent>
-              <Typography variant="h6" component="h2" gutterBottom>
-                Your active todos
-              </Typography>
-              {!dashboardData?.activeTodos.length ? (
-                <Typography color="text.secondary">No active todos.</Typography>
-              ) : (
-                <List disablePadding>
-                  {dashboardData.activeTodos.map((todo) => (
-                    <ListItem key={todo.todo_id} divider disableGutters>
-                      <Box sx={{ py: 1 }}>
-                        <Typography sx={{ fontWeight: 700 }}>{todo.title}</Typography>
-                        <Typography variant="body2">{todo.description}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Due {formatTodoDate(todo.todo_deadline)}
-                        </Typography>
-                      </Box>
-                    </ListItem>
-                  ))}
-                </List>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+        <Paper component="section" variant="outlined" sx={{ p: 2 }}>
+          <Typography variant="h6" component="h2">
+            Your active todos
+          </Typography>
+          {!dashboardData?.activeTodos.length ? (
+            <Typography color="text.secondary" sx={{ mt: 2 }}>
+              No active todos.
+            </Typography>
+          ) : (
+            <List disablePadding sx={{ mt: 1 }}>
+              {dashboardData.activeTodos.map((todo) => (
+                <ListItem key={todo.todo_id} divider disableGutters>
+                  <Box sx={{ py: 1 }}>
+                    <Typography>{todo.title}</Typography>
+                    <Typography variant="body2">{todo.description}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Due {formatTodoDate(todo.todo_deadline)}
+                    </Typography>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Paper>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent>
-              <Typography variant="h6" component="h2" gutterBottom>
-                Public todos
-              </Typography>
-              {!dashboardData?.publicTodos.length ? (
-                <Typography color="text.secondary">No public todos.</Typography>
-              ) : (
-                <List disablePadding>
-                  {dashboardData.publicTodos.map((todo) => (
-                    <ListItem key={todo.todo_id} divider disableGutters>
-                      <Box sx={{ py: 1, width: "100%" }}>
-                        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                          <Typography sx={{ fontWeight: 700 }}>{todo.title}</Typography>
-                          <Chip label={todo.user.user_name} size="small" />
-                        </Stack>
-                        <Typography variant="body2">{todo.description}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Due {formatTodoDate(todo.todo_deadline)}
-                        </Typography>
-                      </Box>
-                    </ListItem>
-                  ))}
-                </List>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        <Paper component="section" variant="outlined" sx={{ p: 2 }}>
+          <Typography variant="h6" component="h2">
+            Public todos
+          </Typography>
+          {!dashboardData?.publicTodos.length ? (
+            <Typography color="text.secondary" sx={{ mt: 2 }}>
+              No public todos.
+            </Typography>
+          ) : (
+            <List disablePadding sx={{ mt: 1 }}>
+              {dashboardData.publicTodos.map((todo) => (
+                <ListItem key={todo.todo_id} divider disableGutters>
+                  <Box sx={{ py: 1, width: "100%" }}>
+                    <Typography>{todo.title}</Typography>
+                    <Typography variant="body2">{todo.description}</Typography>
+                    <Typography variant="caption" color="text.secondary" component="p">
+                      by {todo.user.user_name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Due {formatTodoDate(todo.todo_deadline)}
+                    </Typography>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Paper>
+      </Box>
     </Stack>
   )
 }
