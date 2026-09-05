@@ -5,9 +5,7 @@ import MessageList from "@/components/messages/MessageList"
 import type { MessageWithUsers } from "@/domain/message/Message"
 import useAuth from "@/hooks/useAuth"
 import { handleClientError } from "@/utils/errorHandler.client"
-import AddIcon from "@mui/icons-material/Add"
 import Alert from "@mui/material/Alert"
-import Badge from "@mui/material/Badge"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
 import Container from "@mui/material/Container"
@@ -167,11 +165,7 @@ const MessagesPage = () => {
           <Typography component="h1" variant="h4">
             メッセージ
           </Typography>
-          <Button
-            startIcon={<AddIcon />}
-            variant="contained"
-            onClick={() => router.push("/dashboard/messages/compose")}
-          >
+          <Button variant="contained" onClick={() => router.push("/dashboard/messages/compose")}>
             新規メッセージ
           </Button>
         </Box>
@@ -187,11 +181,7 @@ const MessagesPage = () => {
             <Tab
               {...tabA11yProps("inbox")}
               value="inbox"
-              label={
-                <Badge badgeContent={unreadCount} color="primary" max={99}>
-                  受信トレイ
-                </Badge>
-              }
+              label={unreadCount > 0 ? `受信トレイ（未読 ${unreadCount}）` : "受信トレイ"}
             />
             <Tab {...tabA11yProps("sent")} value="sent" label="送信トレイ" />
           </Tabs>
