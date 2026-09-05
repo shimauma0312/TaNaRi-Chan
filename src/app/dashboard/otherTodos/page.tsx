@@ -1,18 +1,13 @@
 "use client"
 
-import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   FormControl,
-  Grid,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   Stack,
   Typography,
@@ -60,18 +55,16 @@ export default function OtherTodosPage() {
   if (loading || !user) return <MinLoader />
 
   const stats = [
-    { label: "Total Public Todos", value: filteredTodos.length, color: "primary.main" },
+    { label: "Total", value: filteredTodos.length },
     {
       label: "Completed",
       value: filteredTodos.filter((todo) => todo.is_completed).length,
-      color: "success.main",
     },
     {
       label: "In Progress",
       value: filteredTodos.filter((todo) => !todo.is_completed).length,
-      color: "warning.main",
     },
-    { label: "Users", value: selectedUser ? 1 : uniqueUsers.length, color: "secondary.main" },
+    { label: "Users", value: selectedUser ? 1 : uniqueUsers.length },
   ]
 
   return (
@@ -85,9 +78,9 @@ export default function OtherTodosPage() {
         </Typography>
       </Box>
 
-      <Alert severity="info">
+      <Typography variant="body2" color="text.secondary">
         Public Todos are visible to everyone. Choose Private when creating personal tasks.
-      </Alert>
+      </Typography>
 
       <FormControl sx={{ width: { xs: "100%", sm: 320 } }}>
         <InputLabel id="public-todo-user-label">Filter by user</InputLabel>
@@ -107,26 +100,31 @@ export default function OtherTodosPage() {
       </FormControl>
 
       {filteredTodos.length > 0 && (
-        <Grid container spacing={2} aria-label="Public Todo statistics">
+        <Box
+          component="dl"
+          aria-label="Public Todo statistics"
+          sx={{
+            m: 0,
+            py: 1.5,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))",
+            gap: 2,
+            borderTop: 1,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
           {stats.map((stat) => (
-            <Grid key={stat.label} size={{ xs: 12, sm: 6, lg: 3 }}>
-              <Card sx={{ height: "100%", borderColor: stat.color }}>
-                <CardContent>
-                  <Typography variant="body2" color="text.secondary">
-                    {stat.label}
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{ color: stat.color, fontWeight: 700 }}
-                  >
-                    {stat.value}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Box key={stat.label}>
+              <Typography component="dt" variant="caption" color="text.secondary">
+                {stat.label}
+              </Typography>
+              <Typography component="dd" sx={{ m: 0, fontWeight: 600 }}>
+                {stat.value}
+              </Typography>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
 
       {error && (
@@ -147,7 +145,7 @@ export default function OtherTodosPage() {
           showPublicBadge={false}
         />
       ) : !error ? (
-        <Paper sx={{ p: 5, textAlign: "center" }}>
+        <Box sx={{ py: 6, textAlign: "center" }}>
           <Typography variant="h6" gutterBottom>
             {selectedUser ? "No public Todos found for this user" : "No public Todos available yet"}
           </Typography>
@@ -168,14 +166,12 @@ export default function OtherTodosPage() {
             )}
             <Button
               variant="contained"
-              color="success"
-              startIcon={<AddRoundedIcon />}
               onClick={() => router.push("/dashboard/todoList/register")}
             >
               Create New Todo
             </Button>
           </Stack>
-        </Paper>
+        </Box>
       ) : null}
 
       {hasMore && (
