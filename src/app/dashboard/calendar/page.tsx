@@ -1,9 +1,6 @@
 "use client"
 
-import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
-import TodayRoundedIcon from "@mui/icons-material/TodayRounded"
-import { Alert, Box, IconButton, LinearProgress, Stack, Typography } from "@mui/material"
+import { Alert, Box, Button, LinearProgress, Stack, Typography } from "@mui/material"
 import MinLoader from "@/components/MinLoader"
 import Calendar, { TodoItem } from "@/components/calendar/Calendar"
 import useAuth from "@/hooks/useAuth"
@@ -77,30 +74,27 @@ export default function CalendarPage() {
       </Box>
 
       <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "center" }}>
-        <IconButton
-          aria-label="Show previous month"
+        <Button
           onClick={() =>
             setCurrentDate(
               (previous) => new Date(previous.getFullYear(), previous.getMonth() - 1, 1),
             )
           }
         >
-          <ChevronLeftRoundedIcon />
-        </IconButton>
-        <TodayRoundedIcon color="primary" />
+          Previous
+        </Button>
         <Typography variant="h5" component="h2" sx={{ minWidth: { sm: 220 }, textAlign: "center" }}>
           {monthLabel}
         </Typography>
-        <IconButton
-          aria-label="Show next month"
+        <Button
           onClick={() =>
             setCurrentDate(
               (previous) => new Date(previous.getFullYear(), previous.getMonth() + 1, 1),
             )
           }
         >
-          <ChevronRightRoundedIcon />
-        </IconButton>
+          Next
+        </Button>
       </Stack>
 
       {error && <Alert severity="error">{error}</Alert>}
