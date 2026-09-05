@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Box, Paper, Stack, Typography } from "@mui/material"
+import { Box, Stack, Typography } from "@mui/material"
 
 interface AuthPageShellProps {
   title: string
@@ -22,13 +22,11 @@ export default function AuthPageShell({ title, children, footer }: AuthPageShell
         py: 4,
       }}
     >
-      <Paper
+      <Box
         component="section"
         aria-labelledby={titleId}
-        variant="outlined"
         sx={{
           maxWidth: 448,
-          p: { xs: 3, sm: 4 },
           width: "100%",
         }}
       >
@@ -41,7 +39,7 @@ export default function AuthPageShell({ title, children, footer }: AuthPageShell
             {footer}
           </Typography>
         </Stack>
-      </Paper>
+      </Box>
     </Box>
   )
 }

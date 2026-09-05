@@ -69,17 +69,8 @@ export default function OtherTodosPage() {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Public Todos
-        </Typography>
-        <Typography color="text.secondary">
-          Browse goals and activities shared by other users.
-        </Typography>
-      </Box>
-
-      <Typography variant="body2" color="text.secondary">
-        Public Todos are visible to everyone. Choose Private when creating personal tasks.
+      <Typography variant="h4" component="h1">
+        Public Todos
       </Typography>
 
       <FormControl sx={{ width: { xs: "100%", sm: 320 } }}>
@@ -149,25 +140,17 @@ export default function OtherTodosPage() {
           <Typography variant="h6" gutterBottom>
             {selectedUser ? "No public Todos found for this user" : "No public Todos available yet"}
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            {selectedUser
-              ? "Choose a different user or clear the filter."
-              : "Create a public Todo to share a goal with everyone."}
-          </Typography>
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={2}
-            sx={{ justifyContent: "center" }}
+            sx={{ justifyContent: "center", mt: 3 }}
           >
             {selectedUser && (
               <Button variant="outlined" onClick={() => setSelectedUser("")}>
                 Show all users
               </Button>
             )}
-            <Button
-              variant="contained"
-              onClick={() => router.push("/dashboard/todoList/register")}
-            >
+            <Button variant="contained" onClick={() => router.push("/dashboard/todoList/register")}>
               Create New Todo
             </Button>
           </Stack>
