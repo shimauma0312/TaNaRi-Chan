@@ -24,7 +24,12 @@ const MessageItem = ({ message, variant, divider = false, onDelete, onRead }: Me
     <ListItem
       disableGutters
       divider={divider}
-      sx={{ alignItems: { xs: "flex-start", sm: "center" }, flexDirection: { xs: "column", sm: "row" }, gap: 2, py: 2 }}
+      sx={{
+        alignItems: { xs: "flex-start", sm: "center" },
+        flexDirection: { xs: "column", sm: "row" },
+        gap: 2,
+        py: 2,
+      }}
     >
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", mb: 0.5 }}>
@@ -43,7 +48,13 @@ const MessageItem = ({ message, variant, divider = false, onDelete, onRead }: Me
         <Typography
           color="text.secondary"
           variant="body2"
-          sx={{ display: "-webkit-box", overflow: "hidden", overflowWrap: "anywhere", WebkitBoxOrient: "vertical", WebkitLineClamp: 2 }}
+          sx={{
+            display: "-webkit-box",
+            overflow: "hidden",
+            overflowWrap: "anywhere",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: 2,
+          }}
         >
           {message.body}
         </Typography>
@@ -53,9 +64,13 @@ const MessageItem = ({ message, variant, divider = false, onDelete, onRead }: Me
       </Box>
       <Stack direction="row" spacing={1}>
         {isUnread && onRead && (
-          <Button size="small" onClick={() => onRead(message.message_id)}>既読にする</Button>
+          <Button size="small" onClick={() => onRead(message.message_id)}>
+            既読にする
+          </Button>
         )}
-        <Button color="error" size="small" onClick={() => onDelete(message.message_id)}>削除</Button>
+        <Button color="error" size="small" onClick={() => onDelete(message.message_id)}>
+          削除
+        </Button>
       </Stack>
     </ListItem>
   )
