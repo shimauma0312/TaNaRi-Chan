@@ -4,11 +4,8 @@ import MinLoader from "@/components/MinLoader"
 import MessageForm from "@/components/messages/MessageForm"
 import useAuth from "@/hooks/useAuth"
 import { handleClientError } from "@/utils/errorHandler.client"
-import SearchIcon from "@mui/icons-material/Search"
 import Alert from "@mui/material/Alert"
 import Container from "@mui/material/Container"
-import InputAdornment from "@mui/material/InputAdornment"
-import Paper from "@mui/material/Paper"
 import Stack from "@mui/material/Stack"
 import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
@@ -62,32 +59,21 @@ const ComposeMessagePage = () => {
 
   return (
     <Container maxWidth="md">
-      <Paper sx={{ p: { xs: 2, sm: 4 } }}>
-        <Stack spacing={3}>
-          <Typography component="h1" variant="h4">
-            新規メッセージ
-          </Typography>
-          {error && <Alert severity="error">{error}</Alert>}
-          <TextField
-            id="recipient-search"
-            type="search"
-            label="送信先を検索"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="ユーザー名"
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          {usersLoading ? <MinLoader /> : <MessageForm users={users} />}
-        </Stack>
-      </Paper>
+      <Stack spacing={3}>
+        <Typography component="h1" variant="h4">
+          新規メッセージ
+        </Typography>
+        {error && <Alert severity="error">{error}</Alert>}
+        <TextField
+          id="recipient-search"
+          type="search"
+          label="送信先を検索"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="ユーザー名"
+        />
+        {usersLoading ? <MinLoader /> : <MessageForm users={users} />}
+      </Stack>
     </Container>
   )
 }
