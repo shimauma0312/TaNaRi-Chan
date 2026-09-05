@@ -2,7 +2,7 @@
 
 import NextLink from "@/components/NextLink"
 import SideMenu from "@/components/SideMenu"
-import MenuRoundedIcon from "@mui/icons-material/MenuRounded"
+import MenuIcon from "@mui/icons-material/Menu"
 import { AppBar, Box, Drawer, IconButton, Link, Toolbar, Typography } from "@mui/material"
 import { useState, type ReactNode } from "react"
 
@@ -42,7 +42,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             onClick={() => setMobileMenuOpen(true)}
             sx={{ display: { md: "none" }, mr: 1 }}
           >
-            <MenuRoundedIcon />
+            <MenuIcon />
           </IconButton>
           <Typography component="div" sx={{ flexGrow: 1 }} variant="h6">
             <Link color="inherit" component={NextLink} href="/dashboard" underline="none">
