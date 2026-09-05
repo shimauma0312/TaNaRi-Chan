@@ -17,7 +17,7 @@ export default function MinLoader() {
     >
       <CircularProgress
         aria-hidden="true"
-        size={48}
+        size={32}
         sx={{ "@media (prefers-reduced-motion: reduce)": { animation: "none" } }}
       />
     </Box>
