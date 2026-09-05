@@ -1,6 +1,6 @@
 "use client"
 
-import { Box, Chip, Paper, Stack, Typography } from "@mui/material"
+import { Box, Typography } from "@mui/material"
 import { formatTodoDate, getLocalToday } from "@/utils/todoDate"
 import { useMemo } from "react"
 
@@ -46,13 +46,13 @@ export default function Calendar({ currentDate, todos }: CalendarProps) {
   }, [currentDate, todos])
 
   return (
-    <Paper
+    <Box
       role="grid"
       aria-label={`${currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })} Todo calendar`}
-      sx={{ minWidth: 680, overflow: "hidden" }}
+      sx={{ minWidth: 700, border: 1, borderColor: "divider" }}
     >
       <Box role="row" sx={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
-        {dayNames.map((day) => (
+        {dayNames.map((day, dayIndex) => (
           <Box
             key={day}
             role="columnheader"
@@ -60,7 +60,7 @@ export default function Calendar({ currentDate, todos }: CalendarProps) {
             sx={{
               p: 1.5,
               textAlign: "center",
-              bgcolor: "action.hover",
+              borderRight: dayIndex < 6 ? 1 : 0,
               borderBottom: 1,
               borderColor: "divider",
             }}
@@ -89,36 +89,38 @@ export default function Calendar({ currentDate, todos }: CalendarProps) {
                     : "Outside the current month"
                 }
                 sx={{
-                  minHeight: 120,
+                  aspectRatio: "1 / 1",
                   p: 1,
+                  minWidth: 0,
+                  overflow: "hidden",
                   borderRight: dayIndex < 6 ? 1 : 0,
                   borderBottom: weekIndex < weeks.length - 1 ? 1 : 0,
                   borderColor: "divider",
-                  bgcolor: cell.todos.length > 0 ? "action.selected" : "transparent",
                 }}
               >
                 {cell.date && (
-                  <Stack spacing={0.75}>
-                    <Typography variant="body2" sx={{ alignSelf: "flex-end", fontWeight: 700 }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ mb: 0.75, textAlign: "right" }}>
                       {cell.date.getDate()}
                     </Typography>
                     {cell.todos.map((todo) => (
-                      <Chip
+                      <Typography
                         key={todo.todo_id}
-                        label={todo.title}
-                        color="primary"
-                        size="small"
+                        variant="caption"
+                        component="p"
                         title={todo.title}
-                        sx={{ maxWidth: "100%", justifyContent: "flex-start" }}
-                      />
+                        sx={{ m: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                      >
+                        {todo.title}
+                      </Typography>
                     ))}
-                  </Stack>
+                  </Box>
                 )}
               </Box>
             )
           })}
         </Box>
       ))}
-    </Paper>
+    </Box>
   )
 }
