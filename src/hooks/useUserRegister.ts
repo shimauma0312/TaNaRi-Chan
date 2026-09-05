@@ -1,7 +1,7 @@
 import { RegisterSchema } from "@/schemas/validation"
 import { handleClientError } from "@/utils/errorHandler.client"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 /**
  * ユーザー登録機能カスタムフック
@@ -12,6 +12,8 @@ export const useUserRegister = () => {
   const [password, setPassword] = useState("")
   const [userName, setUserName] = useState("")
   const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const inFlight = useRef(false)
   const router = useRouter()
 
   /**
@@ -20,6 +22,10 @@ export const useUserRegister = () => {
    * @param data 登録データ（メール、パスワード、ユーザー名）
    */
   const handleSubmit = async (data: RegisterSchema) => {
+    if (inFlight.current) return
+    inFlight.current = true
+    setIsSubmitting(true)
+    setError("")
     const { email, password, userName } = data
 
     try {
@@ -47,6 +53,9 @@ export const useUserRegister = () => {
         "An error occurred during user registration. Cannot connect to server.",
       )
       setError(errorMessage)
+    } finally {
+      inFlight.current = false
+      setIsSubmitting(false)
     }
   }
 
@@ -59,6 +68,7 @@ export const useUserRegister = () => {
     userName,
     setUserName,
     error,
+    isSubmitting,
     handleSubmit,
   }
 }

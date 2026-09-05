@@ -1,44 +1,39 @@
-name: ブランチ制限とPR検証
+name: Branch policy
 
 on:
   pull_request:
-    branches:
-      - main
-      - develop  # develop ブランチへのPRも監視
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
 
 jobs:
-  check_base_branch:
+  check-base-branch:
     runs-on: ubuntu-latest
+    env:
+      TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+      SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+
     steps:
-      - name: リポジトリをチェックアウト
-        uses: actions/checkout@v4
-      
-      - name: ブランチ制限チェック
+      - name: Enforce main branch promotion policy
+        shell: bash
         run: |
-          TARGET_BRANCH="${{ github.event.pull_request.base.ref }}"
-          SOURCE_BRANCH="${{ github.event.pull_request.head.ref }}"
-          
-          echo "🔍 ブランチ制限チェック実行中..."
-          echo "  - ソース: $SOURCE_BRANCH"
-          echo "  - ターゲット: $TARGET_BRANCH"
-          
-          if [[ "$TARGET_BRANCH" == "main" ]]; then
-            if [[ "$SOURCE_BRANCH" != "develop" ]]; then
-              echo "❌ エラー: mainブランチへのPRはdevelopブランチからのみ許可されています。"
-              echo "📝 まずdevelopブランチにPRを作成してください。"
-              echo "🔄 ワークフロー: feature → develop → main"
-              exit 1
-            else
-              echo "✅ 正常: developブランチからのPRです。"
-            fi
-          elif [[ "$TARGET_BRANCH" == "develop" ]]; then
-            echo "✅ 正常: developブランチへのPRです。"
-            echo "🌿 Feature ブランチからのPRを受け付けています。"
+          echo "Checking branch policy: ${SOURCE_BRANCH} -> ${TARGET_BRANCH}"
+
+          if [[ "${TARGET_BRANCH}" == "main" && "${SOURCE_BRANCH}" != "develop" ]]; then
+            echo "Pull requests to main must come from develop."
+            echo "Expected promotion path: feature -> develop -> main"
+            exit 1
           fi
-      
-      - name: PR情報を表示
+
+          echo "Branch policy passed."
+
+      - name: Show pull request metadata
+        shell: bash
         run: |
-          echo "📋 PR情報:"
-          echo "  - ブランチ: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}"
-          echo "  - タイトル: ${{ github.event.pull_request.title }}"
-          echo "  - 作成者: ${{ github.event.pull_request.user.login }}"
+          echo "Branch: ${SOURCE_BRANCH} -> ${TARGET_BRANCH}"
+          echo "Title: ${PR_TITLE}"
+          echo "Author: ${PR_AUTHOR}"

@@ -14,11 +14,18 @@ const customJestConfig = {
   },
   testMatch: ["**/__tests__/**/*.(ts|tsx|js)", "**/*.(test|spec).(ts|tsx|js)"],
   collectCoverageFrom: [
-    "utils/**/*.{ts,tsx}",
-    "app/api/**/*.{ts,tsx}",
+    "{app,application,components,domain,hooks,infrastructure,lib,logging,schemas,service,utils}/**/*.{ts,tsx}",
     "!**/*.d.ts",
     "!**/node_modules/**",
   ],
+  coverageThreshold: {
+    global: {
+      statements: 30,
+      branches: 25,
+      functions: 25,
+      lines: 30,
+    },
+  },
   preset: "ts-jest",
   globals: {
     "ts-jest": {

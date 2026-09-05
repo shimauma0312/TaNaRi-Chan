@@ -1,6 +1,6 @@
 import { handleClientError } from "@/utils/errorHandler.client"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 /**
  * ログイン機能カスタムフック
@@ -11,6 +11,7 @@ export const useLogin = () => {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const inFlight = useRef(false)
   const router = useRouter()
 
   /**
@@ -20,6 +21,8 @@ export const useLogin = () => {
    * @param password ユーザーのパスワード
    */
   const login = async (email: string, password: string) => {
+    if (inFlight.current) return
+    inFlight.current = true
     setLoading(true)
     setError("")
 
@@ -48,6 +51,7 @@ export const useLogin = () => {
       )
       setError(errorMessage)
     } finally {
+      inFlight.current = false
       setLoading(false)
     }
   }

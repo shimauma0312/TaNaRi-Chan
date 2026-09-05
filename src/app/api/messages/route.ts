@@ -5,18 +5,24 @@
  * POST /api/messages        - メッセージを送信
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { getUserIdFromRequest } from '@/lib/auth';
-import { PrismaMessageRepository } from '@/infrastructure/message/PrismaMessageRepository';
-import { GetInboxMessagesUseCase } from '@/application/message/GetInboxMessagesUseCase';
-import { SendMessageUseCase } from '@/application/message/SendMessageUseCase';
-import { AppError, createApiErrorResponse } from '@/utils/errorHandler';
-
-const prisma = new PrismaClient();
+import { NextRequest, NextResponse } from "next/server"
+import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
+import prisma from "@/lib/prisma"
+import { PrismaMessageRepository } from "@/infrastructure/message/PrismaMessageRepository"
+import { GetInboxMessagesUseCase } from "@/application/message/GetInboxMessagesUseCase"
+import { SendMessageUseCase } from "@/application/message/SendMessageUseCase"
+import { AppError, createApiErrorResponse } from "@/utils/errorHandler"
+import { createMessageRequestSchema, firstValidationMessage, readJsonRequest } from "@/schemas/api"
+import { z } from "zod"
+import { enforceWriteRateLimit } from "@/lib/writeRateLimit"
 
 // Force dynamic rendering for this route
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic"
+
+const paginationQuery = z.object({
+  cursor: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+})
 
 /**
  * 受信メッセージ一覧を取得する
@@ -26,23 +32,35 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const userId = getUserIdFromRequest(request);
+    const userId = await getUserIdFromRequest(request)
     if (!userId) {
-      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
-    const repository = new PrismaMessageRepository(prisma);
-    const useCase = new GetInboxMessagesUseCase(repository);
-    const messages = await useCase.execute(userId);
+    const repository = new PrismaMessageRepository(prisma)
+    const useCase = new GetInboxMessagesUseCase(repository)
+    const url = new URL(request.url)
+    const page = paginationQuery.safeParse({
+      cursor: url.searchParams.get("cursor") ?? undefined,
+      limit: url.searchParams.get("limit") ?? undefined,
+    })
+    if (!page.success) {
+      return NextResponse.json({ error: "ページ指定が不正です" }, { status: 400 })
+    }
+    const messages = await useCase.execute(userId, page.data)
 
-    return NextResponse.json(messages);
+    const response = NextResponse.json(messages)
+    if (page.data.limit && messages.length === page.data.limit) {
+      response.headers.set("X-Next-Cursor", String(messages.at(-1)?.message_id))
+    }
+    return response
   } catch (error) {
     if (error instanceof AppError) {
-      const errorResponse = createApiErrorResponse(error, '受信メッセージの取得に失敗しました');
-      return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+      const errorResponse = createApiErrorResponse(error, "受信メッセージの取得に失敗しました")
+      return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
     }
-    const errorResponse = createApiErrorResponse(error, '受信メッセージの取得に失敗しました');
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const errorResponse = createApiErrorResponse(error, "受信メッセージの取得に失敗しました")
+    return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
   }
 }
 
@@ -54,30 +72,49 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const userId = getUserIdFromRequest(request);
-    if (!userId) {
-      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
     }
 
-    const body = await request.json();
-    const { subject, body: messageBody, receiver_id } = body;
+    const userId = await getUserIdFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
+    }
 
-    const repository = new PrismaMessageRepository(prisma);
-    const useCase = new SendMessageUseCase(repository);
+    const limited = await enforceWriteRateLimit(userId, {
+      scope: "message-create",
+      limit: 30,
+      windowSeconds: 60,
+    })
+    if (limited) return limited
+
+    const json = await readJsonRequest(request)
+    if (!json.success) {
+      return NextResponse.json({ error: json.error }, { status: json.status })
+    }
+
+    const parsed = createMessageRequestSchema.safeParse(json.data)
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstValidationMessage(parsed.error) }, { status: 400 })
+    }
+    const { subject, body: messageBody, receiver_id } = parsed.data
+
+    const repository = new PrismaMessageRepository(prisma)
+    const useCase = new SendMessageUseCase(repository)
     const message = await useCase.execute({
       subject,
       body: messageBody,
       sender_id: userId,
       receiver_id,
-    });
+    })
 
-    return NextResponse.json(message, { status: 201 });
+    return NextResponse.json(message, { status: 201 })
   } catch (error) {
     if (error instanceof AppError) {
-      const errorResponse = createApiErrorResponse(error, 'メッセージの送信に失敗しました');
-      return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+      const errorResponse = createApiErrorResponse(error, "メッセージの送信に失敗しました")
+      return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
     }
-    const errorResponse = createApiErrorResponse(error, 'メッセージの送信に失敗しました');
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const errorResponse = createApiErrorResponse(error, "メッセージの送信に失敗しました")
+    return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
   }
 }

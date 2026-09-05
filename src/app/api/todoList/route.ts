@@ -1,7 +1,10 @@
-import { getUserIdFromRequest } from "@/lib/auth"
+import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
 import { todoService } from "@/service/todoService"
 import { createApiErrorResponse } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
+import { enforceWriteRateLimit } from "@/lib/writeRateLimit"
+import { createTodoRequestSchema, firstValidationMessage, readJsonRequest } from "@/schemas/api"
+import { z } from "zod"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
@@ -10,10 +13,31 @@ export const dynamic = "force-dynamic"
  * ToDoリスト取得API
  * @returns 公開ToDoリストまたはエラーレスポンス
  */
-export async function GET(): Promise<NextResponse> {
+const paginationQuery = z.object({
+  cursor: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+})
+
+export async function GET(request?: NextRequest): Promise<NextResponse> {
   try {
-    const todos = await todoService.getPublicTodos()
-    return NextResponse.json(todos)
+    const url = request ? new URL(request.url) : null
+    const parsed = paginationQuery.safeParse({
+      cursor: url?.searchParams.get("cursor") ?? undefined,
+      limit: url?.searchParams.get("limit") ?? undefined,
+    })
+    if (!parsed.success)
+      return NextResponse.json({ error: "ページ指定が不正です" }, { status: 400 })
+
+    const currentUserId = request ? await getUserIdFromRequest(request) : null
+    const todos = await todoService.getPublicTodos({
+      ...parsed.data,
+      excludeUserId: currentUserId ?? undefined,
+    })
+    const response = NextResponse.json(todos)
+    if (parsed.data.limit && todos.length === parsed.data.limit) {
+      response.headers.set("X-Next-Cursor", String(todos.at(-1)?.todo_id))
+    }
+    return response
   } catch (error) {
     const errorResponse = createApiErrorResponse(error, "ToDoリストの取得に失敗しました")
     return NextResponse.json({ error: errorResponse.error }, { status: errorResponse.statusCode })
@@ -27,24 +51,38 @@ export async function GET(): Promise<NextResponse> {
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const userId = getUserIdFromRequest(request)
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
+    }
+
+    const userId = await getUserIdFromRequest(request)
     if (!userId) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { title, description, todo_deadline, is_public } = body
+    const limited = await enforceWriteRateLimit(userId, {
+      scope: "todo-create",
+      limit: 30,
+      windowSeconds: 60,
+    })
+    if (limited) return limited
 
-    // バリデーション
-    if (!title || !description || !todo_deadline) {
-      return NextResponse.json({ error: "タイトル、詳細、期限は必須です" }, { status: 400 })
+    const json = await readJsonRequest(request)
+    if (!json.success) {
+      return NextResponse.json({ error: json.error }, { status: json.status })
     }
+
+    const parsed = createTodoRequestSchema.safeParse(json.data)
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstValidationMessage(parsed.error) }, { status: 400 })
+    }
+    const { title, description, todo_deadline, is_public } = parsed.data
 
     const todo = await todoService.createTodo(userId, {
       title,
       description,
-      todo_deadline: new Date(todo_deadline),
-      is_public: is_public || false,
+      todo_deadline,
+      is_public,
     })
 
     return NextResponse.json(todo, { status: 201 })

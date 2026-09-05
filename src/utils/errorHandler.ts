@@ -2,7 +2,7 @@
  * エラーハンドリングユーティリティ
  */
 
-import logger from "@/logging/logging"
+import logger from "@/utils/logger"
 
 // エラーの種類を定義
 export enum ErrorType {
@@ -177,7 +177,7 @@ export const createApiErrorResponse = (
     })
 
     return {
-      error: error.message,
+      error: fallbackMessage,
       type: ErrorType.SERVER_ERROR,
       statusCode: 500,
       timestamp: new Date().toISOString(),
@@ -241,7 +241,7 @@ export const handleDatabaseError = (error: PrismaError): AppError => {
       return new AppError(
         `Duplicate data constraint violation${duplicateField}`,
         ErrorType.VALIDATION,
-        400,
+        409,
       )
     case "P2003":
       return new AppError("Related data does not exist", ErrorType.VALIDATION, 400)
@@ -267,7 +267,7 @@ export const handleDatabaseError = (error: PrismaError): AppError => {
       )
     default:
       return new AppError(
-        `Database error occurred: ${error.message}`,
+        "Database operation failed",
         ErrorType.DATABASE_ERROR,
         500,
       )

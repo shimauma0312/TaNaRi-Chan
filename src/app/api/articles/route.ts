@@ -1,133 +1,160 @@
-import logger from "@/logging/logging"
-import { AppError, createApiErrorResponse, ErrorType } from "@/utils/errorHandler"
-import { NextResponse } from "next/server"
+import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
+import logger from "@/utils/logger"
 import * as articleService from "@/service/articleService"
+import { AppError, createApiErrorResponse, ErrorType } from "@/utils/errorHandler"
+import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+import { readJsonRequest } from "@/schemas/api"
+import { enforceWriteRateLimit } from "@/lib/writeRateLimit"
 
-/*
- * 記事一覧を取得する。
- */
-export async function GET(req: Request): Promise<NextResponse> {
+const articleFields = z.object({
+  title: z.string().trim().min(1).max(200),
+  content: z.string().trim().min(1).max(100_000),
+})
+
+const updateArticleInput = articleFields.extend({
+  post_id: z.coerce.number().int().positive(),
+})
+
+const deleteArticleInput = z.object({
+  post_id: z.coerce.number().int().positive(),
+})
+
+const articleListQuery = z.object({
+  cursor: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  mine: z.enum(["true"]).optional(),
+})
+
+function errorResponse(error: unknown, fallback: string): NextResponse {
+  const response = createApiErrorResponse(error, fallback)
+  return NextResponse.json(response, { status: response.statusCode })
+}
+
+async function requireUserId(req: NextRequest): Promise<string> {
+  if (!isSameOriginRequest(req)) {
+    throw new AppError("Cross-origin request is not allowed", ErrorType.AUTHORIZATION, 403)
+  }
+
+  const userId = await getUserIdFromRequest(req)
+  if (!userId) {
+    throw new AppError("Authentication required", ErrorType.AUTHENTICATION, 401)
+  }
+  return userId
+}
+
+async function readJson(req: NextRequest): Promise<unknown> {
+  const result = await readJsonRequest(req)
+  if (!result.success) {
+    throw new AppError(
+      result.status === 400 ? "Request body must be valid JSON" : result.error,
+      ErrorType.VALIDATION,
+      result.status,
+    )
+  }
+  return result.data
+}
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     const url = new URL(req.url)
     const postId = url.searchParams.get("post_id")
     if (!postId) {
-      const articles = await articleService.getArticles()
-      return NextResponse.json(articles)
-    } else {
-      const article = await articleService.getArticle(postId)
-      if (article) {
-        return NextResponse.json(article)
-      } else {
-        throw new AppError("Article not found", ErrorType.NOT_FOUND, 404)
+      const query = articleListQuery.safeParse({
+        cursor: url.searchParams.get("cursor") ?? undefined,
+        limit: url.searchParams.get("limit") ?? undefined,
+        mine: url.searchParams.get("mine") ?? undefined,
+      })
+      if (!query.success) {
+        throw new AppError("Invalid pagination parameters", ErrorType.VALIDATION, 400)
       }
-    }
-  } catch (error) {
-    if (error instanceof AppError) {
-      const errorResponse = createApiErrorResponse(error, "Failed to fetch articles")
-      return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
+      let authorId: string | undefined
+      if (query.data.mine) {
+        const currentUserId = await getUserIdFromRequest(req)
+        if (!currentUserId) {
+          throw new AppError("Authentication required", ErrorType.AUTHENTICATION, 401)
+        }
+        authorId = currentUserId
+      }
+      const articles = await articleService.getArticles({
+        cursor: query.data.cursor,
+        limit: query.data.limit,
+        authorId,
+      })
+      const response = NextResponse.json(articles)
+      if (query.data.limit && articles.length === query.data.limit) {
+        response.headers.set("X-Next-Cursor", String(articles.at(-1)?.post_id))
+      }
+      return response
     }
 
-    const errorResponse = createApiErrorResponse(error, "Failed to fetch articles")
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
+    const article = await articleService.getArticle(postId)
+    if (!article) {
+      throw new AppError("Article not found", ErrorType.NOT_FOUND, 404)
+    }
+    return NextResponse.json(article)
+  } catch (error) {
+    return errorResponse(error, "Failed to fetch articles")
   }
 }
 
-// 記事POST
-export async function POST(req: Request): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const data = await req.json()
-
-    if (
-      !data.title ||
-      !data.content ||
-      !data.author_id ||
-      !data.title.trim() ||
-      !data.content.trim() ||
-      !data.author_id.trim()
-    ) {
-      throw new AppError("Title, content, and author ID are required", ErrorType.VALIDATION, 400)
+    const userId = await requireUserId(req)
+    const limited = await enforceWriteRateLimit(userId, {
+      scope: "article-create",
+      limit: 20,
+      windowSeconds: 60,
+    })
+    if (limited) return limited
+    const parsed = articleFields.safeParse(await readJson(req))
+    if (!parsed.success) {
+      throw new AppError("Title and content are required", ErrorType.VALIDATION, 400)
     }
 
-    const newPost = await articleService.createArticle(data)
-    logger.info("Article created successfully", { postId: newPost.post_id })
+    const newPost = await articleService.createArticle({
+      ...parsed.data,
+      // Never accept author identity from the request body.
+      author_id: userId,
+    })
+    logger.info("Article created successfully", { postId: newPost.post_id, userId })
     return NextResponse.json(newPost, { status: 201 })
   } catch (error) {
-    if (error instanceof AppError) {
-      const errorResponse = createApiErrorResponse(error, "Failed to create article")
-      return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
-    }
-
-    const errorResponse = createApiErrorResponse(error as AppError, "Failed to create article")
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
+    return errorResponse(error, "Failed to create article")
   }
 }
 
-// 記事PUT
-export async function PUT(req: Request): Promise<NextResponse> {
+export async function PUT(req: NextRequest): Promise<NextResponse> {
   try {
-    const data = await req.json()
-
-    if (
-      !data.post_id ||
-      !data.title ||
-      !data.content ||
-      !data.title.trim() ||
-      !data.content.trim()
-    ) {
+    const userId = await requireUserId(req)
+    const parsed = updateArticleInput.safeParse(await readJson(req))
+    if (!parsed.success) {
       throw new AppError("Post ID, title, and content are required", ErrorType.VALIDATION, 400)
     }
 
-    // post_idのバリデーション
-    const postId = parseInt(data.post_id, 10)
-    if (isNaN(postId) || postId <= 0) {
-      throw new AppError("Invalid post ID", ErrorType.VALIDATION, 400)
-    }
-
-    const updateData = {
-      post_id: postId,
-      title: data.title,
-      content: data.content,
-    }
-
-    const updatedPost = await articleService.updateArticle(updateData)
-    logger.info("Article updated successfully", { postId: updatedPost.post_id })
+    const updatedPost = await articleService.updateArticle({
+      ...parsed.data,
+      author_id: userId,
+    })
+    logger.info("Article updated successfully", { postId: updatedPost.post_id, userId })
     return NextResponse.json(updatedPost)
   } catch (error) {
-    if (error instanceof AppError) {
-      const errorResponse = createApiErrorResponse(error, "Failed to update article")
-      return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
-    }
-
-    const errorResponse = createApiErrorResponse(error as AppError, "Failed to update article")
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
+    return errorResponse(error, "Failed to update article")
   }
 }
 
-// 記事DELETE
-export async function DELETE(req: Request): Promise<NextResponse> {
+export async function DELETE(req: NextRequest): Promise<NextResponse> {
   try {
-    const data = await req.json()
-
-    if (!data.post_id) {
+    const userId = await requireUserId(req)
+    const parsed = deleteArticleInput.safeParse(await readJson(req))
+    if (!parsed.success) {
       throw new AppError("Post ID is required", ErrorType.VALIDATION, 400)
     }
 
-    // post_idのバリデーション
-    const postId = parseInt(data.post_id, 10)
-    if (isNaN(postId) || postId <= 0) {
-      throw new AppError("Invalid post ID", ErrorType.VALIDATION, 400)
-    }
-
-    const deletedPost = await articleService.deleteArticle(postId)
-    logger.info("Article deleted successfully", { postId: postId })
+    const deletedPost = await articleService.deleteArticle(parsed.data.post_id, userId)
+    logger.info("Article deleted successfully", { postId: parsed.data.post_id, userId })
     return NextResponse.json(deletedPost)
   } catch (error) {
-    if (error instanceof AppError) {
-      const errorResponse = createApiErrorResponse(error, "Failed to delete article")
-      return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
-    }
-
-    const errorResponse = createApiErrorResponse(error as AppError, "Failed to delete article")
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
+    return errorResponse(error, "Failed to delete article")
   }
 }

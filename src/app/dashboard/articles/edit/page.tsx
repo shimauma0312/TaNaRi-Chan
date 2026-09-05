@@ -2,29 +2,26 @@
 
 import ArticleForm from "@/components/ArticleForm"
 import MinLoader from "@/components/MinLoader"
-import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
+import Alert from "@mui/material/Alert"
+import Button from "@mui/material/Button"
+import Container from "@mui/material/Container"
+import Stack from "@mui/material/Stack"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 
 async function fetchArticleData(postId: number) {
-  try {
-    const response = await fetch(`/api/articles?post_id=${postId}`)
-    const data = await response.json()
-    return {
-      title: data.title ?? "",
-      content: data.content ?? "",
-    }
-  } catch (error) {
-    console.error("Error fetching article:", error)
-    return { title: "", content: "" }
-  }
+  const response = await fetch(`/api/articles?post_id=${postId}`)
+  const data = await response.json().catch(() => null)
+  if (!response.ok) throw new Error(data?.error || "記事の取得に失敗しました")
+  return { title: data.title, content: data.content }
 }
 
 function EditArticleContent({ postId }: { postId: number | null }) {
   const router = useRouter()
   const [articleData, setArticleData] = useState({ title: "", content: "" })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (postId === null) {
@@ -35,69 +32,64 @@ function EditArticleContent({ postId }: { postId: number | null }) {
     const loadArticleData = async () => {
       setLoading(true)
       try {
-        const data = await fetchArticleData(postId)
-        setArticleData(data)
+        setArticleData(await fetchArticleData(postId))
       } catch (error) {
         console.error("Failed to load article:", error)
-        setArticleData({ title: "", content: "" })
+        setError(error instanceof Error ? error.message : "記事の取得に失敗しました")
       } finally {
         setLoading(false)
       }
     }
 
-    loadArticleData()
+    void loadArticleData()
   }, [postId])
 
-  const handleSuccess = () => {
-    router.push("/dashboard/articles")
-  }
-
   if (postId === null) {
-    return <div className="text-center p-8">Invalid article ID.</div>
+    return <Alert severity="error">Invalid article ID.</Alert>
   }
-
-  if (loading) {
-    return <MinLoader />
+  if (loading) return <MinLoader />
+  if (error) {
+    return (
+      <Container maxWidth="md">
+        <Stack spacing={2}>
+          <Alert severity="error">{error}</Alert>
+          <Button
+            sx={{ alignSelf: "flex-start" }}
+            onClick={() => router.push("/dashboard/articles")}
+          >
+            記事一覧へ戻る
+          </Button>
+        </Stack>
+      </Container>
+    )
   }
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
-      <SideMenu />
-      <ArticleForm
-        postId={postId}
-        initialTitle={articleData.title}
-        initialContent={articleData.content}
-        onSuccess={handleSuccess}
-      />
-    </div>
+    <ArticleForm
+      postId={postId}
+      initialTitle={articleData.title}
+      initialContent={articleData.content}
+      onSuccess={() => router.push("/dashboard/articles")}
+    />
   )
 }
 
-const EditArticlePageInner = () => {
+function EditArticlePageInner() {
   const { user, loading } = useAuth()
-  const [postId, setPostId] = useState<number | null>(null)
   const searchParams = useSearchParams()
+  const postIdParam = searchParams.get("post_id")
+  const numericId = postIdParam ? Number(postIdParam) : null
+  const postId =
+    numericId !== null && Number.isSafeInteger(numericId) && numericId > 0 ? numericId : null
 
-  useEffect(() => {
-    const postIdParam = searchParams.get("post_id")
-    if (postIdParam) {
-      setPostId(Number(postIdParam))
-    }
-  }, [searchParams])
-
-  if (loading || !user) {
-    return <MinLoader />
-  }
-
+  if (loading || !user) return <MinLoader />
   return <EditArticleContent postId={postId} />
 }
 
-const EditArticlePage = () => {
+export default function EditArticlePage() {
   return (
     <Suspense fallback={<MinLoader />}>
       <EditArticlePageInner />
     </Suspense>
   )
 }
-
-export default EditArticlePage

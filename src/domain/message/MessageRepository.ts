@@ -1,4 +1,9 @@
-import { CreateMessageData, Message, MessageWithUsers } from './Message';
+import { CreateMessageData, Message, MessageWithUsers } from "./Message"
+
+export interface MessagePageOptions {
+  cursor?: number
+  limit?: number
+}
 
 /**
  * メッセージリポジトリのインターフェース
@@ -10,7 +15,7 @@ export interface IMessageRepository {
    * @param data - 作成するメッセージのデータ
    * @returns 作成されたメッセージ（ユーザー情報付き）
    */
-  create(data: CreateMessageData): Promise<MessageWithUsers>;
+  create(data: CreateMessageData): Promise<MessageWithUsers>
 
   /**
    * 指定ユーザーの受信トレイを取得する
@@ -18,7 +23,7 @@ export interface IMessageRepository {
    * @param userId - 対象ユーザーID
    * @returns ユーザー情報付きメッセージの配列（新しい順）
    */
-  findByReceiverId(userId: string): Promise<MessageWithUsers[]>;
+  findByReceiverId(userId: string, options?: MessagePageOptions): Promise<MessageWithUsers[]>
 
   /**
    * 指定ユーザーの送信トレイを取得する
@@ -26,7 +31,7 @@ export interface IMessageRepository {
    * @param userId - 対象ユーザーID
    * @returns ユーザー情報付きメッセージの配列（新しい順）
    */
-  findBySenderId(userId: string): Promise<MessageWithUsers[]>;
+  findBySenderId(userId: string, options?: MessagePageOptions): Promise<MessageWithUsers[]>
 
   /**
    * メッセージIDでメッセージを取得する
@@ -34,7 +39,7 @@ export interface IMessageRepository {
    * @param messageId - メッセージID
    * @returns ユーザー情報付きメッセージ、または`null`（存在しない場合）
    */
-  findById(messageId: number): Promise<MessageWithUsers | null>;
+  findById(messageId: number): Promise<MessageWithUsers | null>
 
   /**
    * メッセージを既読にする
@@ -43,7 +48,7 @@ export interface IMessageRepository {
    * @param userId    - 操作者ユーザーID（受信者のみが既読にできる）
    * @returns 更新後のメッセージ
    */
-  markAsRead(messageId: number, userId: string): Promise<Message>;
+  markAsRead(messageId: number, userId: string): Promise<Message>
 
   /**
    * メッセージを削除する
@@ -51,5 +56,5 @@ export interface IMessageRepository {
    * @param messageId - 削除対象メッセージID
    * @param userId    - 操作者ユーザーID（送信者または受信者のみ削除可能）
    */
-  delete(messageId: number, userId: string): Promise<void>;
+  delete(messageId: number, userId: string): Promise<void>
 }

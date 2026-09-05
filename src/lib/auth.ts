@@ -1,9 +1,14 @@
-import { PrismaClient } from "@prisma/client"
+import { createHash, randomBytes, randomUUID } from "node:crypto"
 import bcrypt from "bcryptjs"
 import { cookies } from "next/headers"
 import { NextRequest } from "next/server"
+import prisma from "@/lib/prisma"
 
-const prisma = new PrismaClient()
+export const AUTH_COOKIE_NAME = "auth-session"
+const LEGACY_AUTH_COOKIE_NAME = "auth-user-id"
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
+// Keep the password verification cost comparable when an account does not exist.
+const DUMMY_PASSWORD_HASH = "$2b$12$hjWbtJVE4XUN2M8Ia1V.AeAv6uIzgf6MFOqKdytUpu7Hoply3Qg46"
 
 export interface AuthUser {
   id: string
@@ -12,82 +17,100 @@ export interface AuthUser {
   icon_number: number
 }
 
-/**
- * Hash a password using bcrypt
- */
+const authUserSelect = {
+  id: true,
+  user_name: true,
+  user_email: true,
+  icon_number: true,
+} as const
+
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12)
 }
 
-/**
- * Verify a password against a hash
- */
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   return bcrypt.compare(password, hashedPassword)
 }
 
-/**
- * Generate a random user ID
- */
 export function generateUserId(): string {
-  return "user_" + Math.random().toString(36).slice(2, 11) + Date.now().toString(36)
+  return `user_${randomUUID()}`
 }
 
-/**
- * Authenticate user by email and password
- */
-export async function authenticateUser(email: string, password: string): Promise<AuthUser | null> {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { user_email: email },
-      select: {
-        id: true,
-        user_name: true,
-        user_email: true,
-        icon_number: true,
-        password: true,
-      },
-    })
+function hashSessionToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex")
+}
 
-    if (!user) {
-      return null
-    }
+function newSessionToken(): string {
+  return randomBytes(32).toString("base64url")
+}
 
-    const isPasswordValid = await verifyPassword(password, user.password)
-    if (!isPasswordValid) {
-      return null
-    }
-
-    // Return user without password
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _password, ...userWithoutPassword } = user
-    return userWithoutPassword
-  } catch (error) {
-    console.error("Error authenticating user:", error)
+async function findUserBySessionToken(token: string | undefined): Promise<AuthUser | null> {
+  if (!token) {
     return null
+  }
+
+  const session = await prisma.session.findUnique({
+    where: { tokenHash: hashSessionToken(token) },
+    select: {
+      expiresAt: true,
+      revokedAt: true,
+      user: { select: authUserSelect },
+    },
+  })
+
+  if (!session || session.revokedAt !== null || session.expiresAt <= new Date()) {
+    return null
+  }
+
+  return session.user
+}
+
+export async function authenticateUser(email: string, password: string): Promise<AuthUser | null> {
+  const user = await prisma.user.findUnique({
+    where: { user_email: email },
+    select: {
+      ...authUserSelect,
+      password: true,
+    },
+  })
+
+  const passwordMatches = await verifyPassword(password, user?.password ?? DUMMY_PASSWORD_HASH)
+  if (!user || !passwordMatches) {
+    return null
+  }
+
+  return {
+    id: user.id,
+    user_name: user.user_name,
+    user_email: user.user_email,
+    icon_number: user.icon_number,
   }
 }
 
-/**
- * Set authentication cookie
- */
+/** Create a server-side session and store only its opaque token in the browser. */
 export async function setAuthCookie(userId: string): Promise<void> {
+  const token = newSessionToken()
+  const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000)
+
+  await prisma.session.create({
+    data: {
+      tokenHash: hashSessionToken(token),
+      userId,
+      expiresAt,
+    },
+  })
+
   const cookieStore = await cookies()
-  cookieStore.set("auth-user-id", userId, {
+  cookieStore.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7, // 1 week
+    maxAge: SESSION_TTL_SECONDS,
+    expires: expiresAt,
     path: "/",
   })
-}
-
-/**
- * Clear authentication cookie
- */
-export async function clearAuthCookie(): Promise<void> {
-  const cookieStore = await cookies()
-  cookieStore.set("auth-user-id", "", {
+  // Remove cookies issued by versions that stored a raw user ID.
+  cookieStore.set(LEGACY_AUTH_COOKIE_NAME, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -96,39 +119,98 @@ export async function clearAuthCookie(): Promise<void> {
   })
 }
 
-/**
- * Get current authenticated user from cookie
- */
-export async function getCurrentUser(): Promise<AuthUser | null> {
-  try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get("auth-user-id")?.value
+/** Revoke the current server-side session before removing its browser cookie. */
+export async function clearAuthCookie(): Promise<void> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value
 
-    if (!userId) {
-      return null
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        user_name: true,
-        user_email: true,
-        icon_number: true,
+  if (token) {
+    await prisma.session.updateMany({
+      where: {
+        tokenHash: hashSessionToken(token),
+        revokedAt: null,
       },
+      data: { revokedAt: new Date() },
     })
+  }
 
-    return user
-  } catch (error) {
-    console.error("Error getting current user:", error)
-    return null
+  for (const name of [AUTH_COOKIE_NAME, LEGACY_AUTH_COOKIE_NAME]) {
+    cookieStore.set(name, "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 0,
+      path: "/",
+    })
   }
 }
 
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const cookieStore = await cookies()
+  return findUserBySessionToken(cookieStore.get(AUTH_COOKIE_NAME)?.value)
+}
+
+/** Resolve an authenticated user ID from an opaque, non-reversible session cookie. */
+export async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
+  const user = await findUserBySessionToken(request.cookies.get(AUTH_COOKIE_NAME)?.value)
+  return user?.id ?? null
+}
+
+export async function getUserFromRequest(request: NextRequest): Promise<AuthUser | null> {
+  return findUserBySessionToken(request.cookies.get(AUTH_COOKIE_NAME)?.value)
+}
+
+function configuredTrustedOrigins(): Set<string> {
+  const origins = new Set<string>()
+
+  for (const candidate of (process.env.TRUSTED_ORIGINS ?? "").split(",")) {
+    const value = candidate.trim()
+    if (!value) {
+      continue
+    }
+
+    try {
+      const url = new URL(value)
+      if ((url.protocol === "http:" || url.protocol === "https:") && url.origin === value.replace(/\/$/, "")) {
+        origins.add(url.origin)
+      }
+    } catch {
+      // Invalid configuration must never broaden the set of trusted origins.
+    }
+  }
+
+  return origins
+}
+
 /**
- * Get user ID from request cookie (for API routes)
+ * Reject browser requests whose Origin is not the internal URL or an explicitly
+ * configured public URL. Forwarded headers are intentionally not trusted here:
+ * deployments behind a proxy must put their externally visible origins in
+ * TRUSTED_ORIGINS.
  */
-export function getUserIdFromRequest(request: NextRequest): string | null {
-  const userId = request.cookies.get("auth-user-id")?.value
-  return userId || null
+export function isSameOriginRequest(request: Request): boolean {
+  if (request.headers.get("sec-fetch-site") === "cross-site") {
+    return false
+  }
+
+  const origin = request.headers.get("origin")
+  if (origin === null) {
+    return true
+  }
+
+  let normalizedOrigin: string
+  try {
+    const url = new URL(origin)
+    if ((url.protocol !== "http:" && url.protocol !== "https:") || url.origin !== origin.replace(/\/$/, "")) {
+      return false
+    }
+    normalizedOrigin = url.origin
+  } catch {
+    return false
+  }
+
+  return (
+    normalizedOrigin === new URL(request.url).origin ||
+    configuredTrustedOrigins().has(normalizedOrigin)
+  )
 }

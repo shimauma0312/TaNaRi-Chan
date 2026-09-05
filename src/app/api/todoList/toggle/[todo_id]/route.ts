@@ -1,7 +1,8 @@
-import { getUserIdFromRequest } from "@/lib/auth"
+import { getUserIdFromRequest, isSameOriginRequest } from "@/lib/auth"
 import { todoService } from "@/service/todoService"
 import { createApiErrorResponse } from "@/utils/errorHandler"
 import { NextRequest, NextResponse } from "next/server"
+import { todoIdSchema } from "@/schemas/api"
 
 // Force dynamic rendering for this route
 export const dynamic = "force-dynamic"
@@ -20,16 +21,21 @@ interface RouteParams {
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   try {
-    const requestUserId = getUserIdFromRequest(request)
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
+    }
+
+    const requestUserId = await getUserIdFromRequest(request)
     if (!requestUserId) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
     const { todo_id } = await params
-    const todoId = parseInt(todo_id)
-    if (isNaN(todoId)) {
+    const parsedTodoId = todoIdSchema.safeParse(todo_id)
+    if (!parsedTodoId.success) {
       return NextResponse.json({ error: "無効なToDoIDです" }, { status: 400 })
     }
+    const todoId = parsedTodoId.data
 
     const updatedTodo = await todoService.toggleTodoCompletion(todoId, requestUserId)
 

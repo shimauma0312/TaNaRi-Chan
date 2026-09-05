@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic"
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const userId = getUserIdFromRequest(request)
+    const userId = await getUserIdFromRequest(request)
     if (!userId) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
@@ -23,16 +23,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const [articles, activeTodos, publicTodos] = await Promise.all([
       articleService.getRandomArticles(5),
       todoService.getActiveTodos(userId),
-      todoService.getPublicTodos(),
+      todoService.getPublicTodos({ excludeUserId: userId, limit: 50 }),
     ])
-
-    // 自分のTodoは他者のTodo欄から除外
-    const otherPublicTodos = publicTodos.filter((t: { id: string }) => t.id !== userId)
 
     return NextResponse.json({
       articles,
       activeTodos,
-      publicTodos: otherPublicTodos,
+      publicTodos,
     })
   } catch (error) {
     const errorResponse = createApiErrorResponse(error, "ダッシュボードデータの取得に失敗しました")

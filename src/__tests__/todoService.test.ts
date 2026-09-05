@@ -64,9 +64,26 @@ describe("TodoService", () => {
       // Assert
       expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith({
         where: { id: userId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { todo_id: "desc" },
+        take: 100,
       })
       expect(result).toEqual(mockTodos)
+    })
+
+    it("filters a calendar range while retaining cursor pagination", async () => {
+      mockPrismaClient.todo.findMany.mockResolvedValue([])
+      const from = new Date("2026-09-01T00:00:00.000Z")
+      const to = new Date("2026-10-01T00:00:00.000Z")
+
+      await service.getUserTodos("test-user-id", { from, to, cursor: 200, limit: 50 })
+
+      expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith({
+        where: { id: "test-user-id", todo_deadline: { gte: from, lt: to } },
+        orderBy: { todo_id: "desc" },
+        take: 50,
+        cursor: { todo_id: 200 },
+        skip: 1,
+      })
     })
   })
 
@@ -100,7 +117,8 @@ describe("TodoService", () => {
       // Assert
       expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith({
         where: { is_public: true },
-        orderBy: { createdAt: "desc" },
+        orderBy: { todo_id: "desc" },
+        take: 100,
         include: {
           user: {
             select: {
@@ -112,6 +130,25 @@ describe("TodoService", () => {
       })
 
       expect(result).toEqual(mockPublicTodos)
+    })
+
+    test("applies a half-open deadline range", async () => {
+      mockPrismaClient.todo.findMany.mockResolvedValue([])
+      const from = new Date("2026-09-01T00:00:00.000Z")
+      const to = new Date("2026-10-01T00:00:00.000Z")
+
+      await service.getPublicTodos({ userId: "owner", from, to, limit: 20 })
+
+      expect(mockPrismaClient.todo.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            is_public: true,
+            id: "owner",
+            todo_deadline: { gte: from, lt: to },
+          },
+          take: 20,
+        }),
+      )
     })
   })
 
@@ -242,7 +279,13 @@ describe("TodoService", () => {
         data: {
           title: todoData.title,
           description: todoData.description,
-          todo_deadline: todoData.todo_deadline,
+          todo_deadline: new Date(
+            Date.UTC(
+              todoData.todo_deadline.getUTCFullYear(),
+              todoData.todo_deadline.getUTCMonth(),
+              todoData.todo_deadline.getUTCDate(),
+            ),
+          ),
           is_public: todoData.is_public,
           id: userId,
         },
@@ -278,12 +321,46 @@ describe("TodoService", () => {
 
       // Act & Assert
       await expect(service.createTodo(userId, todoData)).rejects.toThrow(
-        "期限は現在時刻より後に設定してください",
+        "期限は今日以降に設定してください",
       )
+    })
+
+    it("当日の期限を時刻に関係なく受け付けること", async () => {
+      jest.useFakeTimers().setSystemTime(new Date("2026-09-03T12:00:00.000Z"))
+      const today = new Date("2026-09-03T00:00:00.000Z")
+      mockPrismaClient.todo.create.mockResolvedValue({ todo_id: 1 } as Todo)
+
+      await service.createTodo("test-user-id", {
+        title: "Today",
+        description: "Due today",
+        todo_deadline: today,
+      })
+
+      expect(mockPrismaClient.todo.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ todo_deadline: today }),
+      })
+      jest.useRealTimers()
     })
   })
 
   describe("updateTodo", () => {
+    it("期限を変更しない期限切れToDoの編集を許可すること", async () => {
+      const expiredTodo = {
+        todo_id: 1,
+        title: "Expired",
+        todo_deadline: new Date("2020-01-01T00:00:00.000Z"),
+      } as Todo
+      mockPrismaClient.todo.update.mockResolvedValue({ ...expiredTodo, title: "Updated" })
+
+      await expect(service.updateTodo(1, "test-user-id", { title: "Updated" })).resolves.toEqual(
+        expect.objectContaining({ title: "Updated" }),
+      )
+      expect(mockPrismaClient.todo.update).toHaveBeenCalledWith({
+        where: { todo_id: 1, id: "test-user-id" },
+        data: { title: "Updated" },
+      })
+    })
+
     it("ToDoを更新できること", async () => {
       // Arrange
       const todoId = 1
@@ -311,18 +388,14 @@ describe("TodoService", () => {
         title: "Updated Todo",
         is_completed: true,
       }
-      mockPrismaClient.todo.findFirst.mockResolvedValue(mockExistingTodo)
       mockPrismaClient.todo.update.mockResolvedValue(mockUpdatedTodo)
 
       // Act
       const result = await service.updateTodo(todoId, userId, updateData)
 
       // Assert
-      expect(mockPrismaClient.todo.findFirst).toHaveBeenCalledWith({
-        where: { todo_id: todoId, id: userId },
-      })
       expect(mockPrismaClient.todo.update).toHaveBeenCalledWith({
-        where: { todo_id: todoId },
+        where: { todo_id: todoId, id: userId },
         data: {
           title: "Updated Todo",
           is_completed: true,
@@ -336,7 +409,9 @@ describe("TodoService", () => {
       const todoId = 1
       const userId = "test-user-id"
       const updateData = { title: "Updated Todo" }
-      mockPrismaClient.todo.findFirst.mockResolvedValue(null)
+      mockPrismaClient.todo.update.mockRejectedValue(
+        Object.assign(new Error("Record not found"), { code: "P2025" }),
+      )
 
       // Act
       const result = await service.updateTodo(todoId, userId, updateData)
@@ -378,32 +453,14 @@ describe("TodoService", () => {
       // Arrange
       const todoId = 1
       const userId = "test-user-id"
-      const currentDate = new Date()
-      const tomorrow = new Date(currentDate)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      const mockExistingTodo: Todo = {
-        todo_id: todoId,
-        title: "Test Todo",
-        description: "Test Description",
-        todo_deadline: tomorrow,
-        createdAt: currentDate,
-        updatedAt: currentDate,
-        id: userId,
-        is_completed: false,
-        is_public: false,
-      }
-      mockPrismaClient.todo.findFirst.mockResolvedValue(mockExistingTodo)
       mockPrismaClient.todo.delete.mockResolvedValue({})
 
       // Act
       const result = await service.deleteTodo(todoId, userId)
 
       // Assert
-      expect(mockPrismaClient.todo.findFirst).toHaveBeenCalledWith({
-        where: { todo_id: todoId, id: userId },
-      })
       expect(mockPrismaClient.todo.delete).toHaveBeenCalledWith({
-        where: { todo_id: todoId },
+        where: { todo_id: todoId, id: userId },
       })
       expect(result).toBe(true)
     })
@@ -412,7 +469,9 @@ describe("TodoService", () => {
       // Arrange
       const todoId = 1
       const userId = "test-user-id"
-      mockPrismaClient.todo.findFirst.mockResolvedValue(null)
+      mockPrismaClient.todo.delete.mockRejectedValue(
+        Object.assign(new Error("Record not found"), { code: "P2025" }),
+      )
 
       // Act
       const result = await service.deleteTodo(todoId, userId)
@@ -453,7 +512,7 @@ describe("TodoService", () => {
 
       // Assert
       expect(mockPrismaClient.todo.update).toHaveBeenCalledWith({
-        where: { todo_id: todoId },
+        where: { todo_id: todoId, id: userId, is_completed: false },
         data: { is_completed: true },
       })
       expect(result).toEqual(mockUpdatedTodo)

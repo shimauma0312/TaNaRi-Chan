@@ -1,59 +1,82 @@
 "use client"
 
+import NextLink from "@/components/NextLink"
 import { useLogout } from "@/hooks/useLogout"
-import Link from "next/link"
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Divider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+} from "@mui/material"
+import { usePathname } from "next/navigation"
 
-const SideMenu = () => {
-  const { handleLogout } = useLogout()
-
-  return (
-    <div className="w-1/5 p-4">
-      <nav className="space-y-4">
-        <Link
-          href="/dashboard/todoList"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          My Todo List
-        </Link>
-        <Link
-          href="/dashboard/otherTodos"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          Other&apos;s Todo List
-        </Link>
-        <Link
-          href="/dashboard/articles"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          My Articles
-        </Link>
-        <Link
-          href="/dashboard/messages"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          Messages
-        </Link>
-        <Link
-          href="/dashboard/myPage"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          My Page
-        </Link>
-        {/* <Link
-          href="/dashboard/calendar"
-          className="block text-lg text-indigo-400 hover:text-indigo-300"
-        >
-          Calendar
-        </Link> */}
-        <button
-          className="block w-full bg-red-500 text-lg text-white py-1 px-3 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
-      </nav>
-    </div>
-  )
+interface SideMenuProps {
+  onNavigate?: () => void
 }
 
-export default SideMenu
+interface NavigationItem {
+  href: string
+  label: string
+  exact?: boolean
+}
+
+const navigationItems: NavigationItem[] = [
+  { href: "/dashboard", label: "Dashboard", exact: true },
+  { href: "/dashboard/todoList", label: "My Todo List" },
+  { href: "/dashboard/otherTodos", label: "Other's Todo List" },
+  { href: "/dashboard/articles", label: "My Articles" },
+  { href: "/dashboard/messages", label: "Messages" },
+  { href: "/dashboard/calendar", label: "Calendar" },
+]
+
+export default function SideMenu({ onNavigate }: SideMenuProps) {
+  const pathname = usePathname()
+  const { handleLogout, error, isLoggingOut } = useLogout()
+
+  return (
+    <Box component="nav" aria-label="ダッシュボードナビゲーション" sx={{ p: 2 }}>
+      <List disablePadding>
+        {navigationItems.map(({ exact, href, label }) => {
+          const selected = exact ? pathname === href : pathname.startsWith(href)
+
+          return (
+            <ListItem disablePadding key={href}>
+              <ListItemButton
+                aria-current={selected ? "page" : undefined}
+                component={NextLink}
+                href={href}
+                onClick={onNavigate}
+                selected={selected}
+                sx={{
+                  "&.Mui-selected .MuiListItemText-primary": { fontWeight: 700 },
+                }}
+              >
+                <ListItemText primary={label} />
+              </ListItemButton>
+            </ListItem>
+          )
+        })}
+      </List>
+      <Divider sx={{ my: 2 }} />
+      <List disablePadding>
+        <ListItem disablePadding>
+          <ListItemButton disabled={isLoggingOut} onClick={() => void handleLogout()}>
+            {isLoggingOut && (
+              <CircularProgress aria-hidden="true" color="inherit" size={20} sx={{ mr: 2 }} />
+            )}
+            <ListItemText primary={isLoggingOut ? "Logging out..." : "Logout"} />
+          </ListItemButton>
+        </ListItem>
+      </List>
+      {error && (
+        <Alert role="alert" severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      )}
+    </Box>
+  )
+}

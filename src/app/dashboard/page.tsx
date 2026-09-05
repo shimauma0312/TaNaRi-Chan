@@ -1,9 +1,11 @@
 "use client"
 
 import MinLoader from "@/components/MinLoader"
+import NextLink from "@/components/NextLink"
 import ShakeImage from "@/components/ShakeImage"
-import SideMenu from "@/components/SideMenu"
 import useAuth from "@/hooks/useAuth"
+import { formatTodoDate } from "@/utils/todoDate"
+import { Alert, Box, Divider, Link, List, ListItem, Stack, Typography } from "@mui/material"
 import { useEffect, useState } from "react"
 
 type DashboardArticle = {
@@ -22,10 +24,7 @@ type DashboardTodo = {
 }
 
 type DashboardPublicTodo = DashboardTodo & {
-  user: {
-    id: string
-    user_name: string
-  }
+  user: { id: string; user_name: string }
 }
 
 type DashboardData = {
@@ -38,115 +37,145 @@ const DashboardPage = () => {
   const { user, loading } = useAuth()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [dataLoading, setDataLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
 
+    const controller = new AbortController()
     const fetchDashboard = async () => {
       try {
-        const res = await fetch("/api/dashboard")
-        if (res.ok) {
-          const data = await res.json()
-          setDashboardData(data)
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error)
+        const response = await fetch("/api/dashboard", { signal: controller.signal })
+        const data = await response.json().catch(() => null)
+        if (!response.ok) throw new Error(data?.error || "Failed to load the dashboard")
+        setDashboardData(data)
+      } catch (fetchError) {
+        if (controller.signal.aborted) return
+        console.error("Failed to fetch dashboard data:", fetchError)
+        setError(fetchError instanceof Error ? fetchError.message : "Failed to load the dashboard")
       } finally {
-        setDataLoading(false)
+        if (!controller.signal.aborted) setDataLoading(false)
       }
     }
 
     fetchDashboard()
+    return () => controller.abort()
   }, [user])
 
-  if (loading || !user) {
-    return <MinLoader />
-  }
-
-  if (dataLoading) {
-    return <MinLoader />
-  }
+  if (loading || !user || dataLoading) return <MinLoader />
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
-      <SideMenu />
-      <div className="w-4/5 p-4 relative">
-        <div className="container mx-auto">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-xl">Welcome, {user.user_email}</p>
-            <p className="text-lg">Today&apos;s Date: {new Date().toLocaleDateString()}</p>
-          </div>
+    <Stack spacing={4}>
+      <Box>
+        <Typography variant="h4" component="h1">
+          Dashboard
+        </Typography>
+        <Typography sx={{ mt: 1 }}>Welcome, {user.user_email}</Typography>
+        <Typography color="text.secondary" variant="body2">
+          Today&apos;s date: {new Date().toLocaleDateString()}
+        </Typography>
+      </Box>
 
-          <ShakeImage />
+      <Divider />
+      {error && <Alert severity="error">{error}</Alert>}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
-              <h2 className="text-2xl font-bold mb-4">Random Timeline Articles</h2>
-              <ul className="space-y-2">
-                {dashboardData?.articles.length === 0 && (
-                  <p className="text-gray-400">記事がありません</p>
-                )}
-                {dashboardData?.articles.map((article) => (
-                  <li key={article.post_id} className="p-2 border rounded-md">
-                    <div className="block hover:underline cursor-pointer">
-                      <h3 className="font-bold">{article.title}</h3>
-                      <p className="text-sm text-gray-300">
-                        {article.content.replace(/[#*`[\]]/g, "").slice(0, 100)}
-                        {article.content.length > 100 ? "..." : ""}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        by {article.author.user_name} &middot;{" "}
-                        {new Date(article.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
-              <h2 className="text-2xl font-bold mb-4">Your Active Todos</h2>
-              <ul className="space-y-2">
-                {dashboardData?.activeTodos.length === 0 && (
-                  <p className="text-gray-400">アクティブなTodoはありません</p>
-                )}
-                {dashboardData?.activeTodos.map((todo) => (
-                  <li key={todo.todo_id} className="p-2 border rounded-md">
-                    <div className="block hover:underline cursor-pointer">
-                      <h3 className="font-bold">{todo.title}</h3>
-                      <p className="text-sm">{todo.description}</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Deadline: {new Date(todo.todo_deadline).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="bg-transparent p-4 rounded-lg shadow-md backdrop-filter backdrop-blur-lg bg-opacity-30 border border-gray-300">
-              <h2 className="text-2xl font-bold mb-4">Public Todos</h2>
-              <ul className="space-y-2">
-                {dashboardData?.publicTodos.length === 0 && (
-                  <p className="text-gray-400">公開Todoはありません</p>
-                )}
-                {dashboardData?.publicTodos.map((todo) => (
-                  <li key={todo.todo_id} className="p-2 border rounded-md">
-                    <div className="block hover:underline cursor-pointer">
-                      <h3 className="font-bold">{todo.title}</h3>
-                      <p className="text-sm">{todo.description}</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        by {todo.user.user_name} &middot; Deadline:{" "}
-                        {new Date(todo.todo_deadline).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <Box
+        sx={{
+          display: "grid",
+          gap: 4,
+          gridTemplateColumns: { xs: "1fr", lg: "repeat(3, minmax(0, 1fr))" },
+        }}
+      >
+        <Box component="section">
+          <Typography variant="h6" component="h2">
+            Random timeline articles
+          </Typography>
+          {!dashboardData?.articles.length ? (
+            <Typography color="text.secondary" sx={{ mt: 2 }}>
+              No articles yet.
+            </Typography>
+          ) : (
+            <List disablePadding sx={{ mt: 1 }}>
+              {dashboardData.articles.map((article) => (
+                <ListItem key={article.post_id} divider disableGutters>
+                  <Box sx={{ py: 1, width: "100%" }}>
+                    <Link
+                      component={NextLink}
+                      href={`/dashboard/articles/view?post_id=${article.post_id}`}
+                    >
+                      {article.title}
+                    </Link>
+                    <Typography variant="body2" color="text.secondary">
+                      {article.content.replace(/[#*`[\]]/g, "").slice(0, 100)}
+                      {article.content.length > 100 ? "..." : ""}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      by {article.author.user_name},{" "}
+                      {new Date(article.createdAt).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Box>
+
+        <Box component="section">
+          <Typography variant="h6" component="h2">
+            Your active todos
+          </Typography>
+          {!dashboardData?.activeTodos.length ? (
+            <Typography color="text.secondary" sx={{ mt: 2 }}>
+              No active todos.
+            </Typography>
+          ) : (
+            <List disablePadding sx={{ mt: 1 }}>
+              {dashboardData.activeTodos.map((todo) => (
+                <ListItem key={todo.todo_id} divider disableGutters>
+                  <Box sx={{ py: 1 }}>
+                    <Typography>{todo.title}</Typography>
+                    <Typography variant="body2">{todo.description}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Due {formatTodoDate(todo.todo_deadline)}
+                    </Typography>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Box>
+
+        <Box component="section">
+          <Typography variant="h6" component="h2">
+            Public todos
+          </Typography>
+          {!dashboardData?.publicTodos.length ? (
+            <Typography color="text.secondary" sx={{ mt: 2 }}>
+              No public todos.
+            </Typography>
+          ) : (
+            <List disablePadding sx={{ mt: 1 }}>
+              {dashboardData.publicTodos.map((todo) => (
+                <ListItem key={todo.todo_id} divider disableGutters>
+                  <Box sx={{ py: 1, width: "100%" }}>
+                    <Typography>{todo.title}</Typography>
+                    <Typography variant="body2">{todo.description}</Typography>
+                    <Typography variant="caption" color="text.secondary" component="p">
+                      by {todo.user.user_name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Due {formatTodoDate(todo.todo_deadline)}
+                    </Typography>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Box>
+      </Box>
+
+      <ShakeImage />
+    </Stack>
   )
 }
 

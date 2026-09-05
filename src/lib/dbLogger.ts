@@ -14,8 +14,8 @@ export interface LogEntry {
   message: string
   context?: Record<string, unknown>
   source?: LogSource
-  userId?: string
-  path?: string
+  userId?: string | null
+  path?: string | null
 }
 
 /**
@@ -38,5 +38,6 @@ export async function writeLogToDB(entry: LogEntry): Promise<void> {
     })
   } catch (err) {
     console.error("[dbLogger] DB へのログ書き込みに失敗しました:", err)
+    throw err
   }
 }

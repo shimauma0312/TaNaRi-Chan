@@ -3,7 +3,6 @@
  */
 
 import { NextRequest } from "next/server"
-import { AppError, ErrorType } from "../utils/errorHandler"
 
 // Mock PrismaClient with proper structure
 jest.mock("@prisma/client", () => ({
@@ -19,7 +18,7 @@ jest.mock("@prisma/client", () => ({
 }))
 
 // Mock logger - need to match the correct import path
-jest.mock("@/logging/logging", () => ({
+jest.mock("@/utils/logger", () => ({
   __esModule: true,
   default: {
     info: jest.fn(),
@@ -30,7 +29,7 @@ jest.mock("@/logging/logging", () => ({
 }))
 
 // Import after mocking
-import { GET, POST, PUT, DELETE } from "../app/api/articles/route"
+import { GET, POST } from "../app/api/articles/route"
 import { PrismaClient } from "@prisma/client"
 
 // Get mock instance

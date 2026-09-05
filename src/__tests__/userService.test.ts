@@ -14,6 +14,7 @@ jest.mock("@prisma/client", () => {
   const mockPrisma = {
     user: {
       findUnique: jest.fn(),
+      create: jest.fn(),
     },
   }
   return {
@@ -27,7 +28,7 @@ jest.mock("bcryptjs", () => ({
 }))
 
 // userServiceをモック後にインポート
-import { authenticateUser } from "@/service/userService"
+import { authenticateUser, createUser } from "@/service/userService"
 import bcrypt from "bcryptjs"
 
 const mockBcryptCompare = bcrypt.compare as jest.MockedFunction<typeof bcrypt.compare>
@@ -96,7 +97,10 @@ describe("authenticateUser", () => {
 
       // Assert
       expect(result).toBeNull()
-      expect(mockBcryptCompare).not.toHaveBeenCalled()
+      expect(mockBcryptCompare).toHaveBeenCalledWith(
+        password,
+        "$2b$12$hjWbtJVE4XUN2M8Ia1V.AeAv6uIzgf6MFOqKdytUpu7Hoply3Qg46",
+      )
     })
 
     it("パスワードが間違っている場合はnullを返す", async () => {
@@ -188,5 +192,20 @@ describe("authenticateUser", () => {
       expect(result).not.toHaveProperty("password")
       expect(Object.keys(result!)).toEqual(["id", "user_name", "user_email", "icon_number"])
     })
+  })
+})
+
+describe("createUser", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it("returns a consistent conflict status when the email already exists", async () => {
+    mockPrisma.user.findUnique = jest.fn().mockResolvedValue({ id: "existing-user" })
+
+    await expect(
+      createUser({ email: "test@example.com", password: "Password123!", userName: "Test" }),
+    ).rejects.toMatchObject({ statusCode: 409 })
+    expect(mockPrisma.user.create).not.toHaveBeenCalled()
   })
 })

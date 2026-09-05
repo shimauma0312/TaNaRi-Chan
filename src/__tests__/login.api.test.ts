@@ -12,13 +12,25 @@ import { NextRequest } from "next/server"
 import { POST } from "@/app/api/login/route"
 import * as userService from "@/service/userService"
 import logger from "@/utils/logger"
+import { enforceRateLimits } from "@/lib/rateLimit"
 
 // userServiceをモック
-jest.mock("@/service/userService")
+jest.mock("@/service/userService", () => ({
+  authenticateUser: jest.fn(),
+  setAuthCookie: jest.fn(),
+}))
 jest.mock("@/utils/logger")
+jest.mock("@/lib/auth", () => ({
+  isSameOriginRequest: jest.fn().mockReturnValue(true),
+}))
+jest.mock("@/lib/rateLimit", () => ({
+  enforceRateLimits: jest.fn().mockResolvedValue({ allowed: true, retryAfter: 1 }),
+  getRateLimitClientId: jest.fn().mockReturnValue("test-client"),
+}))
 
 const mockUserService = userService as jest.Mocked<typeof userService>
 const mockLogger = logger as jest.Mocked<typeof logger>
+const mockEnforceRateLimits = enforceRateLimits as jest.MockedFunction<typeof enforceRateLimits>
 
 // テスト用のNextRequestを作成するヘルパー関数
 function createMockRequest(body: any): NextRequest {
@@ -30,6 +42,18 @@ function createMockRequest(body: any): NextRequest {
 describe("/api/login", () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockEnforceRateLimits.mockResolvedValue({ allowed: true, retryAfter: 1 })
+  })
+
+  it("レート制限超過時はRetry-After付き429を返す", async () => {
+    mockEnforceRateLimits.mockResolvedValue({ allowed: false, retryAfter: 120 })
+    const response = await POST(
+      createMockRequest({ email: "test@example.com", password: "password123" }),
+    )
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("Retry-After")).toBe("120")
+    expect(mockUserService.authenticateUser).not.toHaveBeenCalled()
   })
 
   describe("正常系", () => {
@@ -164,7 +188,7 @@ describe("/api/login", () => {
 
       // ログ出力の確認
       expect(mockLogger.error).toHaveBeenCalledWith("Login error occurred", {
-        email: "test@example.com",
+        accountProvided: true,
         error: "Database connection failed",
         stack: dbError.stack,
       })
@@ -172,7 +196,7 @@ describe("/api/login", () => {
       expect(mockUserService.setAuthCookie).not.toHaveBeenCalled()
     })
 
-    it("JSON解析エラーが発生した場合は500エラーを返し、ログに記録する", async () => {
+    it("JSON解析エラーが発生した場合は400エラーを返す", async () => {
       // Arrange
       const jsonError = new Error("Invalid JSON")
       const request = {
@@ -184,17 +208,11 @@ describe("/api/login", () => {
       const responseData = await response.json()
 
       // Assert
-      expect(response.status).toBe(500)
+      expect(response.status).toBe(400)
       expect(responseData).toEqual({
-        error: "ログイン処理中にエラーが発生しました",
+        error: "リクエスト本文が不正です",
       })
-
-      // ログ出力の確認（メールアドレスが取得できない場合）
-      expect(mockLogger.error).toHaveBeenCalledWith("Login error occurred", {
-        email: "unknown",
-        error: "Invalid JSON",
-        stack: jsonError.stack,
-      })
+      expect(mockLogger.error).not.toHaveBeenCalled()
     })
   })
 
@@ -218,7 +236,7 @@ describe("/api/login", () => {
       // Assert
       expect(mockLogger.error).toHaveBeenCalledTimes(1)
       expect(mockLogger.error).toHaveBeenCalledWith("Login error occurred", {
-        email: "user@example.com",
+        accountProvided: true,
         error: "Custom database error",
         stack: "Error: Custom database error\n    at someFunction...",
       })

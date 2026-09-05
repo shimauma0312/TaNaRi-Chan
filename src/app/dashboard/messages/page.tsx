@@ -1,206 +1,262 @@
-/**
- * メッセージ一覧ダッシュボードページ
- *
- * 受信トレイと送信トレイをタブで切り替えて表示する。
- */
-
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import MinLoader from "@/components/MinLoader"
-import SideMenu from "@/components/SideMenu"
 import MessageList from "@/components/messages/MessageList"
+import type { MessageWithUsers } from "@/domain/message/Message"
 import useAuth from "@/hooks/useAuth"
-import { MessageWithUsers } from "@/domain/message/Message"
 import { handleClientError } from "@/utils/errorHandler.client"
+import Alert from "@mui/material/Alert"
+import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
+import Container from "@mui/material/Container"
+import Dialog from "@mui/material/Dialog"
+import DialogActions from "@mui/material/DialogActions"
+import DialogContent from "@mui/material/DialogContent"
+import DialogContentText from "@mui/material/DialogContentText"
+import DialogTitle from "@mui/material/DialogTitle"
+import Snackbar from "@mui/material/Snackbar"
+import Stack from "@mui/material/Stack"
+import Tab from "@mui/material/Tab"
+import Tabs from "@mui/material/Tabs"
+import Typography from "@mui/material/Typography"
+import { useRouter } from "next/navigation"
+import { useCallback, useEffect, useState } from "react"
 
-/** タブの種別 */
-type Tab = "inbox" | "sent"
+type MessageTab = "inbox" | "sent"
 
-/**
- * メッセージ一覧ページコンポーネント
- *
- * @returns メッセージ一覧ページのJSX要素
- */
+const tabA11yProps = (tab: MessageTab) => ({
+  "aria-controls": `message-${tab}-panel`,
+  id: `message-${tab}-tab`,
+})
+
 const MessagesPage = () => {
   const { user, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState<Tab>("inbox")
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState<MessageTab>("inbox")
   const [inboxMessages, setInboxMessages] = useState<MessageWithUsers[]>([])
   const [sentMessages, setSentMessages] = useState<MessageWithUsers[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+  const [inboxCursor, setInboxCursor] = useState<string | null>(null)
+  const [sentCursor, setSentCursor] = useState<string | null>(null)
+  const [messageToDelete, setMessageToDelete] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [notice, setNotice] = useState<{ message: string; severity: "error" | "success" } | null>(
+    null,
+  )
 
-  /**
-   * メッセージデータを取得する
-   */
   const fetchMessages = useCallback(async () => {
     setDataLoading(true)
     setError(null)
     try {
       const [inboxRes, sentRes] = await Promise.all([
-        fetch("/api/messages"),
-        fetch("/api/messages/sent"),
+        fetch("/api/messages?limit=20"),
+        fetch("/api/messages/sent?limit=20"),
       ])
+      if (!inboxRes.ok || !sentRes.ok) throw new Error("メッセージの取得に失敗しました")
 
-      if (!inboxRes.ok || !sentRes.ok) {
-        throw new Error("メッセージの取得に失敗しました")
+      const [inboxData, sentData] = await Promise.all([inboxRes.json(), sentRes.json()])
+      if (!Array.isArray(inboxData) || !Array.isArray(sentData)) {
+        throw new Error("メッセージ一覧の応答形式が不正です")
       }
-
-      const [inboxData, sentData] = await Promise.all([
-        inboxRes.json(),
-        sentRes.json(),
-      ])
 
       setInboxMessages(inboxData)
       setSentMessages(sentData)
-    } catch (err) {
-      setError(handleClientError(err, "メッセージの取得に失敗しました"))
+      setInboxCursor(inboxRes.headers.get("X-Next-Cursor"))
+      setSentCursor(sentRes.headers.get("X-Next-Cursor"))
+    } catch (error) {
+      setError(handleClientError(error, "メッセージの取得に失敗しました"))
     } finally {
       setDataLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    if (user) {
-      fetchMessages()
-    }
+    if (user) void fetchMessages()
   }, [user, fetchMessages])
 
-  /**
-   * メッセージを削除する
-   *
-   * @param messageId - 削除するメッセージID
-   */
-  const handleDelete = async (messageId: number) => {
-    if (!confirm("このメッセージを削除しますか？")) return
+  const loadMore = async (tab: MessageTab) => {
+    const cursor = tab === "inbox" ? inboxCursor : sentCursor
+    if (!cursor || dataLoading) return
 
+    setDataLoading(true)
+    setError(null)
     try {
-      const response = await fetch(`/api/messages/${messageId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        setInboxMessages((prev) =>
-          prev.filter((m) => m.message_id !== messageId)
-        )
-        setSentMessages((prev) =>
-          prev.filter((m) => m.message_id !== messageId)
-        )
-      } else {
-        const data = await response.json()
-        alert(data.error || "削除に失敗しました")
+      const path = tab === "inbox" ? "/api/messages" : "/api/messages/sent"
+      const response = await fetch(`${path}?limit=20&cursor=${cursor}`)
+      const data = await response.json().catch(() => null)
+      if (!response.ok || !Array.isArray(data)) {
+        throw new Error(data?.error || "メッセージの取得に失敗しました")
       }
-    } catch (err) {
-      alert(handleClientError(err, "削除に失敗しました"))
+      if (tab === "inbox") {
+        setInboxMessages((previous) => [...previous, ...data])
+        setInboxCursor(response.headers.get("X-Next-Cursor"))
+      } else {
+        setSentMessages((previous) => [...previous, ...data])
+        setSentCursor(response.headers.get("X-Next-Cursor"))
+      }
+    } catch (error) {
+      setError(handleClientError(error, "メッセージの取得に失敗しました"))
+    } finally {
+      setDataLoading(false)
     }
   }
 
-  /**
-   * メッセージを既読にする
-   *
-   * @param messageId - 既読にするメッセージID
-   */
+  const handleDelete = async () => {
+    if (messageToDelete === null || deleting) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/messages/${messageToDelete}`, { method: "DELETE" })
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.error || "削除に失敗しました")
+      }
+
+      setInboxMessages((previous) =>
+        previous.filter((message) => message.message_id !== messageToDelete),
+      )
+      setSentMessages((previous) =>
+        previous.filter((message) => message.message_id !== messageToDelete),
+      )
+      setMessageToDelete(null)
+      setNotice({ message: "メッセージを削除しました", severity: "success" })
+    } catch (error) {
+      setNotice({ message: handleClientError(error, "削除に失敗しました"), severity: "error" })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const handleRead = async (messageId: number) => {
     try {
-      const response = await fetch(`/api/messages/${messageId}/read`, {
-        method: "PATCH",
-      })
-
-      if (response.ok) {
-        setInboxMessages((prev) =>
-          prev.map((m) =>
-            m.message_id === messageId ? { ...m, is_read: true } : m
-          )
-        )
-      } else {
-        const data = await response.json()
-        alert(data.error || "既読化に失敗しました")
+      const response = await fetch(`/api/messages/${messageId}/read`, { method: "PATCH" })
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.error || "既読化に失敗しました")
       }
-    } catch (err) {
-      alert(handleClientError(err, "既読化に失敗しました"))
+      setInboxMessages((previous) =>
+        previous.map((message) =>
+          message.message_id === messageId ? { ...message, is_read: true } : message,
+        ),
+      )
+    } catch (error) {
+      setNotice({ message: handleClientError(error, "既読化に失敗しました"), severity: "error" })
     }
   }
 
-  if (loading || !user) {
-    return <MinLoader />
-  }
+  if (loading || !user) return <MinLoader />
+
+  const unreadCount = inboxMessages.filter((message) => !message.is_read).length
+  const cursor = activeTab === "inbox" ? inboxCursor : sentCursor
 
   return (
-    <div className="min-h-screen text-white p-4 flex">
-      <SideMenu />
-      <div className="w-4/5 p-4">
-        <div className="container mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">メッセージ</h1>
-            <button
-              onClick={() => router.push("/dashboard/messages/compose")}
-              className="px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600"
-            >
-              新規メッセージ
-            </button>
-          </div>
+    <Container maxWidth="lg">
+      <Stack spacing={3}>
+        <Box
+          sx={{
+            alignItems: { sm: "center" },
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography component="h1" variant="h4">
+            メッセージ
+          </Typography>
+          <Button variant="contained" onClick={() => router.push("/dashboard/messages/compose")}>
+            新規メッセージ
+          </Button>
+        </Box>
 
-          {error && (
-            <div className="p-3 mb-4 bg-red-500 bg-opacity-20 border border-red-500 rounded-md text-red-300">
-              {error}
-            </div>
-          )}
+        {error && <Alert severity="error">{error}</Alert>}
 
-          {/* タブ切り替え */}
-          <div className="flex border-b border-gray-600 mb-4">
-            <button
-              onClick={() => setActiveTab("inbox")}
-              className={`px-6 py-2 text-sm font-medium transition-colors ${
-                activeTab === "inbox"
-                  ? "border-b-2 border-indigo-400 text-indigo-400"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              受信トレイ
-              {inboxMessages.filter((m) => !m.is_read).length > 0 && (
-                <span className="ml-2 px-2 py-0.5 text-xs bg-indigo-500 text-white rounded-full">
-                  {inboxMessages.filter((m) => !m.is_read).length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab("sent")}
-              className={`px-6 py-2 text-sm font-medium transition-colors ${
-                activeTab === "sent"
-                  ? "border-b-2 border-indigo-400 text-indigo-400"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              送信トレイ
-            </button>
-          </div>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Tabs
+            aria-label="メッセージボックス"
+            value={activeTab}
+            onChange={(_event, value: MessageTab) => setActiveTab(value)}
+          >
+            <Tab
+              {...tabA11yProps("inbox")}
+              value="inbox"
+              label={unreadCount > 0 ? `受信トレイ（未読 ${unreadCount}）` : "受信トレイ"}
+            />
+            <Tab {...tabA11yProps("sent")} value="sent" label="送信トレイ" />
+          </Tabs>
+        </Box>
 
-          {dataLoading ? (
-            <MinLoader />
-          ) : (
-            <>
+        {dataLoading && inboxMessages.length === 0 && sentMessages.length === 0 ? (
+          <MinLoader />
+        ) : (
+          <>
+            <Box
+              aria-labelledby="message-inbox-tab"
+              hidden={activeTab !== "inbox"}
+              id="message-inbox-panel"
+              role="tabpanel"
+            >
               {activeTab === "inbox" && (
                 <MessageList
                   messages={inboxMessages}
                   variant="inbox"
-                  onDelete={handleDelete}
+                  onDelete={setMessageToDelete}
                   onRead={handleRead}
                 />
               )}
+            </Box>
+            <Box
+              aria-labelledby="message-sent-tab"
+              hidden={activeTab !== "sent"}
+              id="message-sent-panel"
+              role="tabpanel"
+            >
               {activeTab === "sent" && (
-                <MessageList
-                  messages={sentMessages}
-                  variant="sent"
-                  onDelete={handleDelete}
-                />
+                <MessageList messages={sentMessages} variant="sent" onDelete={setMessageToDelete} />
               )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+            </Box>
+            {cursor && (
+              <Box sx={{ textAlign: "center" }}>
+                <Button
+                  disabled={dataLoading}
+                  variant="outlined"
+                  onClick={() => void loadMore(activeTab)}
+                >
+                  {dataLoading ? "読み込み中..." : "さらに読み込む"}
+                </Button>
+              </Box>
+            )}
+          </>
+        )}
+      </Stack>
+
+      <Dialog open={messageToDelete !== null} onClose={() => !deleting && setMessageToDelete(null)}>
+        <DialogTitle>メッセージを削除しますか？</DialogTitle>
+        <DialogContent>
+          <DialogContentText>この操作は取り消せません。</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={deleting} onClick={() => setMessageToDelete(null)}>
+            キャンセル
+          </Button>
+          <Button
+            color="error"
+            disabled={deleting}
+            variant="contained"
+            onClick={() => void handleDelete()}
+          >
+            {deleting ? "削除中..." : "削除"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={notice !== null} autoHideDuration={5000} onClose={() => setNotice(null)}>
+        <Alert severity={notice?.severity ?? "error"} onClose={() => setNotice(null)}>
+          {notice?.message}
+        </Alert>
+      </Snackbar>
+    </Container>
   )
 }
 

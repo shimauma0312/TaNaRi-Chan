@@ -5,13 +5,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { getUserIdFromRequest } from '@/lib/auth';
+import { getUserIdFromRequest, isSameOriginRequest } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 import { PrismaMessageRepository } from '@/infrastructure/message/PrismaMessageRepository';
 import { DeleteMessageUseCase } from '@/application/message/DeleteMessageUseCase';
 import { AppError, createApiErrorResponse, ErrorType } from '@/utils/errorHandler';
-
-const prisma = new PrismaClient();
+import { todoIdSchema } from '@/schemas/api';
 
 /**
  * メッセージを削除する
@@ -27,16 +26,21 @@ export async function DELETE(
   { params }: { params: Promise<{ message_id: string }> }
 ): Promise<NextResponse> {
   try {
-    const userId = getUserIdFromRequest(request);
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: '不正な送信元です' }, { status: 403 });
+    }
+
+    const userId = await getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
     }
 
     const { message_id } = await params;
-    const messageId = parseInt(message_id, 10);
-    if (isNaN(messageId) || messageId <= 0) {
+    const parsedMessageId = todoIdSchema.safeParse(message_id);
+    if (!parsedMessageId.success) {
       throw new AppError('無効なメッセージIDです', ErrorType.VALIDATION, 400);
     }
+    const messageId = parsedMessageId.data;
 
     const repository = new PrismaMessageRepository(prisma);
     const useCase = new DeleteMessageUseCase(repository);

@@ -1,51 +1,149 @@
+x-app-environment: &app-environment
+  DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-example_password}@db:5432/${POSTGRES_DB:-app_db}
+  NODE_OPTIONS: --max-old-space-size=4096
+
+x-development-image: &development-image tanari-chan-development
+
+x-development-build: &development-build
+  context: .
+  target: development
+
 services:
   app:
-    container_name: app
-    build:
-      context: .
+    image: *development-image
+    build: *development-build
+    init: true
     tty: true
     stdin_open: true
-    volumes:
-      - ./src:/app
-      - /app/node_modules
-    ports:
-      - "3000:3000"
-      - "5555:5555"
     environment:
-      - WATCHPACK_POLLING=true
-      - DATABASE_URL=postgresql://postgres:example_password@db:5432/app_db
-      - NODE_OPTIONS=--max-old-space-size=4096
-    command: sh -c "sudo chown -R node:node /app && npm install && npm run dev"
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-          cpus: "2.0"
-        reservations:
-          memory: 1G
-          cpus: "0.5"
+      <<: *app-environment
+      TRUSTED_ORIGINS: http://localhost:${APP_PORT:-3000},http://127.0.0.1:${APP_PORT:-3000},${TRUSTED_ORIGINS:-}
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/api/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  debug:
+    profiles: [debug]
+    image: *development-image
+    build: *development-build
+    init: true
+    tty: true
+    stdin_open: true
+    environment:
+      <<: *app-environment
+      TRUSTED_ORIGINS: http://localhost:${DEBUG_APP_PORT:-3001},http://127.0.0.1:${DEBUG_APP_PORT:-3001},${TRUSTED_ORIGINS:-}
+    command:
+      - node_modules/.bin/next
+      - dev
+      - --inspect
+      - 0.0.0.0:9229
+      - --hostname
+      - 0.0.0.0
+      - --port
+      - "3000"
+    ports:
+      - "127.0.0.1:${DEBUG_APP_PORT:-3001}:3000"
+      - "127.0.0.1:${DEBUG_PORT:-9229}:9229"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+
+  migrate:
+    image: *development-image
+    build: *development-build
+    environment: *app-environment
+    command: ["npx", "prisma", "migrate", "deploy"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  seed:
+    image: *development-image
+    build: *development-build
+    environment:
+      <<: *app-environment
+      SEED_IF_EMPTY: "true"
+    command: ["npx", "prisma", "db", "seed"]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  prisma-cli:
+    profiles: [authoring]
+    image: *development-image
+    build: *development-build
+    init: true
+    environment: *app-environment
+    command: ["npx", "prisma", "--help"]
+    volumes:
+      - type: bind
+        source: ./src/prisma
+        target: /app/prisma
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  studio:
+    profiles: [tools]
+    image: *development-image
+    build: *development-build
+    init: true
+    environment: *app-environment
+    command: ["npx", "prisma", "studio", "--hostname", "0.0.0.0", "--port", "5555"]
+    ports:
+      - "127.0.0.1:${PRISMA_STUDIO_PORT:-5555}:5555"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
 
   db:
-    container_name: db
-    image: postgres:13-alpine
+    image: postgres:17-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: example_password
-      POSTGRES_DB: app_db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-example_password}
+      POSTGRES_DB: ${POSTGRES_DB:-app_db}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: "0.5"
-        reservations:
-          memory: 256M
-          cpus: "0.1"
+      - pgdata17:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
 volumes:
-  pgdata:
+  # A new volume name prevents PostgreSQL 17 from attempting to open a data
+  # directory created by an older major version. Migrate retained data through
+  # pg_dump/pg_restore before removing the legacy pgdata volume.
+  pgdata17:

@@ -4,17 +4,21 @@
  * GET /api/messages/sent - 認証ユーザーの送信トレイを取得
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { getUserIdFromRequest } from '@/lib/auth';
-import { PrismaMessageRepository } from '@/infrastructure/message/PrismaMessageRepository';
-import { GetSentMessagesUseCase } from '@/application/message/GetSentMessagesUseCase';
-import { AppError, createApiErrorResponse } from '@/utils/errorHandler';
-
-const prisma = new PrismaClient();
+import { NextRequest, NextResponse } from "next/server"
+import { getUserIdFromRequest } from "@/lib/auth"
+import prisma from "@/lib/prisma"
+import { PrismaMessageRepository } from "@/infrastructure/message/PrismaMessageRepository"
+import { GetSentMessagesUseCase } from "@/application/message/GetSentMessagesUseCase"
+import { AppError, createApiErrorResponse } from "@/utils/errorHandler"
+import { z } from "zod"
 
 // Force dynamic rendering for this route
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic"
+
+const paginationQuery = z.object({
+  cursor: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+})
 
 /**
  * 送信メッセージ一覧を取得する
@@ -24,22 +28,34 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const userId = getUserIdFromRequest(request);
+    const userId = await getUserIdFromRequest(request)
     if (!userId) {
-      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
-    const repository = new PrismaMessageRepository(prisma);
-    const useCase = new GetSentMessagesUseCase(repository);
-    const messages = await useCase.execute(userId);
+    const repository = new PrismaMessageRepository(prisma)
+    const useCase = new GetSentMessagesUseCase(repository)
+    const url = new URL(request.url)
+    const page = paginationQuery.safeParse({
+      cursor: url.searchParams.get("cursor") ?? undefined,
+      limit: url.searchParams.get("limit") ?? undefined,
+    })
+    if (!page.success) {
+      return NextResponse.json({ error: "ページ指定が不正です" }, { status: 400 })
+    }
+    const messages = await useCase.execute(userId, page.data)
 
-    return NextResponse.json(messages);
+    const response = NextResponse.json(messages)
+    if (page.data.limit && messages.length === page.data.limit) {
+      response.headers.set("X-Next-Cursor", String(messages.at(-1)?.message_id))
+    }
+    return response
   } catch (error) {
     if (error instanceof AppError) {
-      const errorResponse = createApiErrorResponse(error, '送信メッセージの取得に失敗しました');
-      return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+      const errorResponse = createApiErrorResponse(error, "送信メッセージの取得に失敗しました")
+      return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
     }
-    const errorResponse = createApiErrorResponse(error, '送信メッセージの取得に失敗しました');
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const errorResponse = createApiErrorResponse(error, "送信メッセージの取得に失敗しました")
+    return NextResponse.json(errorResponse, { status: errorResponse.statusCode })
   }
 }

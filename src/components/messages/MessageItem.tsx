@@ -1,82 +1,78 @@
-/**
- * メッセージアイテムコンポーネント
- *
- * 受信トレイ・送信トレイの各メッセージを表示するカードコンポーネント。
- */
-
 "use client"
 
-import { MessageWithUsers } from "@/domain/message/Message"
+import type { MessageWithUsers } from "@/domain/message/Message"
+import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
+import ListItem from "@mui/material/ListItem"
+import Stack from "@mui/material/Stack"
+import Typography from "@mui/material/Typography"
 
-/**
- * MessageItemコンポーネントのProps
- *
- * @property message  - 表示するメッセージ（ユーザー情報付き）
- * @property variant  - 受信トレイ（`inbox`）か送信トレイ（`sent`）かの種別
- * @property onDelete - 削除ボタン押下時のコールバック
- * @property onRead   - 既読ボタン押下時のコールバック（受信トレイのみ）
- */
 interface MessageItemProps {
   message: MessageWithUsers
   variant: "inbox" | "sent"
+  divider?: boolean
   onDelete: (messageId: number) => void
   onRead?: (messageId: number) => void
 }
 
-/**
- * メッセージアイテムカードコンポーネント
- *
- * @param props - コンポーネントのProps
- * @returns メッセージカードのJSX要素
- */
-const MessageItem = ({ message, variant, onDelete, onRead }: MessageItemProps) => {
-  const counterpart =
-    variant === "inbox" ? message.sender : message.receiver
-
+const MessageItem = ({ message, variant, divider = false, onDelete, onRead }: MessageItemProps) => {
+  const isUnread = variant === "inbox" && !message.is_read
+  const counterpart = variant === "inbox" ? message.sender : message.receiver
   const counterpartLabel = variant === "inbox" ? "From" : "To"
 
   return (
-    <li
-      className={`p-4 border rounded-lg shadow-md ${
-        variant === "inbox" && !message.is_read
-          ? "border-indigo-400 bg-indigo-900 bg-opacity-20"
-          : "border-gray-600"
-      }`}
+    <ListItem
+      disableGutters
+      divider={divider}
+      sx={{
+        alignItems: { xs: "flex-start", sm: "center" },
+        flexDirection: { xs: "column", sm: "row" },
+        gap: 2,
+        py: 2,
+      }}
     >
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            {variant === "inbox" && !message.is_read && (
-              <span className="inline-block w-2 h-2 rounded-full bg-indigo-400" />
-            )}
-            <h2 className="text-lg font-semibold">{message.subject}</h2>
-          </div>
-          <p className="text-sm text-gray-400 mb-2">
-            {counterpartLabel}: {counterpart.user_name}
-          </p>
-          <p className="text-gray-300 text-sm line-clamp-2">{message.body}</p>
-          <p className="text-xs text-gray-500 mt-2">
-            {new Date(message.createdAt).toLocaleString("ja-JP")}
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 ml-4">
-          {variant === "inbox" && !message.is_read && onRead && (
-            <button
-              onClick={() => onRead(message.message_id)}
-              className="px-3 py-1 text-xs bg-indigo-500 text-white rounded hover:bg-indigo-600"
-            >
-              既読にする
-            </button>
-          )}
-          <button
-            onClick={() => onDelete(message.message_id)}
-            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", mb: 0.5 }}>
+          <Typography
+            component="h2"
+            variant="h6"
+            sx={{ fontWeight: isUnread ? 700 : 400, overflowWrap: "anywhere" }}
           >
-            削除
-          </button>
-        </div>
-      </div>
-    </li>
+            {message.subject}
+          </Typography>
+          {isUnread && <Typography variant="caption">未読</Typography>}
+        </Stack>
+        <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">
+          {counterpartLabel}: {counterpart.user_name}
+        </Typography>
+        <Typography
+          color="text.secondary"
+          variant="body2"
+          sx={{
+            display: "-webkit-box",
+            overflow: "hidden",
+            overflowWrap: "anywhere",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: 2,
+          }}
+        >
+          {message.body}
+        </Typography>
+        <Typography color="text.disabled" sx={{ mt: 1 }} variant="caption">
+          {new Date(message.createdAt).toLocaleString("ja-JP")}
+        </Typography>
+      </Box>
+      <Stack direction="row" spacing={1}>
+        {isUnread && onRead && (
+          <Button size="small" onClick={() => onRead(message.message_id)}>
+            既読にする
+          </Button>
+        )}
+        <Button color="error" size="small" onClick={() => onDelete(message.message_id)}>
+          削除
+        </Button>
+      </Stack>
+    </ListItem>
   )
 }
 

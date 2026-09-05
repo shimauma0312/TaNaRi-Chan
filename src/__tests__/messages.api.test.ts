@@ -10,7 +10,6 @@
  */
 
 import { NextRequest } from 'next/server';
-import { ErrorType } from '@/utils/errorHandler';
 
 // PrismaClientモック
 jest.mock('@prisma/client', () => {
@@ -20,6 +19,7 @@ jest.mock('@prisma/client', () => {
     findUnique: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    deleteMany: jest.fn(),
   };
   return {
     PrismaClient: jest.fn().mockImplementation(() => ({
@@ -29,8 +29,15 @@ jest.mock('@prisma/client', () => {
   };
 });
 
-// ロガーモック
-jest.mock('@/logging/logging', () => ({
+// 認証モック
+jest.mock('@/lib/auth', () => ({
+  getUserIdFromRequest: jest.fn(),
+  isSameOriginRequest: jest.fn().mockReturnValue(true),
+}));
+jest.mock('@/lib/writeRateLimit', () => ({
+  enforceWriteRateLimit: jest.fn().mockResolvedValue(null),
+}));
+jest.mock('@/utils/logger', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),
@@ -40,12 +47,6 @@ jest.mock('@/logging/logging', () => ({
   },
 }));
 
-// 認証モック
-jest.mock('@/lib/auth', () => ({
-  getUserIdFromRequest: jest.fn(),
-}));
-
-import { PrismaClient } from '@prisma/client';
 import { getUserIdFromRequest } from '@/lib/auth';
 import { GET as getInbox, POST as postMessage } from '@/app/api/messages/route';
 import { GET as getSent } from '@/app/api/messages/sent/route';
@@ -86,7 +87,7 @@ describe('GET /api/messages', () => {
   });
 
   it('認証済みユーザーの受信メッセージを返す', async () => {
-    mockGetUserId.mockReturnValue('user2');
+    mockGetUserId.mockResolvedValue('user2');
     mockPrismaMessage.findMany.mockResolvedValue([mockMessageData]);
 
     const req = createRequest('GET', 'http://localhost/api/messages');
@@ -98,7 +99,7 @@ describe('GET /api/messages', () => {
   });
 
   it('未認証の場合は401を返す', async () => {
-    mockGetUserId.mockReturnValue(null);
+    mockGetUserId.mockResolvedValue(null);
 
     const req = createRequest('GET', 'http://localhost/api/messages');
     const res = await getInbox(req);
@@ -109,7 +110,7 @@ describe('GET /api/messages', () => {
   });
 
   it('DBエラー時は500を返す', async () => {
-    mockGetUserId.mockReturnValue('user2');
+    mockGetUserId.mockResolvedValue('user2');
     mockPrismaMessage.findMany.mockRejectedValue(new Error('DB error'));
 
     const req = createRequest('GET', 'http://localhost/api/messages');
@@ -128,7 +129,7 @@ describe('POST /api/messages', () => {
   });
 
   it('有効なデータでメッセージを送信できる', async () => {
-    mockGetUserId.mockReturnValue('user1');
+    mockGetUserId.mockResolvedValue('user1');
     mockPrismaMessage.create.mockResolvedValue(mockMessageData);
 
     const req = createRequest('POST', 'http://localhost/api/messages', {
@@ -144,7 +145,7 @@ describe('POST /api/messages', () => {
   });
 
   it('未認証の場合は401を返す', async () => {
-    mockGetUserId.mockReturnValue(null);
+    mockGetUserId.mockResolvedValue(null);
 
     const req = createRequest('POST', 'http://localhost/api/messages', {
       subject: 'テスト件名',
@@ -157,7 +158,7 @@ describe('POST /api/messages', () => {
   });
 
   it('件名が空の場合は400を返す', async () => {
-    mockGetUserId.mockReturnValue('user1');
+    mockGetUserId.mockResolvedValue('user1');
 
     const req = createRequest('POST', 'http://localhost/api/messages', {
       subject: '',
@@ -171,7 +172,7 @@ describe('POST /api/messages', () => {
   });
 
   it('自分自身への送信は400を返す', async () => {
-    mockGetUserId.mockReturnValue('user1');
+    mockGetUserId.mockResolvedValue('user1');
 
     const req = createRequest('POST', 'http://localhost/api/messages', {
       subject: 'テスト件名',
@@ -181,6 +182,36 @@ describe('POST /api/messages', () => {
     const res = await postMessage(req);
 
     expect(res.status).toBe(400);
+  });
+
+  it('存在しない送信先は400を返す', async () => {
+    mockGetUserId.mockResolvedValue('user1');
+    mockPrismaMessage.create.mockRejectedValue(
+      Object.assign(new Error('Foreign key constraint failed'), { code: 'P2003' })
+    );
+
+    const req = createRequest('POST', 'http://localhost/api/messages', {
+      subject: '件名',
+      body: '本文',
+      receiver_id: 'missing-user',
+    });
+    const res = await postMessage(req);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('不正なJSONは400を返す', async () => {
+    mockGetUserId.mockResolvedValue('user1');
+    const req = new NextRequest('http://localhost/api/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{bad',
+    });
+
+    const res = await postMessage(req);
+
+    expect(res.status).toBe(400);
+    expect(mockPrismaMessage.create).not.toHaveBeenCalled();
   });
 });
 
@@ -193,7 +224,7 @@ describe('GET /api/messages/sent', () => {
   });
 
   it('認証済みユーザーの送信メッセージを返す', async () => {
-    mockGetUserId.mockReturnValue('user1');
+    mockGetUserId.mockResolvedValue('user1');
     mockPrismaMessage.findMany.mockResolvedValue([mockMessageData]);
 
     const req = createRequest('GET', 'http://localhost/api/messages/sent');
@@ -203,7 +234,7 @@ describe('GET /api/messages/sent', () => {
   });
 
   it('未認証の場合は401を返す', async () => {
-    mockGetUserId.mockReturnValue(null);
+    mockGetUserId.mockResolvedValue(null);
 
     const req = createRequest('GET', 'http://localhost/api/messages/sent');
     const res = await getSent(req);
@@ -221,9 +252,10 @@ describe('DELETE /api/messages/[message_id]', () => {
   });
 
   it('送信者がメッセージを削除できる', async () => {
-    mockGetUserId.mockReturnValue('user1');
+    mockGetUserId.mockResolvedValue('user1');
     mockPrismaMessage.findUnique.mockResolvedValue(mockMessageData);
-    mockPrismaMessage.delete.mockResolvedValue(mockMessageData);
+    mockPrismaMessage.update.mockResolvedValue({ ...mockMessageData, deletedBySender: true });
+    mockPrismaMessage.deleteMany.mockResolvedValue({ count: 0 });
 
     const req = createRequest('DELETE', 'http://localhost/api/messages/1');
     const res = await deleteMessage(req, {
@@ -234,7 +266,7 @@ describe('DELETE /api/messages/[message_id]', () => {
   });
 
   it('未認証の場合は401を返す', async () => {
-    mockGetUserId.mockReturnValue(null);
+    mockGetUserId.mockResolvedValue(null);
 
     const req = createRequest('DELETE', 'http://localhost/api/messages/1');
     const res = await deleteMessage(req, {
@@ -245,7 +277,7 @@ describe('DELETE /api/messages/[message_id]', () => {
   });
 
   it('無効なIDの場合は400を返す', async () => {
-    mockGetUserId.mockReturnValue('user1');
+    mockGetUserId.mockResolvedValue('user1');
 
     const req = createRequest('DELETE', 'http://localhost/api/messages/invalid');
     const res = await deleteMessage(req, {
@@ -255,8 +287,20 @@ describe('DELETE /api/messages/[message_id]', () => {
     expect(res.status).toBe(400);
   });
 
+  it('末尾に文字を含むIDは400を返す', async () => {
+    mockGetUserId.mockResolvedValue('user1');
+
+    const req = createRequest('DELETE', 'http://localhost/api/messages/1junk');
+    const res = await deleteMessage(req, {
+      params: Promise.resolve({ message_id: '1junk' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockPrismaMessage.findUnique).not.toHaveBeenCalled();
+  });
+
   it('存在しないメッセージは404を返す', async () => {
-    mockGetUserId.mockReturnValue('user1');
+    mockGetUserId.mockResolvedValue('user1');
     mockPrismaMessage.findUnique.mockResolvedValue(null);
 
     const req = createRequest('DELETE', 'http://localhost/api/messages/999');
@@ -268,7 +312,7 @@ describe('DELETE /api/messages/[message_id]', () => {
   });
 
   it('関係者でない場合は403を返す', async () => {
-    mockGetUserId.mockReturnValue('user3');
+    mockGetUserId.mockResolvedValue('user3');
     mockPrismaMessage.findUnique.mockResolvedValue(mockMessageData);
 
     const req = createRequest('DELETE', 'http://localhost/api/messages/1');
@@ -289,7 +333,7 @@ describe('PATCH /api/messages/[message_id]/read', () => {
   });
 
   it('受信者がメッセージを既読にできる', async () => {
-    mockGetUserId.mockReturnValue('user2');
+    mockGetUserId.mockResolvedValue('user2');
     mockPrismaMessage.findUnique.mockResolvedValue(mockMessageData);
     mockPrismaMessage.update.mockResolvedValue({ ...mockMessageData, is_read: true });
 
@@ -302,7 +346,7 @@ describe('PATCH /api/messages/[message_id]/read', () => {
   });
 
   it('未認証の場合は401を返す', async () => {
-    mockGetUserId.mockReturnValue(null);
+    mockGetUserId.mockResolvedValue(null);
 
     const req = createRequest('PATCH', 'http://localhost/api/messages/1/read');
     const res = await patchRead(req, {
@@ -313,7 +357,7 @@ describe('PATCH /api/messages/[message_id]/read', () => {
   });
 
   it('受信者以外が既読にしようとすると403を返す', async () => {
-    mockGetUserId.mockReturnValue('user1'); // sender, not receiver
+    mockGetUserId.mockResolvedValue('user1'); // sender, not receiver
     mockPrismaMessage.findUnique.mockResolvedValue(mockMessageData);
 
     const req = createRequest('PATCH', 'http://localhost/api/messages/1/read');
@@ -325,7 +369,7 @@ describe('PATCH /api/messages/[message_id]/read', () => {
   });
 
   it('存在しないメッセージは404を返す', async () => {
-    mockGetUserId.mockReturnValue('user2');
+    mockGetUserId.mockResolvedValue('user2');
     mockPrismaMessage.findUnique.mockResolvedValue(null);
 
     const req = createRequest('PATCH', 'http://localhost/api/messages/999/read');
