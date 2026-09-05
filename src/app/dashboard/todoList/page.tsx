@@ -1,6 +1,5 @@
 "use client"
 
-import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material"
 import TodoList from "@/components/TodoList"
 import MinLoader from "@/components/MinLoader"
@@ -124,8 +123,6 @@ export default function ToDoListPage() {
         </Box>
         <Button
           variant="contained"
-          color="success"
-          startIcon={<AddRoundedIcon />}
           onClick={() => router.push("/dashboard/todoList/register")}
         >
           Add Todo
@@ -149,8 +146,6 @@ export default function ToDoListPage() {
           </Typography>
           <Button
             variant="contained"
-            color="success"
-            startIcon={<AddRoundedIcon />}
             onClick={() => router.push("/dashboard/todoList/register")}
           >
             Create your first Todo

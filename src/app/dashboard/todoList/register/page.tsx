@@ -1,6 +1,5 @@
 "use client"
 
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded"
 import { Button, Stack } from "@mui/material"
 import MinLoader from "@/components/MinLoader"
 import TodoForm, { TodoFormValues } from "@/components/todo/TodoForm"
@@ -62,7 +61,6 @@ export default function RegisterTodoPage() {
   return (
     <Stack spacing={3} sx={{ alignItems: "center" }}>
       <Button
-        startIcon={<ArrowBackRoundedIcon />}
         onClick={() => router.push("/dashboard/todoList")}
         disabled={isSubmitting}
         sx={{ alignSelf: "flex-start" }}

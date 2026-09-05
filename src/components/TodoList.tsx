@@ -1,21 +1,16 @@
 "use client"
 
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
-import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import {
+  Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Checkbox,
-  Chip,
-  Alert,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Grid,
+  Divider,
   List,
   ListItem,
   Stack,
@@ -23,7 +18,7 @@ import {
 } from "@mui/material"
 import { PublicTodo, Todo } from "@/types/todo"
 import { formatTodoDate, isTodoDateNear, isTodoDateOverdue } from "@/utils/todoDate"
-import { useState } from "react"
+import { Fragment, useState } from "react"
 
 interface TodoListProps {
   todos: (Todo | PublicTodo)[]
@@ -35,15 +30,14 @@ interface TodoListProps {
   showPublicBadge?: boolean
 }
 
-const statCards = [
-  { key: "total", label: "Total", color: "primary.main" },
-  { key: "completed", label: "Completed", color: "success.main" },
-  { key: "pending", label: "Pending", color: "warning.main" },
-  { key: "overdue", label: "Overdue", color: "error.main" },
-  { key: "nearDeadline", label: "Due Soon", color: "secondary.main" },
+const statItems = [
+  { key: "total", label: "Total" },
+  { key: "completed", label: "Completed" },
+  { key: "pending", label: "Pending" },
+  { key: "overdue", label: "Overdue" },
+  { key: "nearDeadline", label: "Due soon" },
 ] as const
 
-/** A shared, accessible Todo list for private and public Todo screens. */
 export default function TodoList({
   todos,
   onToggleCompletion,
@@ -111,7 +105,7 @@ export default function TodoList({
   if (todos.length === 0) {
     return (
       <Box sx={{ py: 6, textAlign: "center" }}>
-        <Typography variant="h6" color="text.secondary" gutterBottom>
+        <Typography variant="h6" gutterBottom>
           No Todos available
         </Typography>
         <Typography color="text.secondary">Create a new Todo to get started.</Typography>
@@ -120,150 +114,104 @@ export default function TodoList({
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={2}>
       {showStats && (
-        <Grid container spacing={2} aria-label="Todo statistics">
-          {statCards.map((stat) => (
-            <Grid key={stat.key} size={{ xs: 6, md: "grow" }}>
-              <Card sx={{ height: "100%", borderColor: stat.color }}>
-                <CardContent sx={{ "&:last-child": { pb: 2 } }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {stat.label}
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{ color: stat.color, fontWeight: 700 }}
-                  >
-                    {stats[stat.key]}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+        <Box
+          component="dl"
+          aria-label="Todo statistics"
+          sx={{
+            m: 0,
+            py: 1.5,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(96px, 1fr))",
+            gap: 2,
+            borderTop: 1,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          {statItems.map((stat) => (
+            <Box key={stat.key}>
+              <Typography component="dt" variant="caption" color="text.secondary">
+                {stat.label}
+              </Typography>
+              <Typography component="dd" sx={{ m: 0, fontWeight: 600 }}>
+                {stats[stat.key]}
+              </Typography>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
 
       <List disablePadding aria-label="Todo list">
-        {todos.map((todo) => {
+        {todos.map((todo, index) => {
           const overdue = !todo.is_completed && isTodoDateOverdue(todo.todo_deadline)
           const dueSoon = !todo.is_completed && !overdue && isTodoDateNear(todo.todo_deadline)
-          const accent = todo.is_completed
-            ? "divider"
-            : overdue
-              ? "error.main"
-              : dueSoon
-                ? "warning.main"
-                : "primary.main"
+          const deadlineState = overdue ? "Overdue" : dueSoon ? "Due soon" : null
 
           return (
-            <ListItem key={todo.todo_id} disableGutters sx={{ pb: 2 }}>
-              <Card sx={{ width: "100%", borderLeft: 4, borderLeftColor: accent }}>
-                <CardContent>
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
-                    sx={{ alignItems: { sm: "flex-start" }, justifyContent: "space-between" }}
-                  >
-                    <Box sx={{ minWidth: 0, flex: 1 }}>
-                      <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
-                        {onToggleCompletion && (
-                          <Checkbox
-                            aria-label={`${todo.title}を${todo.is_completed ? "未完了" : "完了"}にする`}
-                            checked={todo.is_completed}
-                            onChange={() => void toggleCompletion(todo.todo_id)}
-                            color="success"
-                            sx={{ p: 0.5 }}
-                          />
-                        )}
-                        <Typography
-                          variant="h6"
-                          component="h2"
-                          sx={{
-                            overflowWrap: "anywhere",
-                            textDecoration: todo.is_completed ? "line-through" : "none",
-                            color: todo.is_completed ? "text.disabled" : "text.primary",
-                          }}
-                        >
-                          {todo.title}
-                        </Typography>
-                        {showPublicBadge && todo.is_public && (
-                          <Chip label="Public" color="info" size="small" variant="outlined" />
-                        )}
-                      </Stack>
-
+            <Fragment key={todo.todo_id}>
+              <ListItem disableGutters sx={{ py: 2.5, alignItems: "flex-start" }}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={2}
+                  sx={{ width: "100%", justifyContent: "space-between" }}
+                >
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
+                      {onToggleCompletion && (
+                        <Checkbox
+                          aria-label={`${todo.title}を${todo.is_completed ? "未完了" : "完了"}にする`}
+                          checked={todo.is_completed}
+                          onChange={() => void toggleCompletion(todo.todo_id)}
+                          sx={{ p: 0.5 }}
+                        />
+                      )}
                       <Typography
+                        variant="h6"
+                        component="h2"
                         sx={{
-                          mb: 1.5,
-                          whiteSpace: "pre-wrap",
+                          overflowWrap: "anywhere",
                           textDecoration: todo.is_completed ? "line-through" : "none",
-                          color: todo.is_completed ? "text.disabled" : "text.secondary",
                         }}
                       >
-                        {todo.description}
+                        {todo.title}
                       </Typography>
+                    </Stack>
 
-                      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
-                        <Chip
-                          label={`Due: ${formatTodoDate(todo.todo_deadline)}${overdue ? " · Overdue" : dueSoon ? " · Due soon" : ""}`}
-                          color={overdue ? "error" : dueSoon ? "warning" : "default"}
-                          size="small"
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={todo.is_completed ? "Completed" : "Pending"}
-                          color={todo.is_completed ? "success" : "default"}
-                          size="small"
-                        />
-                        {todo.createdAt && (
-                          <Chip
-                            label={`Created: ${new Date(todo.createdAt).toLocaleDateString("en-US")}`}
-                            size="small"
-                            variant="outlined"
-                          />
-                        )}
-                        {"user" in todo && (
-                          <Chip
-                            label={`Author: ${(todo as PublicTodo).user.user_name}`}
-                            color="info"
-                            size="small"
-                            variant="outlined"
-                          />
-                        )}
-                      </Stack>
-                    </Box>
+                    <Typography sx={{ mb: 1, whiteSpace: "pre-wrap" }}>
+                      {todo.description}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Due: {formatTodoDate(todo.todo_deadline)}
+                      {deadlineState ? ` (${deadlineState})` : ""} · Status:{" "}
+                      {todo.is_completed ? "Completed" : "Pending"}
+                      {showPublicBadge && todo.is_public ? " · Visibility: Public" : ""}
+                      {todo.createdAt
+                        ? ` · Created: ${new Date(todo.createdAt).toLocaleDateString("en-US")}`
+                        : ""}
+                      {"user" in todo ? ` · Author: ${(todo as PublicTodo).user.user_name}` : ""}
+                    </Typography>
+                  </Box>
 
-                    {allowEdit && (onEdit || onDelete) && (
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{ alignSelf: { xs: "flex-end", sm: "center" } }}
-                      >
-                        {onEdit && (
-                          <Button
-                            size="small"
-                            startIcon={<EditRoundedIcon />}
-                            onClick={() => onEdit(todo.todo_id)}
-                          >
-                            Edit
-                          </Button>
-                        )}
-                        {onDelete && (
-                          <Button
-                            size="small"
-                            color="error"
-                            startIcon={<DeleteOutlineRoundedIcon />}
-                            onClick={() => openDeleteDialog(todo)}
-                          >
-                            Delete
-                          </Button>
-                        )}
-                      </Stack>
-                    )}
-                  </Stack>
-                </CardContent>
-              </Card>
-            </ListItem>
+                  {allowEdit && (onEdit || onDelete) && (
+                    <Stack direction="row" spacing={1} sx={{ alignSelf: { xs: "flex-end", sm: "center" } }}>
+                      {onEdit && (
+                        <Button size="small" onClick={() => onEdit(todo.todo_id)}>
+                          Edit
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button size="small" onClick={() => openDeleteDialog(todo)}>
+                          Delete
+                        </Button>
+                      )}
+                    </Stack>
+                  )}
+                </Stack>
+              </ListItem>
+              {index < todos.length - 1 && <Divider component="li" />}
+            </Fragment>
           )
         })}
       </List>
@@ -288,7 +236,7 @@ export default function TodoList({
           <Button onClick={closeDeleteDialog} disabled={isDeleting}>
             Cancel
           </Button>
-          <Button onClick={() => void confirmDelete()} color="error" disabled={isDeleting}>
+          <Button onClick={() => void confirmDelete()} disabled={isDeleting}>
             {isDeleting ? "Deleting..." : "Delete"}
           </Button>
         </DialogActions>

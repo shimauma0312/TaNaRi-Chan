@@ -1,15 +1,14 @@
 "use client"
 
-import SaveRoundedIcon from "@mui/icons-material/SaveRounded"
 import {
   Alert,
+  Box,
   Button,
   Checkbox,
   FormControl,
   FormControlLabel,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   Stack,
   TextField,
@@ -55,7 +54,7 @@ export default function TodoForm({
   }
 
   return (
-    <Paper sx={{ width: "100%", maxWidth: 640, p: { xs: 2, sm: 4 } }}>
+    <Box sx={{ width: "100%", maxWidth: 640 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         {heading}
       </Typography>
@@ -116,7 +115,6 @@ export default function TodoForm({
                 checked={Boolean(values.isCompleted)}
                 onChange={(event) => update("isCompleted", event.target.checked)}
                 disabled={submitting}
-                color="success"
               />
             }
             label="Completed"
@@ -126,7 +124,6 @@ export default function TodoForm({
           <Button
             type="submit"
             variant="contained"
-            startIcon={<SaveRoundedIcon />}
             disabled={submitting}
             sx={{ flex: 1 }}
           >
@@ -143,6 +140,6 @@ export default function TodoForm({
           </Button>
         </Stack>
       </Stack>
-    </Paper>
+    </Box>
   )
 }
