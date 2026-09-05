@@ -2,6 +2,7 @@
 
 import MinLoader from "@/components/MinLoader"
 import NextLink from "@/components/NextLink"
+import ShakeImage from "@/components/ShakeImage"
 import useAuth from "@/hooks/useAuth"
 import { formatTodoDate } from "@/utils/todoDate"
 import { Alert, Box, Divider, Link, List, ListItem, Paper, Stack, Typography } from "@mui/material"
@@ -171,6 +172,8 @@ const DashboardPage = () => {
           )}
         </Paper>
       </Box>
+
+      <ShakeImage />
     </Stack>
   )
 }
