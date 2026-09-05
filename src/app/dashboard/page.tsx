@@ -5,7 +5,7 @@ import NextLink from "@/components/NextLink"
 import ShakeImage from "@/components/ShakeImage"
 import useAuth from "@/hooks/useAuth"
 import { formatTodoDate } from "@/utils/todoDate"
-import { Alert, Box, Divider, Link, List, ListItem, Paper, Stack, Typography } from "@mui/material"
+import { Alert, Box, Divider, Link, List, ListItem, Stack, Typography } from "@mui/material"
 import { useEffect, useState } from "react"
 
 type DashboardArticle = {
@@ -82,11 +82,11 @@ const DashboardPage = () => {
       <Box
         sx={{
           display: "grid",
-          gap: 2,
+          gap: 4,
           gridTemplateColumns: { xs: "1fr", lg: "repeat(3, minmax(0, 1fr))" },
         }}
       >
-        <Paper component="section" variant="outlined" sx={{ p: 2 }}>
+        <Box component="section">
           <Typography variant="h6" component="h2">
             Random timeline articles
           </Typography>
@@ -118,9 +118,9 @@ const DashboardPage = () => {
               ))}
             </List>
           )}
-        </Paper>
+        </Box>
 
-        <Paper component="section" variant="outlined" sx={{ p: 2 }}>
+        <Box component="section">
           <Typography variant="h6" component="h2">
             Your active todos
           </Typography>
@@ -143,9 +143,9 @@ const DashboardPage = () => {
               ))}
             </List>
           )}
-        </Paper>
+        </Box>
 
-        <Paper component="section" variant="outlined" sx={{ p: 2 }}>
+        <Box component="section">
           <Typography variant="h6" component="h2">
             Public todos
           </Typography>
@@ -171,7 +171,7 @@ const DashboardPage = () => {
               ))}
             </List>
           )}
-        </Paper>
+        </Box>
       </Box>
 
       <ShakeImage />

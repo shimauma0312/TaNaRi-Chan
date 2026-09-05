@@ -66,12 +66,9 @@ export default function CalendarPage() {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Todo Calendar
-        </Typography>
-        <Typography color="text.secondary">Review deadlines across the month.</Typography>
-      </Box>
+      <Typography variant="h4" component="h1">
+        Todo Calendar
+      </Typography>
 
       <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "center" }}>
         <Button

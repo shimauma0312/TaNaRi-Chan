@@ -108,7 +108,6 @@ export default function TodoList({
         <Typography variant="h6" gutterBottom>
           No Todos available
         </Typography>
-        <Typography color="text.secondary">Create a new Todo to get started.</Typography>
       </Box>
     )
   }
@@ -195,7 +194,11 @@ export default function TodoList({
                   </Box>
 
                   {allowEdit && (onEdit || onDelete) && (
-                    <Stack direction="row" spacing={1} sx={{ alignSelf: { xs: "flex-end", sm: "center" } }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignSelf: { xs: "flex-end", sm: "center" } }}
+                    >
                       {onEdit && (
                         <Button size="small" onClick={() => onEdit(todo.todo_id)}>
                           Edit
