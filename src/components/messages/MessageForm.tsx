@@ -1,10 +1,8 @@
 "use client"
 
 import { handleClientError } from "@/utils/errorHandler.client"
-import SendIcon from "@mui/icons-material/Send"
 import Alert from "@mui/material/Alert"
 import Button from "@mui/material/Button"
-import CircularProgress from "@mui/material/CircularProgress"
 import FormControl from "@mui/material/FormControl"
 import InputLabel from "@mui/material/InputLabel"
 import MenuItem from "@mui/material/MenuItem"
@@ -117,7 +115,6 @@ const MessageForm = ({ users }: MessageFormProps) => {
           type="submit"
           variant="contained"
           disabled={submitting || !receiverId || !subject.trim() || !body.trim()}
-          startIcon={submitting ? <CircularProgress color="inherit" size={18} /> : <SendIcon />}
         >
           {submitting ? "送信中..." : "送信"}
         </Button>

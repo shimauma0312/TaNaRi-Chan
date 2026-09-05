@@ -23,8 +23,9 @@ const MessageList = ({ messages, variant, onDelete, onRead }: MessageListProps) 
 
   return (
     <List disablePadding sx={{ display: "grid", gap: 2 }}>
-      {messages.map((message) => (
+      {messages.map((message, index) => (
         <MessageItem
+          divider={index < messages.length - 1}
           key={message.message_id}
           message={message}
           variant={variant}
