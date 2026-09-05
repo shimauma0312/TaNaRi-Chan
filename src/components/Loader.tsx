@@ -30,11 +30,10 @@ export default function Loader({ onTimeout, timeout }: LoaderProps) {
       <Stack spacing={2} sx={{ alignItems: "center" }}>
         <CircularProgress
           aria-hidden="true"
-          size={96}
+          size={40}
           sx={{ "@media (prefers-reduced-motion: reduce)": { animation: "none" } }}
-          thickness={2}
         />
-        <Typography color="text.secondary" variant="h6">
+        <Typography color="text.secondary" variant="body2">
           Loading...
         </Typography>
       </Stack>

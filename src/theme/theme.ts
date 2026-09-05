@@ -1,28 +1,38 @@
 "use client"
 
-import { createTheme } from "@mui/material/styles"
+import { createTheme, type Shadows } from "@mui/material/styles"
 
 const theme = createTheme({
   cssVariables: true,
   palette: {
-    mode: "dark",
+    mode: "light",
     primary: {
-      main: "#9fa8da",
+      main: "#111111",
     },
     secondary: {
-      main: "#80cbc4",
+      main: "#5f6368",
     },
     background: {
-      default: "#171a0f",
-      paper: "#20251b",
+      default: "#f7f7f7",
+      paper: "#ffffff",
+    },
+    text: {
+      primary: "#111111",
+      secondary: "#616161",
+    },
+    divider: "#d7d7d7",
+    action: {
+      selected: "#e8e8e8",
+      hover: "#f0f0f0",
     },
   },
   typography: {
     fontFamily: "var(--font-geist-sans), Arial, sans-serif",
   },
   shape: {
-    borderRadius: 10,
+    borderRadius: 0,
   },
+  shadows: Array(25).fill("none") as Shadows,
   breakpoints: {
     values: {
       xs: 0,
@@ -37,9 +47,7 @@ const theme = createTheme({
       styleOverrides: {
         body: {
           minHeight: "100vh",
-          backgroundColor: "#171a0f",
-          backgroundImage: "url('/images/tile.png')",
-          backgroundAttachment: "fixed",
+          backgroundColor: "#f7f7f7",
         },
       },
     },
@@ -51,6 +59,11 @@ const theme = createTheme({
     MuiCard: {
       defaultProps: {
         variant: "outlined",
+      },
+    },
+    MuiPaper: {
+      defaultProps: {
+        elevation: 0,
       },
     },
     MuiTextField: {

@@ -2,13 +2,6 @@
 
 import NextLink from "@/components/NextLink"
 import { useLogout } from "@/hooks/useLogout"
-import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded"
-import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded"
-import ChecklistRoundedIcon from "@mui/icons-material/ChecklistRounded"
-import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded"
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded"
-import MailRoundedIcon from "@mui/icons-material/MailRounded"
-import PublicRoundedIcon from "@mui/icons-material/PublicRounded"
 import {
   Alert,
   Box,
@@ -17,11 +10,9 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListItemIcon,
   ListItemText,
 } from "@mui/material"
 import { usePathname } from "next/navigation"
-import type { ReactNode } from "react"
 
 interface SideMenuProps {
   onNavigate?: () => void
@@ -30,17 +21,16 @@ interface SideMenuProps {
 interface NavigationItem {
   href: string
   label: string
-  icon: ReactNode
   exact?: boolean
 }
 
 const navigationItems: NavigationItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: <DashboardRoundedIcon />, exact: true },
-  { href: "/dashboard/todoList", label: "My Todo List", icon: <ChecklistRoundedIcon /> },
-  { href: "/dashboard/otherTodos", label: "Other's Todo List", icon: <PublicRoundedIcon /> },
-  { href: "/dashboard/articles", label: "My Articles", icon: <ArticleRoundedIcon /> },
-  { href: "/dashboard/messages", label: "Messages", icon: <MailRoundedIcon /> },
-  { href: "/dashboard/calendar", label: "Calendar", icon: <CalendarMonthRoundedIcon /> },
+  { href: "/dashboard", label: "Dashboard", exact: true },
+  { href: "/dashboard/todoList", label: "My Todo List" },
+  { href: "/dashboard/otherTodos", label: "Other's Todo List" },
+  { href: "/dashboard/articles", label: "My Articles" },
+  { href: "/dashboard/messages", label: "Messages" },
+  { href: "/dashboard/calendar", label: "Calendar" },
 ]
 
 export default function SideMenu({ onNavigate }: SideMenuProps) {
@@ -50,11 +40,11 @@ export default function SideMenu({ onNavigate }: SideMenuProps) {
   return (
     <Box component="nav" aria-label="ダッシュボードナビゲーション" sx={{ p: 2 }}>
       <List disablePadding>
-        {navigationItems.map(({ exact, href, icon, label }) => {
+        {navigationItems.map(({ exact, href, label }) => {
           const selected = exact ? pathname === href : pathname.startsWith(href)
 
           return (
-            <ListItem disablePadding key={href} sx={{ mb: 0.5 }}>
+            <ListItem disablePadding key={href}>
               <ListItemButton
                 aria-current={selected ? "page" : undefined}
                 component={NextLink}
@@ -62,7 +52,6 @@ export default function SideMenu({ onNavigate }: SideMenuProps) {
                 onClick={onNavigate}
                 selected={selected}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>{icon}</ListItemIcon>
                 <ListItemText primary={label} />
               </ListItemButton>
             </ListItem>
@@ -75,15 +64,10 @@ export default function SideMenu({ onNavigate }: SideMenuProps) {
           <ListItemButton
             disabled={isLoggingOut}
             onClick={() => void handleLogout()}
-            sx={{ color: "error.light" }}
           >
-            <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
-              {isLoggingOut ? (
-                <CircularProgress aria-hidden="true" color="inherit" size={20} />
-              ) : (
-                <LogoutRoundedIcon />
-              )}
-            </ListItemIcon>
+            {isLoggingOut && (
+              <CircularProgress aria-hidden="true" color="inherit" size={20} sx={{ mr: 2 }} />
+            )}
             <ListItemText primary={isLoggingOut ? "Logging out..." : "Logout"} />
           </ListItemButton>
         </ListItem>

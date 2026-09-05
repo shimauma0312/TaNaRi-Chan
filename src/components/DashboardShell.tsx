@@ -21,12 +21,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <Box sx={{ display: "flex", minHeight: "100dvh" }}>
       <AppBar
-        color="transparent"
+        color="inherit"
         elevation={0}
         position="fixed"
         sx={{
-          backdropFilter: "blur(12px)",
-          backgroundColor: "rgba(23, 26, 15, 0.86)",
           borderBottom: 1,
           borderColor: "divider",
           ml: { md: `${drawerWidth}px` },
@@ -56,6 +54,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
       <Box component="aside" aria-label="ダッシュボードメニュー">
         <Drawer
+          elevation={0}
           onClose={() => setMobileMenuOpen(false)}
           open={mobileMenuOpen}
           variant="temporary"
@@ -67,6 +66,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           {navigation("dashboard-mobile-navigation")}
         </Drawer>
         <Drawer
+          elevation={0}
           open
           variant="permanent"
           sx={{
@@ -74,7 +74,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             flexShrink: 0,
             width: drawerWidth,
             "& .MuiDrawer-paper": {
-              backgroundColor: "rgba(23, 26, 15, 0.92)",
               borderRightColor: "divider",
               width: drawerWidth,
             },
