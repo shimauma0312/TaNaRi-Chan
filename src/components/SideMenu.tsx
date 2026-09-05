@@ -61,10 +61,7 @@ export default function SideMenu({ onNavigate }: SideMenuProps) {
       <Divider sx={{ my: 2 }} />
       <List disablePadding>
         <ListItem disablePadding>
-          <ListItemButton
-            disabled={isLoggingOut}
-            onClick={() => void handleLogout()}
-          >
+          <ListItemButton disabled={isLoggingOut} onClick={() => void handleLogout()}>
             {isLoggingOut && (
               <CircularProgress aria-hidden="true" color="inherit" size={20} sx={{ mr: 2 }} />
             )}

@@ -110,7 +110,8 @@ const DashboardPage = () => {
                       {article.content.length > 100 ? "..." : ""}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      by {article.author.user_name}, {new Date(article.createdAt).toLocaleDateString()}
+                      by {article.author.user_name},{" "}
+                      {new Date(article.createdAt).toLocaleDateString()}
                     </Typography>
                   </Box>
                 </ListItem>
