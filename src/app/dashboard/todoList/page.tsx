@@ -113,14 +113,9 @@ export default function ToDoListPage() {
         spacing={2}
         sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}
       >
-        <Box>
-          <Typography variant="h4" component="h1">
-            My Todo List
-          </Typography>
-          <Typography color="text.secondary">
-            Keep deadlines, progress, and visibility in one place.
-          </Typography>
-        </Box>
+        <Typography variant="h4" component="h1">
+          My Todo List
+        </Typography>
         <Button
           variant="contained"
           onClick={() => router.push("/dashboard/todoList/register")}

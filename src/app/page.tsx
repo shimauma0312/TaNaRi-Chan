@@ -37,9 +37,6 @@ export default function Home() {
               <Typography component="h1" id="home-title" variant="h2">
                 TaNaRi-Chan
               </Typography>
-              <Typography color="text.secondary">
-                A simple place for todos, articles, and messages.
-              </Typography>
               <Box>
                 <Button component={NextLink} href="/login" variant="contained">
                   Log in

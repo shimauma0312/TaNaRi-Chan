@@ -69,17 +69,8 @@ export default function OtherTodosPage() {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Public Todos
-        </Typography>
-        <Typography color="text.secondary">
-          Browse goals and activities shared by other users.
-        </Typography>
-      </Box>
-
-      <Typography variant="body2" color="text.secondary">
-        Public Todos are visible to everyone. Choose Private when creating personal tasks.
+      <Typography variant="h4" component="h1">
+        Public Todos
       </Typography>
 
       <FormControl sx={{ width: { xs: "100%", sm: 320 } }}>
