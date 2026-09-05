@@ -109,7 +109,12 @@ export default function Calendar({ currentDate, todos }: CalendarProps) {
                         variant="caption"
                         component="p"
                         title={todo.title}
-                        sx={{ m: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                        sx={{
+                          m: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
                       >
                         {todo.title}
                       </Typography>
