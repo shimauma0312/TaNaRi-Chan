@@ -25,23 +25,19 @@ export default function AuthPageShell({ title, children, footer }: AuthPageShell
       <Paper
         component="section"
         aria-labelledby={titleId}
-        elevation={12}
+        variant="outlined"
         sx={{
-          backdropFilter: "blur(12px)",
-          backgroundColor: "rgba(15, 18, 12, 0.78)",
-          border: 1,
-          borderColor: "divider",
           maxWidth: 448,
           p: { xs: 3, sm: 4 },
           width: "100%",
         }}
       >
         <Stack spacing={3}>
-          <Typography component="h1" id={titleId} sx={{ textAlign: "center" }} variant="h4">
+          <Typography component="h1" id={titleId} variant="h4">
             {title}
           </Typography>
           {children}
-          <Typography color="text.secondary" sx={{ textAlign: "center" }} variant="body2">
+          <Typography color="text.secondary" variant="body2">
             {footer}
           </Typography>
         </Stack>
