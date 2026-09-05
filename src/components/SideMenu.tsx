@@ -51,6 +51,9 @@ export default function SideMenu({ onNavigate }: SideMenuProps) {
                 href={href}
                 onClick={onNavigate}
                 selected={selected}
+                sx={{
+                  "&.Mui-selected .MuiListItemText-primary": { fontWeight: 700 },
+                }}
               >
                 <ListItemText primary={label} />
               </ListItemButton>
