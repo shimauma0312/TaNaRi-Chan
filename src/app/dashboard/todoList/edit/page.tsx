@@ -1,6 +1,5 @@
 "use client"
 
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded"
 import { Alert, Button, Stack } from "@mui/material"
 import MinLoader from "@/components/MinLoader"
 import TodoForm, { TodoFormValues } from "@/components/todo/TodoForm"
@@ -112,10 +111,7 @@ function EditTodoPageContent() {
     return (
       <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
         <Alert severity="error">Todo ID is not specified.</Alert>
-        <Button
-          startIcon={<ArrowBackRoundedIcon />}
-          onClick={() => router.push("/dashboard/todoList")}
-        >
+        <Button onClick={() => router.push("/dashboard/todoList")}>
           Back to Todo List
         </Button>
       </Stack>
@@ -125,7 +121,6 @@ function EditTodoPageContent() {
   return (
     <Stack spacing={3} sx={{ alignItems: "center" }}>
       <Button
-        startIcon={<ArrowBackRoundedIcon />}
         onClick={() => router.push("/dashboard/todoList")}
         disabled={isSubmitting}
         sx={{ alignSelf: "flex-start" }}
