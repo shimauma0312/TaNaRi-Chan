@@ -1,7 +1,6 @@
 import Box from "@mui/material/Box"
 import Divider from "@mui/material/Divider"
 import Link from "@mui/material/Link"
-import Paper from "@mui/material/Paper"
 import Table from "@mui/material/Table"
 import TableBody from "@mui/material/TableBody"
 import TableCell from "@mui/material/TableCell"
@@ -71,46 +70,37 @@ const markdownComponents: Components = {
       {children}
     </Box>
   ),
-  code: ({ children, className }) => (
+  code: ({ children }) => (
     <Box
       component="code"
-      className={className}
       sx={{
-        borderRadius: 0.5,
-        bgcolor: "rgba(15, 23, 42, 0.9)",
-        color: "#f9a8d4",
         fontFamily: "var(--font-geist-mono), monospace",
         fontSize: "0.875em",
-        px: 0.75,
-        py: 0.25,
       }}
     >
       {children}
     </Box>
   ),
   pre: ({ children }) => (
-    <Paper
+    <Box
       component="pre"
-      variant="outlined"
       sx={{
-        bgcolor: "#0f172a",
+        border: 1,
+        borderColor: "divider",
         mb: 2,
         overflowX: "auto",
         p: 2,
-        "& code": { bgcolor: "transparent", color: "text.primary", p: 0 },
       }}
     >
       {children}
-    </Paper>
+    </Box>
   ),
   blockquote: ({ children }) => (
-    <Paper
+    <Box
       component="blockquote"
-      variant="outlined"
       sx={{
-        borderLeft: 4,
-        borderLeftColor: "primary.main",
-        fontStyle: "italic",
+        border: 1,
+        borderColor: "divider",
         m: 0,
         mb: 2,
         px: 2,
@@ -118,7 +108,7 @@ const markdownComponents: Components = {
       }}
     >
       {children}
-    </Paper>
+    </Box>
   ),
   ul: ({ children }) => (
     <Box component="ul" sx={{ mb: 2, pl: 3 }}>
@@ -137,7 +127,7 @@ const markdownComponents: Components = {
   ),
   a: ({ children, href }) => <Link href={href}>{children}</Link>,
   table: ({ children }) => (
-    <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+    <TableContainer sx={{ border: 1, borderColor: "divider", mb: 2 }}>
       <Table size="small">{children}</Table>
     </TableContainer>
   ),
@@ -157,8 +147,6 @@ const markdownComponents: Components = {
       alt={alt ?? ""}
       src={typeof src === "string" ? src : undefined}
       sx={{
-        borderRadius: 1,
-        boxShadow: 3,
         display: "block",
         height: "auto",
         mb: 2,

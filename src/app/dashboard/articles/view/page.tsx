@@ -5,9 +5,10 @@ import NextLink from "@/components/NextLink"
 import MarkdownPreview from "@/components/markdown/markdownPreveiw"
 import useAuth from "@/hooks/useAuth"
 import Alert from "@mui/material/Alert"
+import Box from "@mui/material/Box"
 import Container from "@mui/material/Container"
+import Divider from "@mui/material/Divider"
 import Link from "@mui/material/Link"
-import Paper from "@mui/material/Paper"
 import Stack from "@mui/material/Stack"
 import Typography from "@mui/material/Typography"
 import { useSearchParams } from "next/navigation"
@@ -58,15 +59,16 @@ function ArticleViewContent() {
         {error ? (
           <Alert severity="error">{error}</Alert>
         ) : article ? (
-          <Paper component="article" sx={{ p: { xs: 2, sm: 4 } }}>
+          <Box component="article">
             <Typography component="h1" variant="h3" sx={{ mb: 1 }}>
               {article.title}
             </Typography>
             <Typography color="text.secondary" sx={{ mb: 4 }} variant="body2">
               {new Date(article.createdAt).toLocaleDateString("ja-JP")}
             </Typography>
+            <Divider sx={{ mb: 4 }} />
             <MarkdownPreview markdown={article.content} />
-          </Paper>
+          </Box>
         ) : null}
       </Stack>
     </Container>

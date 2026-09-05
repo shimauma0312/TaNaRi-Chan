@@ -2,7 +2,6 @@
 
 import MarkdownPreview from "@/components/markdown/markdownPreveiw"
 import Box from "@mui/material/Box"
-import Paper from "@mui/material/Paper"
 import Tab from "@mui/material/Tab"
 import Tabs from "@mui/material/Tabs"
 import TextField from "@mui/material/TextField"
@@ -41,7 +40,7 @@ const MarkdownEditor = ({
   const previewPanelId = `${id}-preview-panel`
 
   return (
-    <Paper variant="outlined" sx={{ overflow: "hidden", width: "100%" }}>
+    <Box sx={{ border: 1, borderColor: "divider", overflow: "hidden", width: "100%" }}>
       <Tabs
         aria-label="記事本文の編集モード"
         onChange={(_event, value: EditorTab) => setActiveTab(value)}
@@ -116,7 +115,7 @@ const MarkdownEditor = ({
             </Typography>
           ))}
       </Box>
-    </Paper>
+    </Box>
   )
 }
 
