@@ -113,10 +113,10 @@ jobs:
 
       - name: Verify debug and Studio services
         run: |
-          docker compose --profile debug --profile tools up -d debug studio
-          curl --fail --retry 15 --retry-delay 1 --retry-connrefused http://127.0.0.1:3001/api/health/live
-          curl --fail --retry 15 --retry-delay 1 --retry-connrefused http://127.0.0.1:9229/json/list
-          curl --fail --retry 15 --retry-delay 1 --retry-connrefused http://127.0.0.1:5555/
+          docker compose --profile debug --profile tools up -d --wait --wait-timeout 120 debug studio
+          curl --fail --retry 15 --retry-delay 1 --retry-all-errors http://127.0.0.1:3001/api/health/live
+          curl --fail --retry 15 --retry-delay 1 --retry-all-errors http://127.0.0.1:9229/json/list
+          curl --fail --retry 15 --retry-delay 1 --retry-all-errors http://127.0.0.1:5555/
 
       - name: Verify shared image and bind-free runtime
         run: |

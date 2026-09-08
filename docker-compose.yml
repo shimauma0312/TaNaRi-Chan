@@ -67,6 +67,16 @@ services:
         condition: service_completed_successfully
       seed:
         condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/api/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   migrate:
     image: *development-image
@@ -124,6 +134,16 @@ services:
         condition: service_completed_successfully
       seed:
         condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:5555/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   db:
     image: postgres:17-alpine
