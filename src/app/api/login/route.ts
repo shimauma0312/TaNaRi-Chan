@@ -1,6 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import * as userService from '@/service/userService'
-import logger from '@/utils/logger'
+import { NextRequest, NextResponse } from "next/server"
+import * as userService from "@/service/userService"
+import logger from "@/utils/logger"
+import { firstValidationMessage, loginRequestSchema, readJsonRequest } from "@/schemas/api"
+import { isSameOriginRequest } from "@/lib/auth"
+import { enforceRateLimits, getRateLimitClientId } from "@/lib/rateLimit"
 
 interface LoginRequestBody {
   email: string
@@ -8,16 +11,44 @@ interface LoginRequestBody {
 }
 
 export async function POST(req: NextRequest) {
-  let requestBody: LoginRequestBody | null = null;
-  
-  try {
-    const body: LoginRequestBody = await req.json()
-    requestBody = body;
+  let requestBody: LoginRequestBody | null = null
 
-    if (!body.email || !body.password) {
+  try {
+    if (!isSameOriginRequest(req)) {
+      return NextResponse.json({ error: "不正な送信元です" }, { status: 403 })
+    }
+
+    const json = await readJsonRequest(req)
+    if (!json.success) {
+      return NextResponse.json({ error: json.error }, { status: json.status })
+    }
+
+    const parsed = loginRequestSchema.safeParse(json.data)
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstValidationMessage(parsed.error) }, { status: 400 })
+    }
+
+    const body: LoginRequestBody = parsed.data
+    requestBody = body
+
+    const rateLimit = await enforceRateLimits([
+      {
+        scope: "login-ip",
+        identifier: getRateLimitClientId(req),
+        limit: 30,
+        windowSeconds: 5 * 60,
+      },
+      {
+        scope: "login-account",
+        identifier: body.email.toLowerCase(),
+        limit: 10,
+        windowSeconds: 5 * 60,
+      },
+    ])
+    if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: 'メールアドレスとパスワードは必須です' },
-        { status: 400 }
+        { error: "ログイン試行回数が上限に達しました。しばらく待ってから再試行してください" },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfter) } },
       )
     }
 
@@ -25,8 +56,8 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'メールアドレスまたはパスワードが正しくありません' },
-        { status: 401 }
+        { error: "メールアドレスまたはパスワードが正しくありません" },
+        { status: 401 },
       )
     }
 
@@ -35,25 +66,24 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'ログインに成功しました',
+        message: "ログインに成功しました",
         user: {
           id: user.id,
           user_name: user.user_name,
           user_email: user.user_email,
           icon_number: user.icon_number,
-        }
+        },
       },
-      { status: 200 }
+      { status: 200 },
     )
   } catch (error) {
-    logger.error('Login error occurred', { 
-      email: requestBody?.email || 'unknown',
+    logger.error("Login error occurred", {
+      accountProvided: requestBody !== null,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    return NextResponse.json(
-      { error: 'ログイン処理中にエラーが発生しました' },
-      { status: 500 }
-    )
+      ...(process.env.NODE_ENV !== "production" && error instanceof Error
+        ? { stack: error.stack }
+        : {}),
+    })
+    return NextResponse.json({ error: "ログイン処理中にエラーが発生しました" }, { status: 500 })
   }
 }

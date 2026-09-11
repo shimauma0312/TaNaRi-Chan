@@ -1,6 +1,6 @@
 /**
  * ログインAPIテスト
- * 
+ *
  * /api/login エンドポイントのテストケース：
  * - 正常なログイン
  * - バリデーションエラー
@@ -8,214 +8,238 @@
  * - システムエラー時のログ出力確認
  */
 
-import { NextRequest } from 'next/server';
-import { POST } from '@/app/api/login/route';
-import * as userService from '@/service/userService';
-import logger from '@/utils/logger';
+import { NextRequest } from "next/server"
+import { POST } from "@/app/api/login/route"
+import * as userService from "@/service/userService"
+import logger from "@/utils/logger"
+import { enforceRateLimits } from "@/lib/rateLimit"
 
 // userServiceをモック
-jest.mock('@/service/userService');
-jest.mock('@/utils/logger');
+jest.mock("@/service/userService", () => ({
+  authenticateUser: jest.fn(),
+  setAuthCookie: jest.fn(),
+}))
+jest.mock("@/utils/logger")
+jest.mock("@/lib/auth", () => ({
+  isSameOriginRequest: jest.fn().mockReturnValue(true),
+}))
+jest.mock("@/lib/rateLimit", () => ({
+  enforceRateLimits: jest.fn().mockResolvedValue({ allowed: true, retryAfter: 1 }),
+  getRateLimitClientId: jest.fn().mockReturnValue("test-client"),
+}))
 
-const mockUserService = userService as jest.Mocked<typeof userService>;
-const mockLogger = logger as jest.Mocked<typeof logger>;
+const mockUserService = userService as jest.Mocked<typeof userService>
+const mockLogger = logger as jest.Mocked<typeof logger>
+const mockEnforceRateLimits = enforceRateLimits as jest.MockedFunction<typeof enforceRateLimits>
 
 // テスト用のNextRequestを作成するヘルパー関数
 function createMockRequest(body: any): NextRequest {
   return {
     json: jest.fn().mockResolvedValue(body),
-  } as unknown as NextRequest;
+  } as unknown as NextRequest
 }
 
-describe('/api/login', () => {
+describe("/api/login", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    jest.clearAllMocks()
+    mockEnforceRateLimits.mockResolvedValue({ allowed: true, retryAfter: 1 })
+  })
 
-  describe('正常系', () => {
-    it('有効な認証情報でログインに成功する', async () => {
+  it("レート制限超過時はRetry-After付き429を返す", async () => {
+    mockEnforceRateLimits.mockResolvedValue({ allowed: false, retryAfter: 120 })
+    const response = await POST(
+      createMockRequest({ email: "test@example.com", password: "password123" }),
+    )
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("Retry-After")).toBe("120")
+    expect(mockUserService.authenticateUser).not.toHaveBeenCalled()
+  })
+
+  describe("正常系", () => {
+    it("有効な認証情報でログインに成功する", async () => {
       // Arrange
       const requestBody = {
-        email: 'test@example.com',
-        password: 'password123'
-      };
-      
+        email: "test@example.com",
+        password: "password123",
+      }
+
       const mockUser = {
-        id: 'user123',
-        user_name: 'テストユーザー',
-        user_email: 'test@example.com',
+        id: "user123",
+        user_name: "テストユーザー",
+        user_email: "test@example.com",
         icon_number: 1,
-      };
+      }
 
-      mockUserService.authenticateUser.mockResolvedValue(mockUser);
-      mockUserService.setAuthCookie.mockResolvedValue(undefined);
+      mockUserService.authenticateUser.mockResolvedValue(mockUser)
+      mockUserService.setAuthCookie.mockResolvedValue(undefined)
 
-      const request = createMockRequest(requestBody);
+      const request = createMockRequest(requestBody)
 
       // Act
-      const response = await POST(request);
-      const responseData = await response.json();
+      const response = await POST(request)
+      const responseData = await response.json()
 
       // Assert
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(200)
       expect(responseData).toEqual({
-        message: 'ログインに成功しました',
-        user: mockUser
-      });
-      expect(mockUserService.authenticateUser).toHaveBeenCalledWith('test@example.com', 'password123');
-      expect(mockUserService.setAuthCookie).toHaveBeenCalledWith('user123');
-    });
-  });
+        message: "ログインに成功しました",
+        user: mockUser,
+      })
+      expect(mockUserService.authenticateUser).toHaveBeenCalledWith(
+        "test@example.com",
+        "password123",
+      )
+      expect(mockUserService.setAuthCookie).toHaveBeenCalledWith("user123")
+    })
+  })
 
-  describe('バリデーションエラー', () => {
-    it('メールアドレスが空の場合は400エラーを返す', async () => {
+  describe("バリデーションエラー", () => {
+    it("メールアドレスが空の場合は400エラーを返す", async () => {
       // Arrange
       const requestBody = {
-        email: '',
-        password: 'password123'
-      };
-      const request = createMockRequest(requestBody);
+        email: "",
+        password: "password123",
+      }
+      const request = createMockRequest(requestBody)
 
       // Act
-      const response = await POST(request);
-      const responseData = await response.json();
+      const response = await POST(request)
+      const responseData = await response.json()
 
       // Assert
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(400)
       expect(responseData).toEqual({
-        error: 'メールアドレスとパスワードは必須です'
-      });
-      expect(mockUserService.authenticateUser).not.toHaveBeenCalled();
-    });
+        error: "メールアドレスとパスワードは必須です",
+      })
+      expect(mockUserService.authenticateUser).not.toHaveBeenCalled()
+    })
 
-    it('パスワードが空の場合は400エラーを返す', async () => {
+    it("パスワードが空の場合は400エラーを返す", async () => {
       // Arrange
       const requestBody = {
-        email: 'test@example.com',
-        password: ''
-      };
-      const request = createMockRequest(requestBody);
+        email: "test@example.com",
+        password: "",
+      }
+      const request = createMockRequest(requestBody)
 
       // Act
-      const response = await POST(request);
-      const responseData = await response.json();
+      const response = await POST(request)
+      const responseData = await response.json()
 
       // Assert
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(400)
       expect(responseData).toEqual({
-        error: 'メールアドレスとパスワードは必須です'
-      });
-      expect(mockUserService.authenticateUser).not.toHaveBeenCalled();
-    });
-  });
+        error: "メールアドレスとパスワードは必須です",
+      })
+      expect(mockUserService.authenticateUser).not.toHaveBeenCalled()
+    })
+  })
 
-  describe('認証失敗', () => {
-    it('無効な認証情報の場合は401エラーを返す', async () => {
+  describe("認証失敗", () => {
+    it("無効な認証情報の場合は401エラーを返す", async () => {
       // Arrange
       const requestBody = {
-        email: 'test@example.com',
-        password: 'wrongpassword'
-      };
+        email: "test@example.com",
+        password: "wrongpassword",
+      }
 
-      mockUserService.authenticateUser.mockResolvedValue(null);
-      const request = createMockRequest(requestBody);
+      mockUserService.authenticateUser.mockResolvedValue(null)
+      const request = createMockRequest(requestBody)
 
       // Act
-      const response = await POST(request);
-      const responseData = await response.json();
+      const response = await POST(request)
+      const responseData = await response.json()
 
       // Assert
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(401)
       expect(responseData).toEqual({
-        error: 'メールアドレスまたはパスワードが正しくありません'
-      });
-      expect(mockUserService.authenticateUser).toHaveBeenCalledWith('test@example.com', 'wrongpassword');
-      expect(mockUserService.setAuthCookie).not.toHaveBeenCalled();
-    });
-  });
+        error: "メールアドレスまたはパスワードが正しくありません",
+      })
+      expect(mockUserService.authenticateUser).toHaveBeenCalledWith(
+        "test@example.com",
+        "wrongpassword",
+      )
+      expect(mockUserService.setAuthCookie).not.toHaveBeenCalled()
+    })
+  })
 
-  describe('システムエラー', () => {
-    it('authenticateUserでエラーが発生した場合は500エラーを返し、ログに記録する', async () => {
+  describe("システムエラー", () => {
+    it("authenticateUserでエラーが発生した場合は500エラーを返し、ログに記録する", async () => {
       // Arrange
       const requestBody = {
-        email: 'test@example.com',
-        password: 'password123'
-      };
+        email: "test@example.com",
+        password: "password123",
+      }
 
-      const dbError = new Error('Database connection failed');
-      mockUserService.authenticateUser.mockRejectedValue(dbError);
-      const request = createMockRequest(requestBody);
+      const dbError = new Error("Database connection failed")
+      mockUserService.authenticateUser.mockRejectedValue(dbError)
+      const request = createMockRequest(requestBody)
 
       // Act
-      const response = await POST(request);
-      const responseData = await response.json();
+      const response = await POST(request)
+      const responseData = await response.json()
 
       // Assert
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(500)
       expect(responseData).toEqual({
-        error: 'ログイン処理中にエラーが発生しました'
-      });
-      
+        error: "ログイン処理中にエラーが発生しました",
+      })
+
       // ログ出力の確認
-      expect(mockLogger.error).toHaveBeenCalledWith('Login error occurred', {
-        email: 'test@example.com',
-        error: 'Database connection failed',
-        stack: dbError.stack
-      });
-      
-      expect(mockUserService.setAuthCookie).not.toHaveBeenCalled();
-    });
+      expect(mockLogger.error).toHaveBeenCalledWith("Login error occurred", {
+        accountProvided: true,
+        error: "Database connection failed",
+        stack: dbError.stack,
+      })
 
-    it('JSON解析エラーが発生した場合は500エラーを返し、ログに記録する', async () => {
+      expect(mockUserService.setAuthCookie).not.toHaveBeenCalled()
+    })
+
+    it("JSON解析エラーが発生した場合は400エラーを返す", async () => {
       // Arrange
-      const jsonError = new Error('Invalid JSON');
+      const jsonError = new Error("Invalid JSON")
       const request = {
         json: jest.fn().mockRejectedValue(jsonError),
-      } as unknown as NextRequest;
+      } as unknown as NextRequest
 
       // Act
-      const response = await POST(request);
-      const responseData = await response.json();
+      const response = await POST(request)
+      const responseData = await response.json()
 
       // Assert
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400)
       expect(responseData).toEqual({
-        error: 'ログイン処理中にエラーが発生しました'
-      });
-      
-      // ログ出力の確認（メールアドレスが取得できない場合）
-      expect(mockLogger.error).toHaveBeenCalledWith('Login error occurred', {
-        email: 'unknown',
-        error: 'Invalid JSON',
-        stack: jsonError.stack
-      });
-    });
-  });
+        error: "リクエスト本文が不正です",
+      })
+      expect(mockLogger.error).not.toHaveBeenCalled()
+    })
+  })
 
-  describe('ログ出力テスト', () => {
-    it('エラー発生時に適切なコンテキスト情報がログに記録される', async () => {
+  describe("ログ出力テスト", () => {
+    it("エラー発生時に適切なコンテキスト情報がログに記録される", async () => {
       // Arrange
       const requestBody = {
-        email: 'user@example.com',
-        password: 'testpass'
-      };
+        email: "user@example.com",
+        password: "testpass",
+      }
 
-      const customError = new Error('Custom database error');
-      customError.stack = 'Error: Custom database error\n    at someFunction...';
-      
-      mockUserService.authenticateUser.mockRejectedValue(customError);
-      const request = createMockRequest(requestBody);
+      const customError = new Error("Custom database error")
+      customError.stack = "Error: Custom database error\n    at someFunction..."
+
+      mockUserService.authenticateUser.mockRejectedValue(customError)
+      const request = createMockRequest(requestBody)
 
       // Act
-      await POST(request);
+      await POST(request)
 
       // Assert
-      expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      expect(mockLogger.error).toHaveBeenCalledWith('Login error occurred', {
-        email: 'user@example.com',
-        error: 'Custom database error',
-        stack: 'Error: Custom database error\n    at someFunction...'
-      });
-    });
-  });
-});
+      expect(mockLogger.error).toHaveBeenCalledTimes(1)
+      expect(mockLogger.error).toHaveBeenCalledWith("Login error occurred", {
+        accountProvided: true,
+        error: "Custom database error",
+        stack: "Error: Custom database error\n    at someFunction...",
+      })
+    })
+  })
+})
