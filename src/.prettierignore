@@ -1,0 +1,10 @@
+node_modules/
+.next/
+dist/
+build/
+coverage/
+prisma/migrations/
+public/
+next-env.d.ts
+*.lock
+*.log

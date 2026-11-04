@@ -1,6 +1,6 @@
 import { handleClientError } from "@/utils/errorHandler.client"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 /**
  * ログイン機能カスタムフック
@@ -11,39 +11,47 @@ export const useLogin = () => {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const inFlight = useRef(false)
   const router = useRouter()
 
   /**
    * メールアドレスとパスワードでログイン処理を実行する
-   * 
+   *
    * @param email ユーザーのメールアドレス
    * @param password ユーザーのパスワード
    */
   const login = async (email: string, password: string) => {
+    if (inFlight.current) return
+    inFlight.current = true
     setLoading(true)
     setError("")
-    
+
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
+      const response = await fetch("/api/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       })
 
       if (response.ok) {
         // ダッシュボードへリダイレクト
-        router.push('/dashboard')
+        router.push("/dashboard")
       } else {
         const errorData = await response.json()
-        const errorMessage = errorData.error || "Login failed. Please check your email and password."
+        const errorMessage =
+          errorData.error || "Login failed. Please check your email and password."
         setError(errorMessage)
       }
     } catch (err) {
-      const errorMessage = handleClientError(err, "Login failed. Please check your network connection.")
+      const errorMessage = handleClientError(
+        err,
+        "Login failed. Please check your network connection.",
+      )
       setError(errorMessage)
     } finally {
+      inFlight.current = false
       setLoading(false)
     }
   }

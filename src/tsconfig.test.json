@@ -6,13 +6,6 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node"
   },
-  "include": [
-    "**/__tests__/**/*",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "jest.setup.js"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/__tests__/**/*", "**/*.test.ts", "**/*.test.tsx", "jest.setup.js"],
+  "exclude": ["node_modules"]
 }
