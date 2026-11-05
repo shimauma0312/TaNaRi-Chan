@@ -4,13 +4,13 @@ import { loginPasswordSchema, registrationPasswordSchema } from "@/schemas/passw
 
 const trimmedString = (field: string, max: number) =>
   z
-    .string({ required_error: `${field}は必須です` })
+    .string({ error: `${field}は必須です` })
     .trim()
     .min(1, `${field}は必須です`)
     .max(max, `${field}が長すぎます`)
 
 const todoDeadlineSchema = z
-  .string({ required_error: "期限は必須です" })
+  .string({ error: "期限は必須です" })
   .refine((value) => parseTodoDate(value.slice(0, 10)) !== null, "期限の日付が不正です")
   .refine(
     (value) =>
@@ -23,7 +23,7 @@ const todoDeadlineSchema = z
 export const registerRequestSchema = z
   .object({
     email: z
-      .string({ required_error: "メールアドレスは必須です" })
+      .string({ error: "メールアドレスは必須です" })
       .trim()
       .email("メールアドレスの形式が不正です")
       .max(100)
@@ -36,7 +36,7 @@ export const registerRequestSchema = z
 export const loginRequestSchema = z
   .object({
     email: z
-      .string({ required_error: "メールアドレスとパスワードは必須です" })
+      .string({ error: "メールアドレスとパスワードは必須です" })
       .trim()
       .min(1, "メールアドレスとパスワードは必須です")
       .email("メールアドレスの形式が不正です")
