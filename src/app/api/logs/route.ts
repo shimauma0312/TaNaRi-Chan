@@ -12,7 +12,7 @@ const MAX_CONTEXT_BYTES = 8 * 1024
 const clientLogInput = z.object({
   level: z.nativeEnum(LogLevel),
   message: z.string().trim().min(1).max(2_000),
-  context: z.record(z.unknown()).optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
 })
 
 function jsonSize(value: unknown): number {
