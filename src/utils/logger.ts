@@ -38,22 +38,22 @@ class ClientLogger implements ILogger {
   }
 
   info(message: string, context?: LogContext): void {
-    console.log("[INFO] %s", message, context ?? "")
+    console.log(`[INFO] ${message}`, context ?? "")
     this.send("INFO", message, context)
   }
 
   error(message: string, context?: LogContext): void {
-    console.error("[ERROR] %s", message, context ?? "")
+    console.error(`[ERROR] ${message}`, context ?? "")
     this.send("ERROR", message, context)
   }
 
   warn(message: string, context?: LogContext): void {
-    console.warn("[WARN] %s", message, context ?? "")
+    console.warn(`[WARN] ${message}`, context ?? "")
     this.send("WARN", message, context)
   }
 
   debug(message: string, context?: LogContext): void {
-    console.debug("[DEBUG] %s", message, context ?? "")
+    console.debug(`[DEBUG] ${message}`, context ?? "")
     this.send("DEBUG", message, context)
   }
 }
