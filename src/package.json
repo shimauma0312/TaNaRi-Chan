@@ -25,7 +25,7 @@
     "@mui/material-nextjs": "^9.4.0",
     "@prisma/client": "^6.19.2",
     "bcryptjs": "^3.0.2",
-    "next": "^16.1.7",
+    "next": "^16.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
