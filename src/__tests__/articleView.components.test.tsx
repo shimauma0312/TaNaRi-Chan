@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import ArticleViewPage from "@/app/dashboard/articles/view/page"
 
 jest.mock("next/navigation", () => ({
@@ -74,5 +74,29 @@ describe("Article view separate loading", () => {
     expect(await screen.findByRole("heading", { name: "Like test article", level: 1 })).toBeTruthy()
     await waitFor(() => expect(screen.getByText("comments down")).toBeTruthy())
     expect(screen.getByRole("button", { name: /いいね！ 0/ })).toBeTruthy()
+  })
+
+  test("plays the rainbow burst only when liking", async () => {
+    let liked = false
+    jest.spyOn(global, "fetch").mockImplementation((input, init) => {
+      const url = String(input)
+      if (url.startsWith("/api/articles/likes")) {
+        if (init?.method === "POST") liked = true
+        if (init?.method === "DELETE") liked = false
+        return Promise.resolve(jsonResponse(true, { post_id: 1, count: liked ? 1 : 0, liked }))
+      }
+      if (url.startsWith("/api/articles/comments")) return Promise.resolve(jsonResponse(true, []))
+      return Promise.resolve(jsonResponse(true, article))
+    })
+
+    render(<ArticleViewPage />)
+
+    fireEvent.click(await screen.findByRole("button", { name: /いいね！ 0/ }))
+    expect(await screen.findByRole("button", { name: /いいね！ 1/ })).toBeTruthy()
+    const firstBurst = screen.getByTestId("like-burst")
+
+    fireEvent.click(screen.getByRole("button", { name: /いいね！ 1/ }))
+    expect(await screen.findByRole("button", { name: /いいね！ 0/ })).toBeTruthy()
+    expect(screen.getByTestId("like-burst")).toBe(firstBurst)
   })
 })

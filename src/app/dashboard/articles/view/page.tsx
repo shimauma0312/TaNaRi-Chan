@@ -1,5 +1,6 @@
 "use client"
 
+import LikeBurst from "@/components/LikeBurst"
 import MinLoader from "@/components/MinLoader"
 import NextLink from "@/components/NextLink"
 import MarkdownPreview from "@/components/markdown/markdownPreveiw"
@@ -45,6 +46,7 @@ function ArticleViewContent() {
   const [like, setLike] = useState<LikeStatus | null>(null)
   const [liking, setLiking] = useState(false)
   const [likeError, setLikeError] = useState<string | null>(null)
+  const [burstKey, setBurstKey] = useState(0)
 
   const numericId = Number(postId)
   const validId = Number.isSafeInteger(numericId) && numericId > 0
@@ -123,6 +125,7 @@ function ArticleViewContent() {
     if (!like || liking) return
     setLiking(true)
     setLikeError(null)
+    if (!like.liked) setBurstKey((previous) => previous + 1)
     try {
       const response = await fetch("/api/articles/likes", {
         method: like.liked ? "DELETE" : "POST",
@@ -177,16 +180,19 @@ function ArticleViewContent() {
             {(like || likeError) && (
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 {like && (
-                  <Button
-                    aria-pressed={like.liked}
-                    color="error"
-                    disabled={liking}
-                    startIcon={like.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                    variant={like.liked ? "contained" : "outlined"}
-                    onClick={() => void handleToggleLike()}
-                  >
-                    いいね！ {like.count}
-                  </Button>
+                  <Box sx={{ position: "relative", display: "inline-flex", isolation: "isolate" }}>
+                    <Button
+                      aria-pressed={like.liked}
+                      color="error"
+                      disabled={liking}
+                      startIcon={like.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                      variant={like.liked ? "contained" : "outlined"}
+                      onClick={() => void handleToggleLike()}
+                    >
+                      いいね！ {like.count}
+                    </Button>
+                    <LikeBurst burstKey={burstKey} />
+                  </Box>
                 )}
                 {likeError && <Alert severity="error">{likeError}</Alert>}
               </Stack>
