@@ -36,6 +36,7 @@ export class SendMessageUseCase {
    * @param input - 送信するメッセージのデータ
    * @returns 作成されたメッセージ（ユーザー情報付き）
    * @throws {AppError} バリデーションエラーの場合（VALIDATION, 400）
+   * @throws {AppError} 受信者が存在しない場合（VALIDATION, 400）
    * @throws {AppError} データベースエラーの場合（DATABASE_ERROR, 500）
    */
   async execute(input: SendMessageInput): Promise<MessageWithUsers> {
@@ -56,6 +57,15 @@ export class SendMessageUseCase {
     }
 
     try {
+      const receiverExists = await this.messageRepository.userExists(data.receiver_id);
+      if (!receiverExists) {
+        throw new AppError(
+          '指定された受信者が存在しません',
+          ErrorType.VALIDATION,
+          400
+        );
+      }
+
       return await this.messageRepository.create(data);
     } catch (error) {
       if (error instanceof AppError) {

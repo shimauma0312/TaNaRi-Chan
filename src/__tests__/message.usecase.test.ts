@@ -22,6 +22,7 @@ import { AppError, ErrorType } from '@/utils/errorHandler';
 // モックリポジトリの作成
 const createMockRepository = (): jest.Mocked<IMessageRepository> => ({
   create: jest.fn(),
+  userExists: jest.fn(),
   findByReceiverId: jest.fn(),
   findBySenderId: jest.fn(),
   findById: jest.fn(),
@@ -98,11 +99,13 @@ describe('SendMessageUseCase', () => {
         receiver_id: 'user2',
       };
       const mockMessage = createMockMessage();
+      mockRepo.userExists.mockResolvedValue(true);
       mockRepo.create.mockResolvedValue(mockMessage);
 
       const result = await useCase.execute(input);
 
       expect(result).toEqual(mockMessage);
+      expect(mockRepo.userExists).toHaveBeenCalledWith('user2');
       expect(mockRepo.create).toHaveBeenCalledWith(input);
     });
   });
@@ -163,6 +166,23 @@ describe('SendMessageUseCase', () => {
       await expect(useCase.execute(input)).rejects.toThrow(AppError);
       expect(mockRepo.create).not.toHaveBeenCalled();
     });
+
+    it('受信者が存在しない場合はAppErrorをスローし、DBへの書き込みは行わない', async () => {
+      const input = {
+        subject: 'テスト件名',
+        body: 'テスト本文',
+        sender_id: 'user1',
+        receiver_id: 'nonexistent-user',
+      };
+      mockRepo.userExists.mockResolvedValue(false);
+
+      await expect(useCase.execute(input)).rejects.toThrow(AppError);
+      await expect(useCase.execute(input)).rejects.toMatchObject({
+        type: ErrorType.VALIDATION,
+        statusCode: 400,
+      });
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('異常系 - データベースエラー', () => {
@@ -173,6 +193,7 @@ describe('SendMessageUseCase', () => {
         sender_id: 'user1',
         receiver_id: 'user2',
       };
+      mockRepo.userExists.mockResolvedValue(true);
       mockRepo.create.mockRejectedValue(new Error('DB error'));
 
       await expect(useCase.execute(input)).rejects.toThrow(AppError);
@@ -190,6 +211,7 @@ describe('SendMessageUseCase', () => {
         receiver_id: 'user2',
       };
       const appError = new AppError('Not Found', ErrorType.NOT_FOUND, 404);
+      mockRepo.userExists.mockResolvedValue(true);
       mockRepo.create.mockRejectedValue(appError);
 
       await expect(useCase.execute(input)).rejects.toBe(appError);

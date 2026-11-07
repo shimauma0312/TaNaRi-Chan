@@ -13,7 +13,7 @@ export interface ILogger {
 
 // ─────────────────────────────────────────────────────────────────
 // クライアントサイドロガー
-// console に出力しつつ POST /api/logs でサーバーへ送信する
+// POST /api/logs でサーバーへ送信する
 // ─────────────────────────────────────────────────────────────────
 class ClientLogger implements ILogger {
   private send(level: string, message: string, context?: LogContext): void {
@@ -38,22 +38,18 @@ class ClientLogger implements ILogger {
   }
 
   info(message: string, context?: LogContext): void {
-    console.log("[INFO] %s", message, context ?? "")
     this.send("INFO", message, context)
   }
 
   error(message: string, context?: LogContext): void {
-    console.error("[ERROR] %s", message, context ?? "")
     this.send("ERROR", message, context)
   }
 
   warn(message: string, context?: LogContext): void {
-    console.warn("[WARN] %s", message, context ?? "")
     this.send("WARN", message, context)
   }
 
   debug(message: string, context?: LogContext): void {
-    console.debug("[DEBUG] %s", message, context ?? "")
     this.send("DEBUG", message, context)
   }
 }
@@ -61,7 +57,7 @@ class ClientLogger implements ILogger {
 // ─────────────────────────────────────────────────────────────────
 // 環境別ロガーインスタンスの初期化
 // サーバー: Winston + DB (logging/serverLogger)
-// クライアント: console + /api/logs
+// クライアント: /api/logs へ送信
 // ─────────────────────────────────────────────────────────────────
 let logger: ILogger
 
