@@ -101,40 +101,40 @@ describe("Logger Utility", () => {
       expect(typeof logger.debug).toBe("function")
     })
 
-    test("should log info messages with proper format", () => {
+    test("should not write info messages to console", () => {
       const message = "Test info message"
       const context = { userId: "123" }
 
       logger.info(message, context)
 
-      expect(console.log).toHaveBeenCalledWith("[INFO] Test info message", context)
+      expect(console.log).not.toHaveBeenCalled()
     })
 
-    test("should log error messages with proper format", () => {
+    test("should not write error messages to console", () => {
       const message = "Test error message"
       const context = { error: "Something went wrong" }
 
       logger.error(message, context)
 
-      expect(console.error).toHaveBeenCalledWith("[ERROR] Test error message", context)
+      expect(console.error).not.toHaveBeenCalled()
     })
 
-    test("should log warning messages with proper format", () => {
+    test("should not write warning messages to console", () => {
       const message = "Test warning message"
       const context = { warning: "Deprecated feature" }
 
       logger.warn(message, context)
 
-      expect(console.warn).toHaveBeenCalledWith("[WARN] Test warning message", context)
+      expect(console.warn).not.toHaveBeenCalled()
     })
 
-    test("should log debug messages with proper format", () => {
+    test("should not write debug messages to console", () => {
       const message = "Test debug message"
       const context = { debug: "Debug info" }
 
       logger.debug(message, context)
 
-      expect(console.debug).toHaveBeenCalledWith("[DEBUG] Test debug message", context)
+      expect(console.debug).not.toHaveBeenCalled()
     })
 
     test("should handle logging without context", () => {
@@ -143,10 +143,10 @@ describe("Logger Utility", () => {
       logger.warn("Warning message")
       logger.debug("Debug message")
 
-      expect(console.log).toHaveBeenCalledWith("[INFO] Simple message", "")
-      expect(console.error).toHaveBeenCalledWith("[ERROR] Error message", "")
-      expect(console.warn).toHaveBeenCalledWith("[WARN] Warning message", "")
-      expect(console.debug).toHaveBeenCalledWith("[DEBUG] Debug message", "")
+      expect(console.log).not.toHaveBeenCalled()
+      expect(console.error).not.toHaveBeenCalled()
+      expect(console.warn).not.toHaveBeenCalled()
+      expect(console.debug).not.toHaveBeenCalled()
     })
 
     test("should handle empty context object", () => {
@@ -154,19 +154,19 @@ describe("Logger Utility", () => {
 
       logger.info("Message with empty context", emptyContext)
 
-      expect(console.log).toHaveBeenCalledWith("[INFO] Message with empty context", emptyContext)
+      expect(console.log).not.toHaveBeenCalled()
     })
 
     test("should handle null context", () => {
       logger.info("Message with null context", null)
 
-      expect(console.log).toHaveBeenCalledWith("[INFO] Message with null context", "")
+      expect(console.log).not.toHaveBeenCalled()
     })
 
     test("should handle undefined context", () => {
       logger.info("Message with undefined context", undefined)
 
-      expect(console.log).toHaveBeenCalledWith("[INFO] Message with undefined context", "")
+      expect(console.log).not.toHaveBeenCalled()
     })
   })
 
@@ -227,7 +227,7 @@ describe("Logger Utility", () => {
         logger.info("Large context test", largeContext)
       }).not.toThrow()
 
-      expect(console.log).toHaveBeenCalledWith("[INFO] Large context test", largeContext)
+      expect(console.log).not.toHaveBeenCalled()
     })
 
     test("should handle circular reference in context", () => {
@@ -238,7 +238,7 @@ describe("Logger Utility", () => {
         logger.info("Circular reference test", circularContext)
       }).not.toThrow()
 
-      expect(console.log).toHaveBeenCalledWith("[INFO] Circular reference test", circularContext)
+      expect(console.log).not.toHaveBeenCalled()
     })
 
     test("should handle special characters in messages", () => {
@@ -246,7 +246,7 @@ describe("Logger Utility", () => {
 
       logger.info(specialMessage)
 
-      expect(console.log).toHaveBeenCalledWith(`[INFO] ${specialMessage}`, "")
+      expect(console.log).not.toHaveBeenCalled()
     })
   })
 })
