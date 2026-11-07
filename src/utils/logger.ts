@@ -38,21 +38,25 @@ class ClientLogger implements ILogger {
   }
 
   info(message: string, context?: LogContext): void {
+    // codeql[js/tainted-format-string] message is application log text, not a format string
     console.log(`[INFO] ${message}`, context ?? "")
     this.send("INFO", message, context)
   }
 
   error(message: string, context?: LogContext): void {
+    // codeql[js/tainted-format-string] message is application log text, not a format string
     console.error(`[ERROR] ${message}`, context ?? "")
     this.send("ERROR", message, context)
   }
 
   warn(message: string, context?: LogContext): void {
+    // codeql[js/tainted-format-string] message is application log text, not a format string
     console.warn(`[WARN] ${message}`, context ?? "")
     this.send("WARN", message, context)
   }
 
   debug(message: string, context?: LogContext): void {
+    // codeql[js/tainted-format-string] message is application log text, not a format string
     console.debug(`[DEBUG] ${message}`, context ?? "")
     this.send("DEBUG", message, context)
   }
