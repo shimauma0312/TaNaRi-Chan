@@ -58,7 +58,6 @@ jest.mock("@/lib/auth", () => ({
 
 // Import after mocking
 import { getUserIdFromRequest } from "@/lib/auth"
-import { PrismaClient } from "@prisma/client"
 import { DELETE } from "../app/api/articles/comments/[comment_id]/route"
 import { GET, POST } from "../app/api/articles/comments/route"
 
