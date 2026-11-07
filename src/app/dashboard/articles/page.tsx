@@ -157,6 +157,13 @@ const ArticlesPage = () => {
                 <Stack direction="row" spacing={1}>
                   <Button
                     onClick={() =>
+                      router.push(`/dashboard/articles/view?post_id=${article.post_id}`)
+                    }
+                  >
+                    View
+                  </Button>
+                  <Button
+                    onClick={() =>
                       router.push(`/dashboard/articles/edit?post_id=${article.post_id}`)
                     }
                   >
