@@ -20,6 +20,7 @@ model User {
   sentMessages     Message[]     @relation("SentMessages")
   receivedMessages Message[]     @relation("ReceivedMessages")
   sessions         Session[]
+  postLikes        PostLike[]
 }
 
 model Session {
@@ -93,6 +94,7 @@ model Post {
   author    User          @relation(fields: [author_id], references: [id])
   tags      PostTag[]     @relation()
   comments  PostComment[]
+  likes     PostLike[]
 
   @@index([createdAt])
   @@index([author_id, createdAt])
@@ -113,6 +115,18 @@ model PostComment {
   post_id    Int
   author     User     @relation(fields: [author_id], references: [id])
   post       Post     @relation(fields: [post_id], references: [post_id])
+}
+
+/// 記事へのいいね（1ユーザー1記事につき1件）
+model PostLike {
+  user_id   String
+  post_id   Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+
+  @@id([user_id, post_id])
+  @@index([post_id])
 }
 
 model TodoComment {
