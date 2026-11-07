@@ -68,12 +68,6 @@ function ArticleViewContent() {
         if (commentsResponse.ok && Array.isArray(commentsData)) {
           setComments(commentsData)
         }
-
-        const likesResponse = await fetch(`/api/articles/likes?post_id=${numericId}`)
-        const likesData = await likesResponse.json().catch(() => null)
-        if (likesResponse.ok && likesData) {
-          setLike(likesData)
-        }
       } catch (error) {
         setError(error instanceof Error ? error.message : "記事の取得に失敗しました")
       } finally {
@@ -81,7 +75,19 @@ function ArticleViewContent() {
       }
     }
 
+    const loadLikes = async () => {
+      try {
+        const response = await fetch(`/api/articles/likes?post_id=${numericId}`)
+        const data = await response.json().catch(() => null)
+        if (!response.ok) throw new Error(data?.error || "いいねの取得に失敗しました")
+        setLike(data)
+      } catch (error) {
+        setLikeError(error instanceof Error ? error.message : "いいねの取得に失敗しました")
+      }
+    }
+
     void load()
+    void loadLikes()
   }, [postId])
 
   const handlePostComment = async () => {
@@ -160,18 +166,20 @@ function ArticleViewContent() {
               <MarkdownPreview markdown={article.content} />
             </Box>
 
-            {like && (
+            {(like || likeError) && (
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <Button
-                  aria-pressed={like.liked}
-                  color="error"
-                  disabled={liking}
-                  startIcon={like.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                  variant={like.liked ? "contained" : "outlined"}
-                  onClick={() => void handleToggleLike()}
-                >
-                  いいね！ {like.count}
-                </Button>
+                {like && (
+                  <Button
+                    aria-pressed={like.liked}
+                    color="error"
+                    disabled={liking}
+                    startIcon={like.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                    variant={like.liked ? "contained" : "outlined"}
+                    onClick={() => void handleToggleLike()}
+                  >
+                    いいね！ {like.count}
+                  </Button>
+                )}
                 {likeError && <Alert severity="error">{likeError}</Alert>}
               </Stack>
             )}
