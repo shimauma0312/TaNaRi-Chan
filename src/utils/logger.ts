@@ -13,7 +13,7 @@ export interface ILogger {
 
 // ─────────────────────────────────────────────────────────────────
 // クライアントサイドロガー
-// console に出力しつつ POST /api/logs でサーバーへ送信する
+// POST /api/logs でサーバーへ送信する
 // ─────────────────────────────────────────────────────────────────
 class ClientLogger implements ILogger {
   private send(level: string, message: string, context?: LogContext): void {
@@ -38,26 +38,18 @@ class ClientLogger implements ILogger {
   }
 
   info(message: string, context?: LogContext): void {
-    // codeql[js/tainted-format-string]
-    console.log(`[INFO] ${message}`, context ?? "")
     this.send("INFO", message, context)
   }
 
   error(message: string, context?: LogContext): void {
-    // codeql[js/tainted-format-string]
-    console.error(`[ERROR] ${message}`, context ?? "")
     this.send("ERROR", message, context)
   }
 
   warn(message: string, context?: LogContext): void {
-    // codeql[js/tainted-format-string]
-    console.warn(`[WARN] ${message}`, context ?? "")
     this.send("WARN", message, context)
   }
 
   debug(message: string, context?: LogContext): void {
-    // codeql[js/tainted-format-string]
-    console.debug(`[DEBUG] ${message}`, context ?? "")
     this.send("DEBUG", message, context)
   }
 }
@@ -65,7 +57,7 @@ class ClientLogger implements ILogger {
 // ─────────────────────────────────────────────────────────────────
 // 環境別ロガーインスタンスの初期化
 // サーバー: Winston + DB (logging/serverLogger)
-// クライアント: console + /api/logs
+// クライアント: /api/logs へ送信
 // ─────────────────────────────────────────────────────────────────
 let logger: ILogger
 
