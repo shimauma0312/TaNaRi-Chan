@@ -153,7 +153,7 @@ describe('POST /api/messages', () => {
   });
 
   it('存在しない受信者IDの場合は400を返し、DBへの書き込みは行わない', async () => {
-    mockGetUserId.mockReturnValue('user1');
+    mockGetUserId.mockResolvedValue('user1');
     mockPrismaUser.findUnique.mockResolvedValue(null);
 
     const req = createRequest('POST', 'http://localhost/api/messages', {
