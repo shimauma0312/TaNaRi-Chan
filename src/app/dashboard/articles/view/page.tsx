@@ -62,16 +62,23 @@ function ArticleViewContent() {
         const data = await response.json().catch(() => null)
         if (!response.ok) throw new Error(data?.error || "記事の取得に失敗しました")
         setArticle(data)
-
-        const commentsResponse = await fetch(`/api/articles/comments?post_id=${numericId}`)
-        const commentsData = await commentsResponse.json().catch(() => null)
-        if (commentsResponse.ok && Array.isArray(commentsData)) {
-          setComments(commentsData)
-        }
       } catch (error) {
         setError(error instanceof Error ? error.message : "記事の取得に失敗しました")
       } finally {
         setLoading(false)
+      }
+    }
+
+    const loadComments = async () => {
+      try {
+        const response = await fetch(`/api/articles/comments?post_id=${numericId}`)
+        const data = await response.json().catch(() => null)
+        if (!response.ok || !Array.isArray(data)) {
+          throw new Error(data?.error || "コメントの取得に失敗しました")
+        }
+        setComments(data)
+      } catch (error) {
+        setCommentError(error instanceof Error ? error.message : "コメントの取得に失敗しました")
       }
     }
 
@@ -87,6 +94,7 @@ function ArticleViewContent() {
     }
 
     void load()
+    void loadComments()
     void loadLikes()
   }, [postId])
 

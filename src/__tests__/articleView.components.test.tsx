@@ -27,16 +27,19 @@ function jsonResponse(ok: boolean, body: unknown): Response {
   return { ok, json: async () => body } as Response
 }
 
-function mockFetch(likes: () => Promise<Response>) {
+function mockFetch(
+  likes: () => Promise<Response>,
+  comments: () => Promise<Response> = () => Promise.resolve(jsonResponse(true, [])),
+) {
   jest.spyOn(global, "fetch").mockImplementation((input) => {
     const url = String(input)
     if (url.startsWith("/api/articles/likes")) return likes()
-    if (url.startsWith("/api/articles/comments")) return Promise.resolve(jsonResponse(true, []))
+    if (url.startsWith("/api/articles/comments")) return comments()
     return Promise.resolve(jsonResponse(true, article))
   })
 }
 
-describe("Article view likes", () => {
+describe("Article view separate loading", () => {
   afterEach(() => {
     jest.restoreAllMocks()
   })
@@ -58,5 +61,18 @@ describe("Article view likes", () => {
     expect(await screen.findByRole("heading", { name: "Like test article", level: 1 })).toBeTruthy()
     await waitFor(() => expect(screen.getByText("network down")).toBeTruthy())
     expect(screen.queryByRole("button", { name: /いいね！/ })).toBeNull()
+  })
+
+  test("still shows the article and likes when fetching comments fails", async () => {
+    mockFetch(
+      () => Promise.resolve(jsonResponse(true, { post_id: 1, count: 0, liked: false })),
+      () => Promise.resolve(jsonResponse(false, { error: "comments down" })),
+    )
+
+    render(<ArticleViewPage />)
+
+    expect(await screen.findByRole("heading", { name: "Like test article", level: 1 })).toBeTruthy()
+    await waitFor(() => expect(screen.getByText("comments down")).toBeTruthy())
+    expect(screen.getByRole("button", { name: /いいね！ 0/ })).toBeTruthy()
   })
 })
