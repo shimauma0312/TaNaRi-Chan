@@ -1,9 +1,12 @@
 "use client"
 
+import LikeBurst, { type BurstOrigin, likeButtonBounceSx } from "@/components/LikeBurst"
 import MinLoader from "@/components/MinLoader"
 import NextLink from "@/components/NextLink"
 import MarkdownPreview from "@/components/markdown/markdownPreveiw"
 import useAuth from "@/hooks/useAuth"
+import FavoriteIcon from "@mui/icons-material/Favorite"
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder"
 import Alert from "@mui/material/Alert"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
@@ -19,6 +22,8 @@ import { useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 
 type Article = { title: string; content: string; createdAt: string }
+
+type LikeStatus = { post_id: number; count: number; liked: boolean }
 
 type ArticleComment = {
   comment_id: number
@@ -38,6 +43,11 @@ function ArticleViewContent() {
   const [newComment, setNewComment] = useState("")
   const [commentError, setCommentError] = useState<string | null>(null)
   const [posting, setPosting] = useState(false)
+  const [like, setLike] = useState<LikeStatus | null>(null)
+  const [liking, setLiking] = useState(false)
+  const [likeError, setLikeError] = useState<string | null>(null)
+  const [burstKey, setBurstKey] = useState(0)
+  const [burstOrigin, setBurstOrigin] = useState<BurstOrigin | null>(null)
 
   const numericId = Number(postId)
   const validId = Number.isSafeInteger(numericId) && numericId > 0
@@ -55,12 +65,6 @@ function ArticleViewContent() {
         const data = await response.json().catch(() => null)
         if (!response.ok) throw new Error(data?.error || "記事の取得に失敗しました")
         setArticle(data)
-
-        const commentsResponse = await fetch(`/api/articles/comments?post_id=${numericId}`)
-        const commentsData = await commentsResponse.json().catch(() => null)
-        if (commentsResponse.ok && Array.isArray(commentsData)) {
-          setComments(commentsData)
-        }
       } catch (error) {
         setError(error instanceof Error ? error.message : "記事の取得に失敗しました")
       } finally {
@@ -68,7 +72,33 @@ function ArticleViewContent() {
       }
     }
 
+    const loadComments = async () => {
+      try {
+        const response = await fetch(`/api/articles/comments?post_id=${numericId}`)
+        const data = await response.json().catch(() => null)
+        if (!response.ok || !Array.isArray(data)) {
+          throw new Error(data?.error || "コメントの取得に失敗しました")
+        }
+        setComments(data)
+      } catch (error) {
+        setCommentError(error instanceof Error ? error.message : "コメントの取得に失敗しました")
+      }
+    }
+
+    const loadLikes = async () => {
+      try {
+        const response = await fetch(`/api/articles/likes?post_id=${numericId}`)
+        const data = await response.json().catch(() => null)
+        if (!response.ok) throw new Error(data?.error || "いいねの取得に失敗しました")
+        setLike(data)
+      } catch (error) {
+        setLikeError(error instanceof Error ? error.message : "いいねの取得に失敗しました")
+      }
+    }
+
     void load()
+    void loadComments()
+    void loadLikes()
   }, [postId])
 
   const handlePostComment = async () => {
@@ -89,6 +119,33 @@ function ArticleViewContent() {
       setCommentError(error instanceof Error ? error.message : "コメントの投稿に失敗しました")
     } finally {
       setPosting(false)
+    }
+  }
+
+  const handleToggleLike = async (buttonRect: DOMRect) => {
+    if (!like || liking) return
+    setLiking(true)
+    setLikeError(null)
+    if (!like.liked) {
+      setBurstOrigin({
+        x: buttonRect.left + buttonRect.width / 2,
+        y: buttonRect.top + buttonRect.height / 2,
+      })
+      setBurstKey((previous) => previous + 1)
+    }
+    try {
+      const response = await fetch("/api/articles/likes", {
+        method: like.liked ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: numericId }),
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(data?.error || "いいねの更新に失敗しました")
+      setLike(data)
+    } catch (error) {
+      setLikeError(error instanceof Error ? error.message : "いいねの更新に失敗しました")
+    } finally {
+      setLiking(false)
     }
   }
 
@@ -126,6 +183,29 @@ function ArticleViewContent() {
               <Divider sx={{ mb: 4 }} />
               <MarkdownPreview markdown={article.content} />
             </Box>
+
+            {(like || likeError) && (
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                {like && (
+                  <Box sx={{ display: "inline-flex", ...likeButtonBounceSx(burstKey) }}>
+                    <Button
+                      aria-pressed={like.liked}
+                      color="error"
+                      disabled={liking}
+                      startIcon={like.liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                      variant={like.liked ? "contained" : "outlined"}
+                      onClick={(event) =>
+                        void handleToggleLike(event.currentTarget.getBoundingClientRect())
+                      }
+                    >
+                      いいね！ {like.count}
+                    </Button>
+                    <LikeBurst burstKey={burstKey} origin={burstOrigin} />
+                  </Box>
+                )}
+                {likeError && <Alert severity="error">{likeError}</Alert>}
+              </Stack>
+            )}
 
             <Divider />
             <Box>
