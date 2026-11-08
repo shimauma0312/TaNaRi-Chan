@@ -1,7 +1,18 @@
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import {
+  GENERATED_POST_COUNT,
+  GENERATED_TODO_COUNT,
+  SEED_TAG_NAMES,
+  buildGeneratedPosts,
+  buildGeneratedTodos,
+} from "./seedData"
 
-const database = new PrismaClient()
+// The generated bulk data (Issue #253) makes the seed transaction much
+// larger than the default 5s interactive-transaction timeout, so raise it.
+const database = new PrismaClient({
+  transactionOptions: { maxWait: 10_000, timeout: 120_000 },
+})
 
 const seedUsers = [
   {
@@ -87,6 +98,7 @@ async function main() {
       // Delete every model in dependency order so the reset is complete even when
       // development data includes comments, messages, sessions, tags, or logs.
       await prisma.postComment.deleteMany({})
+      await prisma.postLike.deleteMany({})
       await prisma.todoComment.deleteMany({})
       await prisma.message.deleteMany({})
       await prisma.session.deleteMany({})
@@ -416,6 +428,11 @@ async function main() {
       },
     })
 
+    // Generated bulk todos (Issue #253): deterministic data from seedData.ts,
+    // on top of the hand-written todos above (30 + 270 = 300 in total).
+    console.log("Creating generated todos...")
+    await prisma.todo.createMany({ data: buildGeneratedTodos(now) })
+
     console.log("Creating articles...")
     // Create sample articles
     await prisma.post.create({
@@ -515,6 +532,39 @@ async function main() {
       },
     })
 
+    // Generated bulk articles (Issue #253): deterministic data from
+    // seedData.ts, on top of the hand-written articles above
+    // (12 + 288 = 300 in total). Tags are shared master data and likes
+    // are skewed toward a few posts so popularity rankings are meaningful.
+    console.log("Creating tags...")
+    await prisma.postTag.createMany({
+      data: SEED_TAG_NAMES.map((tag_name) => ({ tag_name })),
+      skipDuplicates: true,
+    })
+
+    console.log("Creating generated articles and likes...")
+    const generatedLikes: { user_id: string; post_id: number; createdAt: Date }[] = []
+    for (const post of buildGeneratedPosts(now)) {
+      const created = await prisma.post.create({
+        data: {
+          title: post.title,
+          content: post.content,
+          author_id: post.author_id,
+          createdAt: post.createdAt,
+          tags: { connect: post.tags.map((tag_name) => ({ tag_name })) },
+        },
+        select: { post_id: true },
+      })
+      for (const like of post.likes) {
+        generatedLikes.push({
+          user_id: like.user_id,
+          post_id: created.post_id,
+          createdAt: like.createdAt,
+        })
+      }
+    }
+    await prisma.postLike.createMany({ data: generatedLikes, skipDuplicates: true })
+
     return true
   })
 
@@ -524,7 +574,9 @@ async function main() {
   }
 
   console.log("Seed data created successfully!")
-  console.log("Users: 5, Todos: 30, Articles: 12")
+  console.log(
+    `Users: 5, Todos: ${30 + GENERATED_TODO_COUNT}, Articles: ${12 + GENERATED_POST_COUNT}`,
+  )
 }
 
 main()
