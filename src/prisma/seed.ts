@@ -6,7 +6,7 @@ import {
   SEED_TAG_NAMES,
   buildGeneratedPosts,
   buildGeneratedTodos,
-} from "./seedData"
+} from "./seedData.ts"
 
 // The generated bulk data (Issue #253) makes the seed transaction much
 // larger than the default 5s interactive-transaction timeout, so raise it.
